@@ -1,7 +1,0 @@
-./api.go
-./caches.go
-./clip.go
-./gpu.go
-./pack.go
-./path.go
-./timer.go

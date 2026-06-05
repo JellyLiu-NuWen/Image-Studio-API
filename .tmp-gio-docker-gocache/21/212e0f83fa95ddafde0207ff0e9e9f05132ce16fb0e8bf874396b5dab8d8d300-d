@@ -1,8 +1,0 @@
-./buffer.go
-./color.go
-./decode.go
-./doc.go
-./encode.go
-./iconvg.go
-./rasterizer.go
-./upgrade.go
