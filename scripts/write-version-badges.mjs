@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 
 function git(args) {
@@ -39,6 +39,36 @@ async function writeBadge(path, payload) {
   await writeFile(path, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
+async function writeReadmeVersionSection(details) {
+  const readmePath = "README.md";
+  const readme = await readFile(readmePath, "utf8");
+  const statusText = details.aligned ? "已对齐" : "需要同步";
+  const nextSection = `## 版本对齐
+
+当前状态: **${statusText}**。我的项目版本是 \`${details.currentVersion}\`，作者版本是 \`${details.upstreamVersion}\`。
+
+| 项目 | 当前值 | 对应提交 | 说明 |
+|---|---|---|---|
+| 我的项目版本 | \`${details.currentVersion}\` | \`${details.currentSha}\` | 本 fork \`main\` 当前对齐的作者 tag |
+| 作者版本 | \`${details.upstreamVersion}\` | \`${details.upstreamSha}\` | \`RoseKhlifa/Image-Studio\` 当前最新作者 tag |
+| 版本对齐 | \`${statusText}\` | - | 两者版本号${details.aligned ? "一致" : "不一致，需要同步 upstream"} |
+
+GitHub Action 会每天检查作者仓库是否有新提交，并刷新 \`badges/*.json\` 和本节内容。如果作者仓库有更新，会创建或更新 \`upstream-sync\` issue 提醒同步。
+
+手动检查:
+
+\`\`\`bash
+node scripts/check-upstream-updates.mjs
+node scripts/write-version-badges.mjs
+\`\`\`
+`;
+  const pattern = /## 版本对齐[\s\S]*?(?=\n## 你需要准备的信息)/;
+  if (!pattern.test(readme)) {
+    throw new Error("README.md is missing the version alignment section");
+  }
+  await writeFile(readmePath, readme.replace(pattern, nextSection.trimEnd()), "utf8");
+}
+
 async function main() {
   const outDir = "badges";
   const currentRef = process.env.CURRENT_REF || "main";
@@ -73,21 +103,17 @@ async function main() {
     message: aligned ? "已对齐" : "需要同步",
     color: aligned ? "2ea44f" : "d29922",
   });
-  await writeBadge(`${outDir}/version-details.json`, {
+  const details = {
     currentVersion,
     upstreamVersion,
     currentSha,
     upstreamSha,
     aligned,
-  });
+  };
+  await writeBadge(`${outDir}/version-details.json`, details);
+  await writeReadmeVersionSection(details);
 
-  console.log(JSON.stringify({
-    currentVersion,
-    upstreamVersion,
-    currentSha,
-    upstreamSha,
-    aligned,
-  }, null, 2));
+  console.log(JSON.stringify(details, null, 2));
 }
 
 main().catch((error) => {

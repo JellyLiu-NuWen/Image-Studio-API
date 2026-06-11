@@ -26,15 +26,15 @@
 
 ## 版本对齐
 
-本 fork 的版本号跟随作者仓库的最新语义化 tag。README 顶部会直接显示:
+当前状态: **已对齐**。我的项目版本是 `v1.2.5`，作者版本是 `v1.2.5`。
 
-| 项目 | 来源 |
-|---|---|
-| 我的项目版本 | 本 fork `main` 当前对齐的作者 tag |
-| 作者版本 | `RoseKhlifa/Image-Studio` 当前最新作者 tag |
-| 版本对齐 | 两者是否一致 |
+| 项目 | 当前值 | 对应提交 | 说明 |
+|---|---|---|---|
+| 我的项目版本 | `v1.2.5` | `faad44a727c7` | 本 fork `main` 当前对齐的作者 tag |
+| 作者版本 | `v1.2.5` | `b592073e699f` | `RoseKhlifa/Image-Studio` 当前最新作者 tag |
+| 版本对齐 | `已对齐` | - | 两者版本号一致 |
 
-GitHub Action 会每天检查作者仓库是否有新提交，并刷新 `badges/*.json`。如果作者仓库有更新，会创建或更新 `upstream-sync` issue 提醒同步。
+GitHub Action 会每天检查作者仓库是否有新提交，并刷新 `badges/*.json` 和本节内容。如果作者仓库有更新，会创建或更新 `upstream-sync` issue 提醒同步。
 
 手动检查:
 
@@ -42,7 +42,6 @@ GitHub Action 会每天检查作者仓库是否有新提交，并刷新 `badges/
 node scripts/check-upstream-updates.mjs
 node scripts/write-version-badges.mjs
 ```
-
 ## 你需要准备的信息
 
 部署前至少需要:
