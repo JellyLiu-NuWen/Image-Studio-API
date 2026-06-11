@@ -68,3 +68,16 @@ outputs/image-studio/
 ## 安全提醒
 
 即使只是自己用，也建议设置足够长的 `ADMIN_TOKEN` 和 `IMAGE_API_TOKEN`。如果直接暴露 `IP:端口`，请至少在云服务器安全组中只开放必要端口，并保留限流配置。
+
+## 分支维护
+
+本 fork 使用:
+
+- `main`: 自托管 API + Codex Skill 版本。
+- `upstream-main`: 原作者版本镜像。
+
+仓库内置 `.github/workflows/check-upstream-updates.yml`，会定时检查原作者仓库是否有更新；本地也可以运行:
+
+```bash
+node scripts/check-upstream-updates.mjs
+```

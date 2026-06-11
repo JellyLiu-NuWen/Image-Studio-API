@@ -153,16 +153,29 @@ python /path/to/skill-creator/scripts/quick_validate.py skills/image-studio-gene
 
 ## 维护 upstream
 
-建议把自托管改动放在独立分支，例如 `self-hosted-api`。后续同步原作者更新:
+本 fork 推荐使用两条长期分支:
+
+- `main`: 自托管 API + Codex Skill 版本。
+- `upstream-main`: 原作者 `RoseKhlifa/Image-Studio` 的镜像版本。
+
+后续同步原作者更新:
 
 ```bash
 git fetch upstream
-git checkout main
-git merge upstream/main
-git push origin main
+git checkout upstream-main
+git merge --ff-only upstream/main
+git push origin upstream-main
 
-git checkout self-hosted-api
-git merge main
+git checkout main
+git merge upstream-main
+npm --prefix server test
+git push origin main
 ```
 
-本目录基本独立于桌面端和 Android 端，通常可以减少合并冲突。
+也可以手动检测:
+
+```bash
+node scripts/check-upstream-updates.mjs
+```
+
+仓库内的 GitHub Action 会每天检查一次 upstream 是否有新提交；如果有，会创建或更新带有 `upstream-sync` 标签的提醒 issue。
