@@ -6,7 +6,7 @@ on:
     - cron: "23 2 * * *"
 
 permissions:
-  contents: read
+  contents: write
   issues: write
 
 jobs:
@@ -28,6 +28,16 @@ jobs:
           node scripts/check-upstream-updates.mjs > upstream-status.json
           cat upstream-status.json
           node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync('upstream-status.json','utf8')); for (const [key,value] of Object.entries(data)) fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${String(value).replace(/\n/g, ' ')}\n`);"
+
+      - name: Refresh version badges
+        run: |
+          node scripts/write-version-badges.mjs
+
+      - name: Commit version badge updates
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: refresh version badges"
+          file_pattern: badges/*.json
 
       - name: Create or update reminder issue
         if: steps.upstream.outputs.hasUpdates == 'true'

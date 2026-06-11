@@ -2,24 +2,130 @@
   <img src="./docs/picture/image-edit-1137ff20.png" alt="Image Studio" width="180" />
 </p>
 
-# Image Studio
+# Image Studio API
 
-> 开源图像生成 / 编辑客户端 · Wails(Go + React/TS) 桌面端 + Android WebView 壳层 ·
-> 支持 Responses API SSE / WebSocket mode 与标准 Images API
+> 基于 [RoseKhlifa/Image-Studio](https://github.com/RoseKhlifa/Image-Studio) 的自托管 API fork ·
+> 面向 Codex / OpenClaw / DeepSeek / MCP 等 AI 工具的私有生图接口
 
 ![license](https://img.shields.io/badge/license-AGPLv3-b22222)
 ![go](https://img.shields.io/badge/go-%3E%3D1.25-00ADD8)
 ![react](https://img.shields.io/badge/react-18-61DAFB)
 ![wails](https://img.shields.io/badge/wails-v2.12-DF0000)
 ![platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux%20%7C%20android-lightgrey)
+![current version](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/current-version.json)
+![upstream version](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/upstream-version.json)
+![version status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/version-status.json)
+
+## 这个 fork 想解决什么
+
+原项目 Image Studio 是一个优秀的开源图像生成 / 编辑客户端，主体是 Wails 桌面端和 Android WebView 壳层。我自己的需求不是再做一个 Web 版，而是把它整理成一个可以部署在自己服务器上的私有 API 服务，让 Codex 或其他 AI 先理解用户需求，再通过这个接口调用生图能力，最后把图片结果回传给用户。
+
+所以这个 fork 的核心思路是:
+
+- 保留原作者项目作为上游基础，版本号尽量和作者版本对齐。
+- 在 `main` 分支提供自托管 API、后台配置页和 Codex Skill。
+- 在 `upstream-main` 分支保留作者原版镜像，方便比较和同步。
+- 真实模型 API Key 只放在服务器上，Codex / OpenClaw / DeepSeek 只拿一个私有调用 token。
+- 先支持 `IP:PORT` 的简单部署，HTTPS、反代、Tailscale、IP 白名单等安全增强可以后续再加。
+
+## 版本对齐
+
+本 fork 的版本号跟随作者仓库的最新语义化 tag。当前版本和作者版本会显示在 README 顶部 badge 中:
+
+| 项目 | 来源 |
+|---|---|
+| current | 本 fork `main` 当前对齐的作者 tag |
+| upstream | `RoseKhlifa/Image-Studio` 当前最新作者 tag |
+| version | 两者是否对齐 |
+
+GitHub Action 会每天检查作者仓库是否有新提交，并刷新 `badges/*.json`。如果作者仓库有更新，会创建或更新 `upstream-sync` issue 提醒同步。
+
+手动检查:
+
+```bash
+node scripts/check-upstream-updates.mjs
+node scripts/write-version-badges.mjs
+```
+
+## 你需要准备的信息
+
+部署前至少需要:
+
+| 信息 | 说明 |
+|---|---|
+| `ADMIN_TOKEN` | 进入 `/admin` 后台配置页的管理 token |
+| `IMAGE_API_TOKEN` | Codex / 其他 AI 调用本服务时使用的 token |
+| `UPSTREAM_BASE_URL` | OpenAI-compatible 图像上游地址，例如 `https://api.openai.com/v1` |
+| `UPSTREAM_API_KEY` | 真正的模型服务 API Key，只保存在服务器 |
+| `DEFAULT_IMAGE_MODEL` | 默认图像模型，例如 `gpt-image-2` 或你的上游兼容模型 |
+| `PORT` | 服务监听端口，默认 `8787` |
+
+最小调用链:
+
+```text
+Codex / OpenClaw / DeepSeek / MCP
+  -> IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
+  -> Authorization: Bearer IMAGE_API_TOKEN
+  -> server/ 自托管 API
+  -> UPSTREAM_BASE_URL + UPSTREAM_API_KEY
+  -> 返回 b64_json 或图片 URL
+```
+
+## 快速部署 API 服务
+
+```bash
+git clone https://github.com/JellyLiu-NuWen/Image-Studio-API.git
+cd Image-Studio-API
+cp server/.env.example server/.env
+```
+
+编辑 `server/.env` 后启动:
+
+```bash
+docker compose -f docker-compose.self-hosted.yml up -d --build
+```
+
+如果不用 Docker，也可以直接 Node 运行:
+
+```bash
+cd server
+npm start
+```
+
+后台配置页:
+
+```text
+http://SERVER_IP:8787/admin
+```
+
+健康检查:
+
+```bash
+curl http://SERVER_IP:8787/healthz
+```
+
+Codex Skill 位于:
+
+```text
+skills/image-studio-generate
+```
+
+Codex 侧配置:
+
+```env
+IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
+IMAGE_STUDIO_API_TOKEN=your-client-token
+```
+
+更多自托管说明见 [server/README.md](./server/README.md) 和 [docs/self-hosted-api.md](./docs/self-hosted-api.md)。
+
+## 原项目能力
 
 Image Studio 面向 OpenAI 兼容图像上游，重点解决长时间图像推理在 Cloudflare / Nginx 后面容易遇到的 524/504 断连问题。Responses API 模式支持 `HTTP SSE` 与 `WebSocket mode` 两种传输；Images API 模式则兼容标准 `/v1/images/generations` 与 `/v1/images/edits`。
 
 项目不内置任何默认上游。首次启动需要你自己填写 BASE_URL、API Key、文本模型与图像模型。
 
 当前没有独立部署的在线 Web 版。仓库里的浏览器预览主要用于前端调试和 target platform 预览，不等同于可直接对外提供服务的 SaaS Web 端。
-
-如果你的目标是让 Codex、OpenClaw、DeepSeek 或其他 AI 工具通过接口调用生图能力，而不是部署完整 Web 端，可以使用本 fork 新增的 [自托管 API 服务](./server/README.md)。它支持直接部署到自己的服务器，通过 `IP:PORT` 提供私有 `/v1/images/generations` 等接口，并配套 [Codex Skill](./skills/image-studio-generate/SKILL.md) 调用。
 
 **配套项目 [Image-Prompts](https://prompts.sorry.ink/) 提供提示词浏览与一键导入能力，支持把网页上的提示词直接送入 Image Studio 桌面端。相关说明见 [docs/prompt-import.md](./docs/prompt-import.md)。**
 

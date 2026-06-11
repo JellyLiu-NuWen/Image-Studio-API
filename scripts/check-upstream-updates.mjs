@@ -19,8 +19,8 @@ function main() {
   const upstreamRemote = process.env.UPSTREAM_REMOTE || "upstream";
   const upstreamBranch = process.env.UPSTREAM_BRANCH || "main";
   const mirrorBranch = process.env.UPSTREAM_MIRROR_BRANCH || "upstream-main";
-  const mirrorRef = "refs/check-upstream/origin-upstream-main";
-  const upstreamRef = "refs/check-upstream/upstream-main";
+  const mirrorRef = "refs/image-studio-api-check/origin-upstream-main";
+  const upstreamRef = "refs/image-studio-api-check/upstream-main";
   const upstreamLabel = `${upstreamRemote}/${upstreamBranch}`;
   const mirrorLabel = `origin/${mirrorBranch}`;
 
