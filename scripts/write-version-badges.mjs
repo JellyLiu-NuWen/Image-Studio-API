@@ -11,8 +11,15 @@ function git(args) {
   return result.stdout.trim();
 }
 
-function fetchRef(remote, branch, ref) {
-  git(["fetch", remote, `${branch}:${ref}`, "--prune"]);
+function resolveUpstreamRef(remote, branch, fallbackRef) {
+  try {
+    git(["fetch", remote, branch, "--prune"]);
+    return git(["rev-parse", "FETCH_HEAD"]);
+  } catch (error) {
+    if (!fallbackRef) throw error;
+    console.warn(`${error.message}\nUsing fallback ref ${fallbackRef}`);
+    return git(["rev-parse", fallbackRef]);
+  }
 }
 
 function latestSemverTag(ref) {
@@ -37,9 +44,9 @@ async function main() {
   const currentRef = process.env.CURRENT_REF || "main";
   const upstreamRemote = process.env.UPSTREAM_REMOTE || "upstream";
   const upstreamBranch = process.env.UPSTREAM_BRANCH || "main";
-  const upstreamRef = "refs/image-studio-api-version/upstream-main";
+  const upstreamFallbackRef = process.env.UPSTREAM_FALLBACK_REF || "upstream-main";
 
-  fetchRef(upstreamRemote, upstreamBranch, upstreamRef);
+  const upstreamRef = resolveUpstreamRef(upstreamRemote, upstreamBranch, upstreamFallbackRef);
   await mkdir(outDir, { recursive: true });
 
   const currentVersion = latestSemverTag(currentRef);
@@ -50,22 +57,20 @@ async function main() {
 
   await writeBadge(`${outDir}/current-version.json`, {
     schemaVersion: 1,
-    label: "current",
+    label: "我的项目版本",
     message: currentVersion,
-    color: aligned ? "2ea44f" : "d29922",
-    namedLogo: "github",
+    color: aligned ? "2ea44f" : "d29922"
   });
   await writeBadge(`${outDir}/upstream-version.json`, {
     schemaVersion: 1,
-    label: "upstream",
+    label: "作者版本",
     message: upstreamVersion,
-    color: "0969da",
-    namedLogo: "github",
+    color: "0969da"
   });
   await writeBadge(`${outDir}/version-status.json`, {
     schemaVersion: 1,
-    label: "version",
-    message: aligned ? "aligned" : "needs sync",
+    label: "版本对齐",
+    message: aligned ? "已对齐" : "需要同步",
     color: aligned ? "2ea44f" : "d29922",
   });
   await writeBadge(`${outDir}/version-details.json`, {

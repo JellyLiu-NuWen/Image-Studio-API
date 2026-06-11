@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="./docs/picture/image-edit-1137ff20.png" alt="Image Studio" width="180" />
-</p>
-
 # Image Studio API
 
 > 基于 [RoseKhlifa/Image-Studio](https://github.com/RoseKhlifa/Image-Studio) 的自托管 API fork ·
@@ -12,9 +8,9 @@
 ![react](https://img.shields.io/badge/react-18-61DAFB)
 ![wails](https://img.shields.io/badge/wails-v2.12-DF0000)
 ![platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux%20%7C%20android-lightgrey)
-![current version](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/current-version.json)
-![upstream version](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/upstream-version.json)
-![version status](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/version-status.json)
+![我的项目版本](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/current-version.json)
+![作者版本](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/upstream-version.json)
+![版本对齐](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/version-status.json)
 
 ## 这个 fork 想解决什么
 
@@ -30,13 +26,13 @@
 
 ## 版本对齐
 
-本 fork 的版本号跟随作者仓库的最新语义化 tag。当前版本和作者版本会显示在 README 顶部 badge 中:
+本 fork 的版本号跟随作者仓库的最新语义化 tag。README 顶部会直接显示:
 
 | 项目 | 来源 |
 |---|---|
-| current | 本 fork `main` 当前对齐的作者 tag |
-| upstream | `RoseKhlifa/Image-Studio` 当前最新作者 tag |
-| version | 两者是否对齐 |
+| 我的项目版本 | 本 fork `main` 当前对齐的作者 tag |
+| 作者版本 | `RoseKhlifa/Image-Studio` 当前最新作者 tag |
+| 版本对齐 | 两者是否一致 |
 
 GitHub Action 会每天检查作者仓库是否有新提交，并刷新 `badges/*.json`。如果作者仓库有更新，会创建或更新 `upstream-sync` issue 提醒同步。
 

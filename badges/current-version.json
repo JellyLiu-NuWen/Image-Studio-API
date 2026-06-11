@@ -1,7 +1,6 @@
 {
   "schemaVersion": 1,
-  "label": "current",
+  "label": "我的项目版本",
   "message": "v1.2.5",
-  "color": "2ea44f",
-  "namedLogo": "github"
+  "color": "2ea44f"
 }

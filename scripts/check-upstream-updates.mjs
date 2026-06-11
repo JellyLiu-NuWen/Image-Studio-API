@@ -15,23 +15,23 @@ function commitSubject(ref) {
   return git(["log", "-1", "--format=%s", ref]);
 }
 
+function fetchHead(remote, branch) {
+  git(["fetch", remote, branch, "--prune"]);
+  return git(["rev-parse", "FETCH_HEAD"]);
+}
+
 function main() {
   const upstreamRemote = process.env.UPSTREAM_REMOTE || "upstream";
   const upstreamBranch = process.env.UPSTREAM_BRANCH || "main";
   const mirrorBranch = process.env.UPSTREAM_MIRROR_BRANCH || "upstream-main";
-  const mirrorRef = "refs/image-studio-api-check/origin-upstream-main";
-  const upstreamRef = "refs/image-studio-api-check/upstream-main";
   const upstreamLabel = `${upstreamRemote}/${upstreamBranch}`;
   const mirrorLabel = `origin/${mirrorBranch}`;
 
-  git(["fetch", upstreamRemote, `${upstreamBranch}:${upstreamRef}`, "--prune"]);
-  git(["fetch", "origin", `${mirrorBranch}:${mirrorRef}`, "--prune"]);
-
-  const upstreamHead = git(["rev-parse", upstreamRef]);
-  const mirrorHead = git(["rev-parse", mirrorRef]);
-  const mergeBase = git(["merge-base", upstreamRef, mirrorRef]);
-  const behindCount = Number(git(["rev-list", "--count", `${mirrorRef}..${upstreamRef}`]));
-  const aheadCount = Number(git(["rev-list", "--count", `${upstreamRef}..${mirrorRef}`]));
+  const upstreamHead = fetchHead(upstreamRemote, upstreamBranch);
+  const mirrorHead = fetchHead("origin", mirrorBranch);
+  const mergeBase = git(["merge-base", upstreamHead, mirrorHead]);
+  const behindCount = Number(git(["rev-list", "--count", `${mirrorHead}..${upstreamHead}`]));
+  const aheadCount = Number(git(["rev-list", "--count", `${upstreamHead}..${mirrorHead}`]));
   const hasUpdates = behindCount > 0;
 
   const result = {
@@ -43,8 +43,8 @@ function main() {
     mergeBase,
     behindCount,
     aheadCount,
-    upstreamSubject: commitSubject(upstreamRef),
-    mirrorSubject: commitSubject(mirrorRef),
+    upstreamSubject: commitSubject(upstreamHead),
+    mirrorSubject: commitSubject(mirrorHead),
   };
 
   console.log(JSON.stringify(result, null, 2));
