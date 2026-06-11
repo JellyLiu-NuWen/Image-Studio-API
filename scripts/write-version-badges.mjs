@@ -45,13 +45,15 @@ async function writeReadmeVersionSection(details) {
   const statusText = details.aligned ? "已对齐" : "需要同步";
   const nextSection = `## 版本对齐
 
-当前状态: **${statusText}**。我的项目版本是 \`${details.currentVersion}\`，作者版本是 \`${details.upstreamVersion}\`。
+当前状态: **${statusText}**。
 
-| 项目 | 当前值 | 对应提交 | 说明 |
-|---|---|---|---|
-| 我的项目版本 | \`${details.currentVersion}\` | \`${details.currentSha}\` | 本 fork \`main\` 当前对齐的作者 tag |
-| 作者版本 | \`${details.upstreamVersion}\` | \`${details.upstreamSha}\` | \`RoseKhlifa/Image-Studio\` 当前最新作者 tag |
-| 版本对齐 | \`${statusText}\` | - | 两者版本号${details.aligned ? "一致" : "不一致，需要同步 upstream"} |
+| 项目 | 版本 |
+|---|---|
+| 我的项目版本 | \`${details.currentVersion}\` |
+| 作者仓库版本 | \`${details.upstreamVersion}\` |
+| 对齐状态 | \`${statusText}\` |
+
+版本号跟随作者仓库的最新语义化 tag。两边版本号${details.aligned ? "一致，说明当前 fork 已对齐作者版本" : "不一致，说明需要同步作者仓库更新"}。
 
 GitHub Action 会每天检查作者仓库是否有新提交，并刷新 \`badges/*.json\` 和本节内容。如果作者仓库有更新，会创建或更新 \`upstream-sync\` issue 提醒同步。
 
@@ -61,12 +63,13 @@ GitHub Action 会每天检查作者仓库是否有新提交，并刷新 \`badges
 node scripts/check-upstream-updates.mjs
 node scripts/write-version-badges.mjs
 \`\`\`
+
 `;
   const pattern = /## 版本对齐[\s\S]*?(?=\n## 你需要准备的信息)/;
   if (!pattern.test(readme)) {
     throw new Error("README.md is missing the version alignment section");
   }
-  await writeFile(readmePath, readme.replace(pattern, nextSection.trimEnd()), "utf8");
+  await writeFile(readmePath, readme.replace(pattern, nextSection), "utf8");
 }
 
 async function main() {
