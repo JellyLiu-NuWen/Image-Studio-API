@@ -1,0 +1,4 @@
+interface:
+  display_name: "Image Studio Generate"
+  short_description: "Generate images through a private self-hosted Image Studio API."
+  default_prompt: "Generate an image with the private Image Studio API."

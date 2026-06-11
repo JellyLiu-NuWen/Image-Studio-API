@@ -1,0 +1,16 @@
+{
+  "name": "image-studio-self-hosted-api",
+  "private": true,
+  "version": "0.1.0",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check-syntax.mjs",
+    "smoke": "node scripts/smoke-check.mjs",
+    "test": "node --test ./test/*.test.mjs",
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -21,6 +21,7 @@
 # Generated images, raw SSE dumps, imported sources
 # (raw SSE files include request headers — may leak API keys)
 /images/
+/outputs/
 /image-studio/build/bin/data/
 *.exe
 *.exe~
@@ -53,6 +54,7 @@ Thumbs.db
 .env
 .env.local
 *.local
+/server/data/
 
 # Local caches / sandboxes
 .npm-cache/

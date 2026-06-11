@@ -1,0 +1,16 @@
+services:
+  image-studio-api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: image-studio-api
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    ports:
+      - "8787:8787"
+    volumes:
+      - image-studio-api-data:/data
+
+volumes:
+  image-studio-api-data:
