@@ -4,12 +4,6 @@
 > 面向 Codex / OpenClaw / DeepSeek / MCP 等 AI 工具的私有生图接口
 
 ![license](https://img.shields.io/badge/license-AGPLv3-b22222)
-![go](https://img.shields.io/badge/go-%3E%3D1.25-00ADD8)
-![react](https://img.shields.io/badge/react-18-61DAFB)
-![wails](https://img.shields.io/badge/wails-v2.12-DF0000)
-![platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux%20%7C%20android-lightgrey)
-![我的项目版本](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/current-version.json)
-![作者版本](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/upstream-version.json)
 ![版本对齐](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JellyLiu-NuWen/Image-Studio-API/main/badges/version-status.json)
 
 ## 这个 fork 想解决什么
