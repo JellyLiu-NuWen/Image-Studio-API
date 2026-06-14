@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { compareIssueCloseDocs } from "./issue-close-doc-compare.mjs";
 import { resolveVerifyOutputPath } from "./verify-output-paths.mjs";
 
 const root = process.cwd();
@@ -12,6 +13,9 @@ const dataPath = path.join(root, "scripts", "issue-close-data.json");
 const renderedDocPath = path.join(root, "docs", "issue-close-comments.md");
 const hasGitHubToken = Boolean((process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim());
 const skipGitHubSync = /^(1|true)$/i.test(process.env.IMAGE_STUDIO_SKIP_ISSUE_CLOSE_GITHUB_SYNC ?? "") || !hasGitHubToken;
+const issueCloseHelperEnv = skipGitHubSync
+  ? { IMAGE_STUDIO_SKIP_ISSUE_CLOSE_GITHUB_SYNC: "1" }
+  : {};
 
 const summary = {
   startedAt: new Date().toISOString(),
@@ -149,31 +153,38 @@ async function main() {
   const renderedDoc = await readFile(renderedDocPath, "utf8");
   const render = await run(process.execPath, ["scripts/render-issue-close-comments.mjs"]);
   pushCheck("render issue close comments exits 0", render.code === 0 ? "passed" : "failed", render.stderr || `code=${render.code}`);
+  const docComparison = compareIssueCloseDocs(render.stdout, renderedDoc);
   pushCheck(
     "rendered issue close doc matches tracked markdown",
-    render.stdout === renderedDoc ? "passed" : "failed",
-    render.stdout === renderedDoc ? "docs/issue-close-comments.md is in sync" : "docs/issue-close-comments.md drift detected",
+    docComparison.matches ? "passed" : "failed",
+    docComparison.matches
+      ? "docs/issue-close-comments.md is in sync"
+      : `docs/issue-close-comments.md drift detected (renderedLength=${docComparison.renderedLength}, trackedLength=${docComparison.trackedLength})`,
   );
 
-  const list = await run(process.execPath, ["scripts/issue-close-helper.mjs", "list", "--json"]);
+  const list = await run(process.execPath, ["scripts/issue-close-helper.mjs", "list", "--json"], { env: issueCloseHelperEnv });
   pushCheck("issue close helper list exits 0", list.code === 0 ? "passed" : "failed", list.stderr || `code=${list.code}`);
   const listed = JSON.parse(list.stdout);
   const listedNumbers = listed.map((item) => Number(item.number));
   pushCheck("helper list matches closable numbers", JSON.stringify(listedNumbers) === JSON.stringify(closableNumbers) ? "passed" : "failed", `listed=${listedNumbers.join(",")}`);
 
   const firstIssue = closableNumbers[0];
-  const comment = await run(process.execPath, ["scripts/issue-close-helper.mjs", "comment", String(firstIssue)]);
+  const comment = await run(process.execPath, ["scripts/issue-close-helper.mjs", "comment", String(firstIssue)], { env: issueCloseHelperEnv });
   pushCheck("issue close helper comment exits 0", comment.code === 0 ? "passed" : "failed", comment.stderr || `code=${comment.code}`);
   const firstComment = data.closable.find((item) => Number(item.number) === firstIssue)?.comment?.trim() ?? "";
   pushCheck("helper comment matches data source", comment.stdout.trim() === firstComment ? "passed" : "failed", `issue=${firstIssue}`);
 
-  const plan = await run(process.execPath, ["scripts/issue-close-helper.mjs", "plan", "--json"]);
+  const plan = await run(process.execPath, ["scripts/issue-close-helper.mjs", "plan", "--json"], { env: issueCloseHelperEnv });
   pushCheck("issue close helper plan exits 0", plan.code === 0 ? "passed" : "failed", plan.stderr || `code=${plan.code}`);
   const planned = JSON.parse(plan.stdout);
   pushCheck("helper plan target count matches closable issues", planned.targets?.length === closableNumbers.length ? "passed" : "failed", `targets=${planned.targets?.length ?? 0}`);
   pushCheck("helper plan default mode is comment-and-close", planned.mode === "comment-and-close" ? "passed" : "failed", `mode=${planned.mode}`);
 
-  const applyDryRun = await run(process.execPath, ["scripts/issue-close-helper.mjs", "apply", String(firstIssue), "--comment-only"]);
+  const applyDryRun = await run(
+    process.execPath,
+    ["scripts/issue-close-helper.mjs", "apply", String(firstIssue), "--comment-only"],
+    { env: issueCloseHelperEnv },
+  );
   pushCheck(
     "issue close helper apply refuses without execute",
     applyDryRun.code !== 0 && /refuses to mutate GitHub/.test(applyDryRun.stderr) ? "passed" : "failed",
@@ -249,7 +260,7 @@ async function main() {
     const exportDir = exportManifestPath
       ? path.dirname(exportManifestPath)
       : path.join(tempRoot, "bundle");
-    const exported = await run(process.execPath, ["scripts/issue-close-helper.mjs", "export", exportDir]);
+    const exported = await run(process.execPath, ["scripts/issue-close-helper.mjs", "export", exportDir], { env: issueCloseHelperEnv });
     pushCheck("issue close helper export exits 0", exported.code === 0 ? "passed" : "failed", exported.stderr || `code=${exported.code}`);
     const exportedJson = JSON.parse(exported.stdout);
     const manifest = JSON.parse(await readFile(exportedJson.manifestPath, "utf8"));
