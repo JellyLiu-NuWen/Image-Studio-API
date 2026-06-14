@@ -27,7 +27,7 @@ jobs:
         run: |
           node scripts/check-upstream-updates.mjs > upstream-status.json
           cat upstream-status.json
-          node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync('upstream-status.json','utf8')); for (const [key,value] of Object.entries(data)) fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${String(value).replace(/\n/g, ' ')}\n`);"
+          node scripts/write-github-output-from-json.mjs upstream-status.json
 
       - name: Refresh version badges
         run: |
