@@ -3,6 +3,7 @@ import { createServer } from "node:http";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { collectUtf8Output } from "./collect-utf8-output.mjs";
 import { compareIssueCloseDocs } from "./issue-close-doc-compare.mjs";
 import { resolveVerifyOutputPath } from "./verify-output-paths.mjs";
 
@@ -38,13 +39,17 @@ function run(cmd, args, options = {}) {
       stdio: ["ignore", "pipe", "pipe"],
       shell: false,
     });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", (chunk) => { stdout += chunk.toString("utf8"); });
-    child.stderr.on("data", (chunk) => { stderr += chunk.toString("utf8"); });
+    const stdoutChunks = [];
+    const stderrChunks = [];
+    child.stdout.on("data", (chunk) => { stdoutChunks.push(Buffer.from(chunk)); });
+    child.stderr.on("data", (chunk) => { stderrChunks.push(Buffer.from(chunk)); });
     child.on("error", reject);
     child.on("exit", (code) => {
-      resolve({ code: code ?? 1, stdout, stderr });
+      resolve({
+        code: code ?? 1,
+        stdout: collectUtf8Output(stdoutChunks),
+        stderr: collectUtf8Output(stderrChunks),
+      });
     });
   });
 }
