@@ -159,7 +159,11 @@ async function main() {
     docComparison.matches ? "passed" : "failed",
     docComparison.matches
       ? "docs/issue-close-comments.md is in sync"
-      : `docs/issue-close-comments.md drift detected (renderedLength=${docComparison.renderedLength}, trackedLength=${docComparison.trackedLength})`,
+      : [
+          `docs/issue-close-comments.md drift detected (renderedLength=${docComparison.renderedLength}, trackedLength=${docComparison.trackedLength}, firstDiff=${docComparison.firstDiff})`,
+          `rendered="${docComparison.renderedPreview}"`,
+          `tracked="${docComparison.trackedPreview}"`,
+        ].join(" "),
   );
 
   const list = await run(process.execPath, ["scripts/issue-close-helper.mjs", "list", "--json"], { env: issueCloseHelperEnv });
