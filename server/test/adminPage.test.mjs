@@ -69,9 +69,26 @@ test("renderAdminPage lets admins reveal saved api keys in the drawer", () => {
 
   assert.match(html, /data-reveal-secret/);
   assert.match(html, /data-secret-output/);
-  assert.match(html, /显示 Key/);
+  assert.match(html, /显示已保存 Key/);
   assert.match(html, /config\/secrets/);
   assert.match(html, /隐藏 Key/);
+});
+
+test("renderAdminPage saves drawer configs directly and reports failures", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /async function saveDrawerConfig/);
+  assert.match(html, /saveDrawerBtn\?\.addEventListener\("click", saveDrawerConfig\)/);
+  assert.doesNotMatch(html, /requestSubmit/);
+  assert.match(html, /保存失败/);
+});
+
+test("renderAdminPage labels service api key as the skill calling key", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /Skill 调用 Key/);
+  assert.match(html, /配置到 Codex、skills、OpenClaw 或其他 AI 工具里/);
+  assert.match(html, /data-secret-role="client-token"/);
 });
 
 test("renderAdminPage validates release link protocol before rendering href", () => {

@@ -90,3 +90,39 @@ test("mergeConfigUpdate preserves blank per-item secrets", () => {
   assert.deepEqual(next.interfaces[0].upstreamIds, ["primary", "backup"]);
   assert.equal(next.interfaces[0].defaultImageModel, "gpt-image-2");
 });
+
+test("mergeConfigUpdate ignores masked secret placeholders", () => {
+  const current = normalizeConfig({
+    interfaces: [{
+      id: "codex",
+      name: "Codex",
+      apiToken: "old-client-token",
+      upstreamIds: ["primary"],
+    }],
+    upstreams: [{
+      id: "primary",
+      name: "Primary",
+      baseURL: "https://old.example/v1",
+      apiKey: "old-upstream-key",
+    }],
+  });
+
+  const next = mergeConfigUpdate(current, {
+    interfaces: [{
+      id: "codex",
+      name: "Codex",
+      apiToken: "sk-••••...saved",
+      upstreamIds: ["primary"],
+    }],
+    upstreams: [{
+      id: "primary",
+      name: "Primary",
+      baseURL: "https://new.example/v1",
+      apiKey: "•••",
+    }],
+  });
+
+  assert.equal(next.interfaces[0].apiToken, "old-client-token");
+  assert.equal(next.upstreams[0].apiKey, "old-upstream-key");
+  assert.equal(next.upstreams[0].baseURL, "https://new.example");
+});

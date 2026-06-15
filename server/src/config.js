@@ -109,6 +109,22 @@ function uniqueIds(values, fallback = []) {
   return ids.length ? ids : [...fallback];
 }
 
+function isMaskedSecretPlaceholder(value) {
+  const text = String(value ?? "").trim().toLowerCase();
+  if (!text) return false;
+  const compact = text.replace(/\s+/g, "");
+  return compact.includes("••")
+    || compact.includes("...saved")
+    || compact.includes("已保存")
+    || /^[*•●·]+$/.test(compact);
+}
+
+function secretUpdateOrPrevious(value, previous = "") {
+  const next = String(value ?? "").trim();
+  if (!next || isMaskedSecretPlaceholder(next)) return previous || "";
+  return next;
+}
+
 function legacyInterfaceFrom(values) {
   return {
     id: DEFAULT_INTERFACE_ID,
@@ -334,7 +350,7 @@ export function mergeConfigUpdate(current, patch) {
         ...previousItem,
         ...item,
         id,
-        apiToken: String(item?.apiToken || "").trim() || previousItem.apiToken || "",
+        apiToken: secretUpdateOrPrevious(item?.apiToken, previousItem.apiToken),
       };
     });
   } else {
@@ -365,7 +381,7 @@ export function mergeConfigUpdate(current, patch) {
         ...previousItem,
         ...item,
         id,
-        apiKey: String(item?.apiKey || "").trim() || previousItem.apiKey || "",
+        apiKey: secretUpdateOrPrevious(item?.apiKey, previousItem.apiKey),
       };
     });
   } else {

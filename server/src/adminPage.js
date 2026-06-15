@@ -736,6 +736,14 @@ export function renderAdminPage() {
       font-size: 12px;
       line-height: 1.5;
     }
+    .field-help {
+      display: block;
+      margin: -2px 0 0;
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.45;
+    }
     .secret-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -1264,7 +1272,7 @@ export function renderAdminPage() {
     }
 
     function maskedKey(isSet) {
-      return isSet ? '<span class="config-key-cell">sk-••••...saved</span>' : chip("未保存 Key", "warn");
+      return isSet ? '<span class="config-key-cell">Key 已保存</span>' : chip("未保存 Key", "warn");
     }
 
     function modelCell(value) {
@@ -1277,22 +1285,18 @@ export function renderAdminPage() {
 
     function secretRevealField({ kind, id, isSet, label }) {
       const disabled = isSet ? "" : " disabled";
-      const placeholder = isSet ? "点击显示 Key 后查看完整密钥" : "当前没有保存 Key";
+      const placeholder = isSet ? "点击右侧按钮显示完整 Key" : "当前没有保存 Key";
       return [
         '<div class="full">',
         '<label>' + escapeHTML(label),
         '<div class="secret-row">',
         '<input data-secret-output="' + escapeHTML(kind) + '" readonly type="password" value="" placeholder="' + escapeHTML(placeholder) + '">',
-        '<button type="button" class="secondary" data-reveal-secret="' + escapeHTML(kind) + '" data-secret-id="' + escapeHTML(id) + '"' + disabled + '>显示 Key</button>',
+        '<button type="button" class="secondary" data-reveal-secret="' + escapeHTML(kind) + '" data-secret-id="' + escapeHTML(id) + '"' + disabled + '>显示已保存 Key</button>',
         '</div>',
         '</label>',
-        '<p class="secret-note">默认隐藏完整 Key。只有已登录后台后，手动点击才会读取并显示。</p>',
+        '<p class="secret-note">默认隐藏完整 Key。只有已登录后台后，手动点击才会读取并显示；上方输入框留空表示不修改。</p>',
         '</div>'
       ].join("");
-    }
-
-    function getActiveConfigForm() {
-      return configDrawerMode === "upstream" ? document.getElementById("upstreamConfigForm") : document.getElementById("clientConfigForm");
     }
 
     function closeConfigDrawer() {
@@ -1414,8 +1418,8 @@ export function renderAdminPage() {
         '<div class="config-form-grid">',
         '<label>接口 ID<input data-interface-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>接口名称<input data-interface-field="name" value="' + escapeHTML(item.name) + '"></label>',
-        '<label class="full">服务 API Key<input data-interface-field="apiToken" autocomplete="off" type="password" placeholder="' + (item.apiTokenSet ? "当前 Key 已保存，留空不修改" : "请输入服务 API Key") + '"></label>',
-        secretRevealField({ kind: "interface", id: item.id, isSet: item.apiTokenSet || item.apiToken, label: "查看已保存服务 API Key" }),
+        '<label class="full">Skill 调用 Key<input data-interface-field="apiToken" data-secret-role="client-token" autocomplete="new-password" inputmode="latin" spellcheck="false" type="password" placeholder="' + (item.apiTokenSet ? "当前 Key 已保存，留空不修改" : "请输入给 skills 使用的调用 Key") + '"><span class="field-help">配置到 Codex、skills、OpenClaw 或其他 AI 工具里，请求时作为 Authorization: Bearer 使用。</span></label>',
+        secretRevealField({ kind: "interface", id: item.id, isSet: item.apiTokenSet || item.apiToken, label: "查看已保存 Skill 调用 Key" }),
         '<label class="checkbox-row"><input data-interface-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个接口</label>',
         '<label>默认生图模型<input data-interface-field="defaultImageModel" value="' + escapeHTML(item.defaultImageModel) + '"></label>',
         '<label>默认文本模型<input data-interface-field="defaultTextModel" value="' + escapeHTML(item.defaultTextModel) + '"></label>',
@@ -1470,7 +1474,7 @@ export function renderAdminPage() {
         '<label>上游 ID<input data-upstream-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>上游名称<input data-upstream-field="name" value="' + escapeHTML(item.name) + '"></label>',
         '<label class="full">Base URL<input data-upstream-field="baseURL" value="' + escapeHTML(item.baseURL) + '" placeholder="https://example.com/v1"></label>',
-        '<label class="full">上游 API Key<input data-upstream-field="apiKey" autocomplete="off" type="password" placeholder="' + (item.apiKeySet ? "当前 Key 已保存，留空不修改" : "请输入上游 Key") + '"></label>',
+        '<label class="full">上游 API Key<input data-upstream-field="apiKey" autocomplete="new-password" inputmode="latin" spellcheck="false" type="password" placeholder="' + (item.apiKeySet ? "当前 Key 已保存，留空不修改" : "请输入上游 Key") + '"><span class="field-help">这是服务器访问上游中转站时使用的 Key，不需要配置到 skills。</span></label>',
         secretRevealField({ kind: "upstream", id: item.id, isSet: item.apiKeySet || item.apiKey, label: "查看已保存上游 API Key" }),
         '<label class="checkbox-row"><input data-upstream-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个上游</label>',
         '</div>',
@@ -1519,6 +1523,35 @@ export function renderAdminPage() {
       });
       fillConfig(data.config);
       setStatus("配置已保存。", "ok");
+    }
+
+    async function saveConfigFromCurrentForms() {
+      syncConfigDetails();
+      await saveConfig({
+        interfaces: readInterfaceForms(),
+        upstreams: readUpstreamForms()
+      });
+    }
+
+    async function saveDrawerConfig() {
+      if (!configDrawerMode) {
+        setStatus("请先选择要保存的配置。", "danger");
+        return;
+      }
+      if (saveDrawerBtn) {
+        saveDrawerBtn.disabled = true;
+        saveDrawerBtn.textContent = "保存中...";
+      }
+      try {
+        await saveConfigFromCurrentForms();
+      } catch (error) {
+        setStatus(error.message || "保存失败。", "danger");
+      } finally {
+        if (saveDrawerBtn) {
+          saveDrawerBtn.disabled = false;
+          saveDrawerBtn.textContent = "保存配置";
+        }
+      }
     }
 
     function metricCard(label, value, hint) {
@@ -1816,10 +1849,7 @@ export function renderAdminPage() {
         closeConfigDrawer();
       }
     });
-    saveDrawerBtn?.addEventListener("click", () => {
-      const activeForm = getActiveConfigForm();
-      activeForm?.requestSubmit?.();
-    });
+    saveDrawerBtn?.addEventListener("click", saveDrawerConfig);
     configDrawerBody?.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-reveal-secret]");
       if (!button) return;
@@ -1829,7 +1859,7 @@ export function renderAdminPage() {
       if (!output || !id) return;
       if (output.type === "text" && output.value) {
         output.type = "password";
-        button.textContent = "显示 Key";
+        button.textContent = "显示已保存 Key";
         return;
       }
       button.disabled = true;
@@ -1843,7 +1873,7 @@ export function renderAdminPage() {
         output.value = "";
         output.type = "password";
         setStatus(error.message || "读取 Key 失败。", "danger");
-        button.textContent = "显示 Key";
+        button.textContent = "显示已保存 Key";
       } finally {
         button.disabled = false;
       }
@@ -1867,20 +1897,20 @@ export function renderAdminPage() {
 
     document.getElementById("clientConfigForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      syncConfigDetails();
-      await saveConfig({
-        interfaces: readInterfaceForms(),
-        upstreams: readUpstreamForms()
-      });
+      try {
+        await saveConfigFromCurrentForms();
+      } catch (error) {
+        setStatus(error.message || "保存失败。", "danger");
+      }
     });
 
     document.getElementById("upstreamConfigForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      syncConfigDetails();
-      await saveConfig({
-        interfaces: readInterfaceForms(),
-        upstreams: readUpstreamForms()
-      });
+      try {
+        await saveConfigFromCurrentForms();
+      } catch (error) {
+        setStatus(error.message || "保存失败。", "danger");
+      }
     });
 
     document.getElementById("accountForm").addEventListener("submit", async (event) => {
