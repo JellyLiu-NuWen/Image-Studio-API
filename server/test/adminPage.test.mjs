@@ -11,3 +11,11 @@ test("renderAdminPage includes admin dashboard sections", () => {
   assert.match(html, /id="apiLogs"/);
   assert.match(html, /id="updateStatus"/);
 });
+
+test("renderAdminPage validates release link protocol before rendering href", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /new URL\(releaseURL\)/);
+  assert.match(html, /protocol === "https:"/);
+  assert.match(html, /safeReleaseURL/);
+});

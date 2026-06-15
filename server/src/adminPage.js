@@ -348,16 +348,28 @@ export function renderAdminPage() {
       const latest = update?.latestVersion ?? "";
       const status = update?.status ?? "unknown";
       const releaseURL = update?.releaseURL ?? "";
+      const safeReleaseURL = safeHTTPSURL(releaseURL);
       const rows = [
         "<strong>Status: " + escapeHTML(status) + "</strong>",
         "<span>Current: " + escapeHTML(current || "unknown") + "</span>",
         "<span>Latest: " + escapeHTML(latest || "unknown") + "</span>"
       ];
-      if (releaseURL) {
-        rows.push('<span>Release: <a href="' + escapeHTML(releaseURL) + '" rel="noreferrer" target="_blank">' + escapeHTML(releaseURL) + '</a></span>');
+      if (safeReleaseURL) {
+        rows.push('<span>Release: <a href="' + escapeHTML(safeReleaseURL) + '" rel="noreferrer" target="_blank">' + escapeHTML(safeReleaseURL) + '</a></span>');
+      } else if (releaseURL) {
+        rows.push("<span>Release: " + escapeHTML(releaseURL) + "</span>");
       }
       container.className = status === "newer" ? "log-row ok" : "log-row";
       container.innerHTML = rows.join("");
+    }
+
+    function safeHTTPSURL(releaseURL) {
+      try {
+        const parsed = new URL(releaseURL);
+        return parsed.protocol === "https:" ? parsed.href : "";
+      } catch {
+        return "";
+      }
     }
 
     async function checkUpdate() {
