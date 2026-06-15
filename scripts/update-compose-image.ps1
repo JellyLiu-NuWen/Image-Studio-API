@@ -2,13 +2,15 @@ param(
   [string]$ComposeFile = "docker-compose.self-hosted.yml",
   [string]$Service = "image-studio-api",
   [string]$HealthUrl = "http://localhost:8787/healthz",
-  [string]$Image = "",
-  [string]$Tag = "",
+  [string]$Image = "ghcr.io/jellyliu-nuwen/image-studio-api",
+  [string]$Tag = "latest",
   [int]$HealthTimeoutSeconds = 60
 )
 
 $ErrorActionPreference = "Stop"
 $ComposeFile = (Resolve-Path -LiteralPath $ComposeFile).Path
+$env:IMAGE_STUDIO_API_IMAGE = $Image
+$env:IMAGE_STUDIO_API_TAG = $Tag
 
 function Invoke-Compose {
   param([string[]]$Arguments)
@@ -32,8 +34,8 @@ function Test-Health {
 Write-Host "Image Studio host-side update"
 Write-Host "Compose file: $ComposeFile"
 Write-Host "Service: $Service"
-if ($Image) { Write-Host "Image hint: $Image" }
-if ($Tag) { Write-Host "Tag hint: $Tag" }
+Write-Host "Image: $Image"
+Write-Host "Tag: $Tag"
 Write-Host "Health URL: $HealthUrl"
 Write-Host ""
 

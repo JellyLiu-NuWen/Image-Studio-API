@@ -24,9 +24,19 @@ From the repository root on the host:
 .\scripts\update-compose-image.ps1 `
   -ComposeFile .\docker-compose.self-hosted.yml `
   -Service image-studio-api `
+  -Image ghcr.io/jellyliu-nuwen/image-studio-api `
+  -Tag v1.2.5 `
   -HealthUrl http://localhost:8787/healthz
 ```
 
-Optional `-Image` and `-Tag` values are printed as deployment hints for operators, but the script does not edit the Compose YAML. Update the Compose file or environment through your normal release process, then run the script to pull, restart, and health check the service.
+`docker-compose.self-hosted.yml` reads `IMAGE_STUDIO_API_IMAGE` and `IMAGE_STUDIO_API_TAG`. The script sets those environment variables for the current run, pulls the requested image, restarts the service, and health checks it.
+
+For persistent pinning, set these variables in your shell profile, CI job, or a host-side `.env` before running Compose:
+
+```powershell
+$env:IMAGE_STUDIO_API_IMAGE="ghcr.io/jellyliu-nuwen/image-studio-api"
+$env:IMAGE_STUDIO_API_TAG="v1.2.5"
+docker compose -f .\docker-compose.self-hosted.yml up -d
+```
 
 The script runs `docker compose pull`, `docker compose up -d --no-deps`, and polls `/healthz`. It exits non-zero if the service does not become healthy before the timeout so host automation can stop the rollout or trigger its own rollback flow.

@@ -15,6 +15,7 @@ images/
 .gocache/
 .gomodcache/
 .gopath/
+.gobin/
 
 # Python
 __pycache__/

@@ -1,5 +1,6 @@
 services:
   image-studio-api:
+    image: ${IMAGE_STUDIO_API_IMAGE:-ghcr.io/jellyliu-nuwen/image-studio-api}:${IMAGE_STUDIO_API_TAG:-latest}
     build:
       context: .
       dockerfile: server/Dockerfile
@@ -7,6 +8,10 @@ services:
     restart: unless-stopped
     env_file:
       - ./server/.env
+    environment:
+      CONFIG_PATH: /data/config.json
+      IMAGE_STUDIO_VERSION: ${IMAGE_STUDIO_API_TAG:-dev}
+      IMAGE_STUDIO_GITHUB_REPOSITORY: ${IMAGE_STUDIO_GITHUB_REPOSITORY:-JellyLiu-NuWen/Image-Studio-API}
     ports:
       - "8787:8787"
     volumes:
