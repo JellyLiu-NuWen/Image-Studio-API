@@ -34,6 +34,7 @@ export function sanitizeLogRecord(value) {
 
 export function createJsonlLogStore({ path, maxRecords = 1000 }) {
   const recordLimit = Math.max(1, Math.floor(Number(maxRecords) || 1000));
+  let writeQueue = Promise.resolve();
 
   async function readAll() {
     try {
@@ -56,9 +57,13 @@ export function createJsonlLogStore({ path, maxRecords = 1000 }) {
 
   return {
     async append(record) {
-      const records = await readAll();
-      records.push(sanitizeLogRecord(record));
-      await writeAll(records.slice(-recordLimit));
+      const writeOperation = writeQueue.then(async () => {
+        const records = await readAll();
+        records.push(sanitizeLogRecord(record));
+        await writeAll(records.slice(-recordLimit));
+      });
+      writeQueue = writeOperation.catch(() => {});
+      await writeOperation;
     },
     async readRecent(limit = 50) {
       const records = await readAll();

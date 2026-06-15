@@ -61,3 +61,26 @@ test("createJsonlLogStore reads recent records newest first and trims old record
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test("createJsonlLogStore preserves concurrent appends", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "image-studio-logs-"));
+  try {
+    const store = createJsonlLogStore({
+      path: join(dir, "nested", "api-calls.jsonl"),
+      maxRecords: 100,
+    });
+
+    await Promise.all(Array.from({ length: 50 }, (_value, index) => (
+      store.append({ id: String(index) })
+    )));
+
+    const records = await store.readRecent(100);
+    assert.equal(records.length, 50);
+    assert.deepEqual(
+      records.map((record) => record.id).sort((left, right) => Number(left) - Number(right)),
+      Array.from({ length: 50 }, (_value, index) => String(index)),
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
