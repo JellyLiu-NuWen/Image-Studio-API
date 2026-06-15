@@ -64,6 +64,16 @@ test("renderAdminPage uses a table-first drawer editor for configs", () => {
   assert.match(html, /表格主视图 · 点击行或编辑按钮打开编辑抽屉/);
 });
 
+test("renderAdminPage lets admins reveal saved api keys in the drawer", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /data-reveal-secret/);
+  assert.match(html, /data-secret-output/);
+  assert.match(html, /显示 Key/);
+  assert.match(html, /config\/secrets/);
+  assert.match(html, /隐藏 Key/);
+});
+
 test("renderAdminPage validates release link protocol before rendering href", () => {
   const html = renderAdminPage();
 

@@ -98,6 +98,24 @@ async function handleAdminConfig({ request, store }) {
   return json({ ok: true, config: publicConfig(saved) });
 }
 
+async function handleAdminConfigSecret({ request, store, url }) {
+  if (request.method !== "GET") return methodNotAllowed();
+  const kind = url.searchParams.get("kind") || "";
+  const id = url.searchParams.get("id") || "";
+  const config = normalizeConfig(await store.load());
+  if (kind === "interface") {
+    const item = config.interfaces.find((entry) => entry.id === id);
+    if (!item) return notFound();
+    return json({ secret: { kind, id: item.id, value: item.apiToken || "" } });
+  }
+  if (kind === "upstream") {
+    const item = config.upstreams.find((entry) => entry.id === id);
+    if (!item) return notFound();
+    return json({ secret: { kind, id: item.id, value: item.apiKey || "" } });
+  }
+  return json({ error: { message: "未知密钥类型" } }, { status: 400 });
+}
+
 async function resolveAdminAccount(store, fallbackUsername, fallbackPassword) {
   const config = normalizeConfig(await store.load());
   if (config.adminPasswordHash) return config;
@@ -272,6 +290,17 @@ export function createSelfHostedApp({
           return response;
         }
         response = await handleAdminConfig({ request, store });
+        return response;
+      }
+
+      if (url.pathname === "/api/config/secrets") {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        response = await handleAdminConfigSecret({ request, store, url });
         return response;
       }
 

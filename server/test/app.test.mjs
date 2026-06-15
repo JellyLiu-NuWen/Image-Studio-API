@@ -275,6 +275,57 @@ test("admin config rejects bearer tokens because dashboard uses login sessions",
   assert.match((await response.json()).error.message, /请先登录/);
 });
 
+test("admin can reveal saved interface and upstream api keys", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://primary.example/v1",
+        apiKey: "upstream-key",
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      throw new Error("secret reveal must not call upstream");
+    },
+  });
+
+  const denied = await app.handle(new Request("http://localhost/api/config/secrets?kind=interface&id=codex"));
+  assert.equal(denied.status, 401);
+
+  const headers = await loginHeaders(app);
+  const interfaceSecret = await app.handle(new Request("http://localhost/api/config/secrets?kind=interface&id=codex", {
+    headers,
+  }));
+  assert.equal(interfaceSecret.status, 200);
+  assert.deepEqual(await interfaceSecret.json(), {
+    secret: {
+      kind: "interface",
+      id: "codex",
+      value: "client-token",
+    },
+  });
+
+  const upstreamSecret = await app.handle(new Request("http://localhost/api/config/secrets?kind=upstream&id=primary", {
+    headers,
+  }));
+  assert.equal(upstreamSecret.status, 200);
+  assert.deepEqual(await upstreamSecret.json(), {
+    secret: {
+      kind: "upstream",
+      id: "primary",
+      value: "upstream-key",
+    },
+  });
+});
+
 test("admin can read logs and metrics while client or missing token is rejected", async () => {
   const apiLogStore = createMemoryLogStore();
   const generationLogStore = createMemoryLogStore();
