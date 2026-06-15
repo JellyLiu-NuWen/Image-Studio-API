@@ -12,7 +12,7 @@ Codex / OpenClaw / DeepSeek / MCP
   -> OpenAI-compatible 图像上游
 ```
 
-真实上游 API Key 只保存在服务器。客户端只使用你自己生成的 `IMAGE_API_TOKEN`。
+真实上游 API Key 只保存在服务器。客户端只使用你自己生成的服务 API Key。后台可以配置多个接口 Key 和多个上游中转站，一个接口可以绑定多个上游，按绑定顺序优先尝试，失败后自动切换到下一个上游。
 
 ## 快速部署
 
@@ -32,9 +32,9 @@ http://SERVER_IP:8787/admin
 
 使用后台账号密码登录后配置:
 
-- 上游 Base URL
-- 上游 API Key
-- 客户端调用 token
+- 多个上游 Base URL 和上游 API Key
+- 多个客户端接口 Key
+- 每个接口绑定的上游优先级
 - 默认图像模型、尺寸、质量、输出格式
 - 请求超时、并发、限流
 

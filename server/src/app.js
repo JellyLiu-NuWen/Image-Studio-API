@@ -14,13 +14,17 @@ import { forwardOpenAIPath } from "./upstreamProxy.js";
 import { summarizeMetrics } from "./metrics.js";
 
 function requireClientAuth(request, config) {
-  if (!config.imageApiToken) {
+  if (!config.interfaces.some((item) => item.enabled && item.apiToken)) {
     return unauthorized("Server is missing IMAGE_API_TOKEN");
   }
-  if (!isBearerAuthorized(request, config.imageApiToken)) {
+  if (!resolveClientInterface(request, config)) {
     return unauthorized("Unauthorized");
   }
   return null;
+}
+
+function resolveClientInterface(request, config) {
+  return config.interfaces.find((item) => item.enabled && isBearerAuthorized(request, item.apiToken)) || null;
 }
 
 function createRateLimiter(now = () => Date.now()) {
@@ -63,7 +67,7 @@ function createRequestId() {
 function classifyAuthKind(request, sessions, config = null) {
   const token = parseCookies(request).image_studio_session || "";
   if (token && sessions.has(token)) return "admin";
-  if (config?.imageApiToken && isBearerAuthorized(request, config.imageApiToken)) return "client";
+  if (config && resolveClientInterface(request, config)) return "client";
   return "none";
 }
 
@@ -177,6 +181,30 @@ async function handleAccountUpdate({ request, store }) {
     adminPasswordHash: await hashPassword(newPassword),
   });
   return json({ ok: true, account: { username: saved.adminUsername } });
+}
+
+function configForClientInterface(config, clientInterface) {
+  const upstreamById = new Map(config.upstreams.map((upstream) => [upstream.id, upstream]));
+  const upstreams = clientInterface.upstreamIds
+    .map((id) => upstreamById.get(id))
+    .filter((upstream) => upstream?.enabled);
+  return {
+    ...config,
+    imageApiToken: clientInterface.apiToken,
+    defaultImageModel: clientInterface.defaultImageModel,
+    defaultTextModel: clientInterface.defaultTextModel,
+    defaultSize: clientInterface.defaultSize,
+    defaultQuality: clientInterface.defaultQuality,
+    defaultOutputFormat: clientInterface.defaultOutputFormat,
+    requestTimeoutSeconds: clientInterface.requestTimeoutSeconds,
+    maxConcurrentRequests: clientInterface.maxConcurrentRequests,
+    rateLimitPerMinute: clientInterface.rateLimitPerMinute,
+    interfaceId: clientInterface.id,
+    interfaceName: clientInterface.name,
+    upstreams,
+    upstreamBaseURL: upstreams[0]?.baseURL || "",
+    upstreamApiKey: upstreams[0]?.apiKey || "",
+  };
 }
 
 export function createSelfHostedApp({
@@ -337,18 +365,20 @@ export function createSelfHostedApp({
           response = authError;
           return response;
         }
-        if (activeRequests >= config.maxConcurrentRequests) {
+        const clientInterface = resolveClientInterface(request, config);
+        const runtimeConfig = configForClientInterface(config, clientInterface);
+        if (activeRequests >= runtimeConfig.maxConcurrentRequests) {
           response = tooManyRequests("Too many active requests");
           return response;
         }
-        const rateLimitError = rateLimiter.check(getBearer(request), config.rateLimitPerMinute);
+        const rateLimitError = rateLimiter.check(getBearer(request), runtimeConfig.rateLimitPerMinute);
         if (rateLimitError) {
           response = rateLimitError;
           return response;
         }
         activeRequests += 1;
         try {
-          response = await forwardOpenAIPath({ request, config, fetchImpl });
+          response = await forwardOpenAIPath({ request, config: runtimeConfig, fetchImpl });
           return response;
         } finally {
           activeRequests -= 1;
@@ -372,6 +402,8 @@ export function createSelfHostedApp({
           finishedAt: new Date(now()).toISOString(),
           status: status >= 200 && status <= 399 ? "success" : "failed",
           endpoint: url.pathname,
+          interfaceId: response.headers.get("x-image-studio-interface-id") || "",
+          upstreamId: response.headers.get("x-image-studio-upstream-id") || "",
           upstreamStatus: status,
           durationMs: Math.max(0, now() - startedAt),
         });

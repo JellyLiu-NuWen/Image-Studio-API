@@ -1,5 +1,4 @@
 import {
-  DEFAULT_AUTO_RETRY_COUNT,
   describeProblem,
   isRetryableRaw,
   normalizeAutoRetryCount,
@@ -55,14 +54,18 @@ async function readBodyBuffer(request, config, pathname) {
 }
 
 function resolveMaxAttempts(autoRetryCount) {
-  return normalizeAutoRetryCount(autoRetryCount ?? DEFAULT_AUTO_RETRY_COUNT) + 1;
+  if (autoRetryCount === undefined || autoRetryCount === null || autoRetryCount === "") return 1;
+  if (Number(autoRetryCount) <= 0) return 1;
+  return normalizeAutoRetryCount(autoRetryCount) + 1;
 }
 
 async function forwardRawWithRetry({
   fetchImpl,
-  upstreamURL,
+  upstream,
+  pathname,
+  search,
   method,
-  headers,
+  request,
   bodyBuffer,
   maxAttempts,
   shouldRetry,
@@ -71,6 +74,9 @@ async function forwardRawWithRetry({
   let lastRaw = "";
   let lastStatus = 502;
   let lastContentType = "application/json; charset=utf-8";
+  const upstreamBaseURL = normalizeBaseURL(upstream.baseURL);
+  const upstreamURL = `${upstreamBaseURL}${pathname}${search}`;
+  const headers = copyPassthroughHeaders(request, upstream.apiKey);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const response = await fetchImpl(upstreamURL, {
@@ -83,12 +89,14 @@ async function forwardRawWithRetry({
     lastContentType = response.headers.get("content-type") || lastContentType;
     lastRaw = await response.text();
     if (response.ok) {
-      return new Response(lastRaw, {
+      const forwarded = new Response(lastRaw, {
         status: response.status,
         headers: {
           "content-type": lastContentType,
         },
       });
+      forwarded.headers.set("x-image-studio-upstream-id", upstream.id);
+      return forwarded;
     }
     if (attempt < maxAttempts && shouldRetry(lastRaw, response.status)) {
       await sleep(RETRY_BACKOFF_MS);
@@ -97,13 +105,15 @@ async function forwardRawWithRetry({
     break;
   }
 
-  return json({
+  const failure = json({
     error: {
       message: describeProblem(lastRaw),
       upstreamStatus: lastStatus,
       raw: lastRaw.slice(0, 1500),
     },
   }, { status: lastStatus || 502 });
+  failure.headers.set("x-image-studio-upstream-id", upstream.id);
+  return failure;
 }
 
 function createTimeoutSignal(seconds) {
@@ -121,24 +131,44 @@ async function sleep(ms) {
 }
 
 export async function forwardOpenAIPath({ request, config, fetchImpl }) {
-  if (!config.upstreamBaseURL) {
+  const upstreams = Array.isArray(config.upstreams) && config.upstreams.length > 0
+    ? config.upstreams
+    : [{ id: "default", baseURL: config.upstreamBaseURL, apiKey: config.upstreamApiKey, enabled: true }];
+  const enabledUpstreams = upstreams.filter((upstream) => upstream?.enabled !== false);
+  if (!enabledUpstreams.some((upstream) => upstream.baseURL)) {
     return json({ error: { message: "Server is missing UPSTREAM_BASE_URL" } }, { status: 400 });
   }
-  if (!config.upstreamApiKey) {
+  if (!enabledUpstreams.some((upstream) => upstream.apiKey)) {
     return json({ error: { message: "Server is missing UPSTREAM_API_KEY" } }, { status: 500 });
   }
   const url = new URL(request.url);
-  const upstreamBaseURL = normalizeBaseURL(config.upstreamBaseURL);
-  const upstreamURL = `${upstreamBaseURL}${url.pathname}${url.search}`;
   const { bodyBuffer, parsedBody } = await readBodyBuffer(request, config, url.pathname);
-  return forwardRawWithRetry({
-    fetchImpl,
-    upstreamURL,
-    method: request.method,
-    headers: copyPassthroughHeaders(request, config.upstreamApiKey),
-    bodyBuffer,
-    maxAttempts: resolveMaxAttempts(parsedBody?.autoRetryCount),
-    shouldRetry: (raw, status) => isRetryableRaw(raw) || [403, 502, 503, 504, 524].includes(status),
-    timeoutSeconds: config.requestTimeoutSeconds,
-  });
+  const maxAttempts = resolveMaxAttempts(parsedBody?.autoRetryCount);
+  const shouldRetry = (raw, status) => isRetryableRaw(raw) || [429, 502, 503, 504, 524].includes(status);
+  const retryableStatuses = new Set([429, 502, 503, 504, 524]);
+  let lastResponse = null;
+  for (const upstream of enabledUpstreams) {
+    if (!upstream.baseURL || !upstream.apiKey) continue;
+    const response = await forwardRawWithRetry({
+      fetchImpl,
+      upstream,
+      pathname: url.pathname,
+      search: url.search,
+      method: request.method,
+      request,
+      bodyBuffer,
+      maxAttempts,
+      shouldRetry,
+      timeoutSeconds: config.requestTimeoutSeconds,
+    });
+    response.headers.set("x-image-studio-interface-id", config.interfaceId || "");
+    lastResponse = response;
+    if (response.ok) {
+      return response;
+    }
+    if (!retryableStatuses.has(response.status)) {
+      return response;
+    }
+  }
+  return lastResponse || json({ error: { message: "No enabled upstream is configured" } }, { status: 400 });
 }

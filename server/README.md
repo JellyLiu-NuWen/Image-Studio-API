@@ -13,7 +13,9 @@
 - `POST /v1/images/edits`
 - `POST /v1/responses`
 
-`/v1/*` 会代理到你配置的 OpenAI-compatible 上游。服务端保存真正的上游 API Key，客户端只需要知道你自己的 `IMAGE_API_TOKEN`。
+`/v1/*` 会代理到你配置的 OpenAI-compatible 上游。服务端保存真正的上游 API Key，客户端只需要知道你自己的服务 API Key。
+
+后台支持多个「接口配置」和多个「上游中转站」。每个接口配置都有独立的服务 API Key、默认模型参数、并发和限流；每个接口可以绑定多个上游中转站，服务会按绑定顺序优先尝试，遇到上游限流、超时或 5xx 错误时自动切到下一个上游。
 
 ## 安全模型
 
@@ -22,8 +24,8 @@
 | 变量 | 用途 | 谁应该知道 |
 |---|---|---|
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 初始后台登录账号密码，登录后可在后台修改 | 只有管理员 |
-| `IMAGE_API_TOKEN` | Codex / 其他 AI 客户端调用生图接口 | 受信任客户端 |
-| `UPSTREAM_API_KEY` | 服务端调用模型上游 | 只有服务器 |
+| `IMAGE_API_TOKEN` | 初始接口 Key，Codex / 其他 AI 客户端调用生图接口 | 受信任客户端 |
+| `UPSTREAM_API_KEY` | 初始上游 Key，服务端调用模型上游 | 只有服务器 |
 
 不要把 `UPSTREAM_API_KEY` 放进 skill、客户端脚本或公开文档。
 
@@ -72,7 +74,7 @@ curl http://SERVER_IP:8787/healthz
 http://SERVER_IP:8787/admin
 ```
 
-使用后台账号密码登录后，可以修改上游地址、上游 API Key、客户端 token、默认模型、尺寸、质量、限流、并发和后台账号密码。
+使用后台账号密码登录后，可以配置多个接口 Key、多个上游中转站、接口绑定的上游优先级、默认模型、尺寸、质量、限流、并发和后台账号密码。
 
 ## 直接 Node 运行
 

@@ -44,9 +44,9 @@ node scripts/write-version-badges.mjs
 | 信息 | 说明 |
 |---|---|
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 第一次进入后台的账号密码，之后可在后台修改 |
-| `IMAGE_API_TOKEN` | Codex / 其他 AI 调用本服务时使用的 token |
-| `UPSTREAM_BASE_URL` | OpenAI-compatible 图像上游地址，例如 `https://api.openai.com/v1` |
-| `UPSTREAM_API_KEY` | 真正的模型服务 API Key，只保存在服务器 |
+| `IMAGE_API_TOKEN` | Codex / 其他 AI 调用本服务时使用的初始 token，后台可继续添加多个接口 Key |
+| `UPSTREAM_BASE_URL` | 初始 OpenAI-compatible 图像上游地址，例如 `https://api.openai.com/v1` |
+| `UPSTREAM_API_KEY` | 初始模型服务 API Key，只保存在服务器；后台可继续添加多个上游 |
 | `DEFAULT_IMAGE_MODEL` | 默认图像模型，例如 `gpt-image-2` 或你的上游兼容模型 |
 | `PORT` | 容器内服务监听端口，默认 `8787`，通常不用改 |
 | `IMAGE_STUDIO_API_HOST_PORT` | Docker 暴露到服务器公网的端口，默认 `8787` |
@@ -56,11 +56,13 @@ node scripts/write-version-badges.mjs
 ```text
 Codex / OpenClaw / DeepSeek / MCP
   -> IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
-  -> Authorization: Bearer IMAGE_API_TOKEN
+  -> Authorization: Bearer 接口配置里的服务 API Key
   -> server/ 自托管 API
-  -> UPSTREAM_BASE_URL + UPSTREAM_API_KEY
+  -> 接口绑定的上游中转站，按优先级故障转移
   -> 返回 b64_json 或图片 URL
 ```
+
+后台支持多个「接口配置」和多个「上游中转站」。一个接口可以绑定多个上游，服务会按绑定顺序优先尝试，遇到上游限流、超时或 5xx 错误时自动切到下一个上游。
 
 ## 快速部署 API 服务
 

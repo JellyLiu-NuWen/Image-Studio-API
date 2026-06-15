@@ -129,6 +129,61 @@ test("image generation forwards with the server-side upstream key and defaults",
   assert.equal(captured.body.output_format, "png");
 });
 
+test("image generation falls back across multiple upstreams by priority", async () => {
+  const calls = [];
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary", "backup"],
+        defaultImageModel: "gpt-image-2",
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://primary.example/v1",
+        apiKey: "primary-key",
+        enabled: true,
+      }, {
+        id: "backup",
+        name: "Backup",
+        baseURL: "https://backup.example/v1",
+        apiKey: "backup-key",
+        enabled: true,
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (url, init) => {
+      calls.push({
+        url: String(url),
+        authorization: init.headers.get("authorization"),
+      });
+      if (calls.length === 1) {
+        return new Response("gateway timeout", { status: 504, headers: { "content-type": "text/plain" } });
+      }
+      return new Response(JSON.stringify({ data: [{ b64_json: "fallback" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "fallback please",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 200);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, "https://primary.example/v1/images/generations");
+  assert.equal(calls[1].url, "https://backup.example/v1/images/generations");
+  assert.equal(calls[0].authorization, "Bearer primary-key");
+  assert.equal(calls[1].authorization, "Bearer backup-key");
+});
+
 test("admin config updates non-secret values and keeps blank secrets unchanged", async () => {
   const store = memoryStore({
     imageApiToken: "old-client-token",
@@ -171,6 +226,28 @@ test("admin config updates non-secret values and keeps blank secrets unchanged",
       requestTimeoutSeconds: 180,
       maxConcurrentRequests: 1,
       rateLimitPerMinute: 10,
+      interfaces: [{
+        id: "default",
+        name: "默认接口",
+        enabled: true,
+        apiTokenSet: true,
+        upstreamIds: ["default"],
+        defaultImageModel: "gpt-image-2",
+        defaultTextModel: "gpt-5.5",
+        defaultSize: "1536x1024",
+        defaultQuality: "auto",
+        defaultOutputFormat: "png",
+        requestTimeoutSeconds: 180,
+        maxConcurrentRequests: 1,
+        rateLimitPerMinute: 10,
+      }],
+      upstreams: [{
+        id: "default",
+        name: "默认上游",
+        enabled: true,
+        baseURL: "https://new.example",
+        apiKeySet: true,
+      }],
     },
   });
   assert.equal(store.current().upstreamApiKey, "old-upstream-key");

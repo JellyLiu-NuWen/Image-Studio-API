@@ -32,6 +32,9 @@ test("renderAdminPage exposes the operations-console template controls", () => {
   assert.match(html, /<table/);
   assert.match(html, /响应耗时/);
   assert.match(html, /当前账号/);
+  assert.match(html, /新增接口/);
+  assert.match(html, /新增上游/);
+  assert.match(html, /data-interface-field="upstreamIds"/);
 });
 
 test("renderAdminPage validates release link protocol before rendering href", () => {

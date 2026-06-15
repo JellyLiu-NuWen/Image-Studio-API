@@ -486,6 +486,54 @@ export function renderAdminPage() {
       background: #fff0ee;
       color: var(--danger);
     }
+    .config-editor {
+      display: grid;
+      gap: 16px;
+    }
+    .config-list {
+      display: grid;
+      gap: 12px;
+    }
+    .config-item {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-alt);
+    }
+    .config-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .config-item-header strong {
+      font-size: 15px;
+      line-height: 1.35;
+    }
+    .config-item-header span {
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .config-item form {
+      box-shadow: none;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+    }
+    .checkbox-row input {
+      width: 18px;
+      min-height: 18px;
+    }
+    select[multiple] {
+      min-height: 116px;
+    }
     .log-list {
       display: grid;
       gap: 10px;
@@ -669,47 +717,13 @@ export function renderAdminPage() {
 
       <section id="clientConfigView" class="view">
         <section class="card">
-          <div class="card-header"><h2>接口配置</h2><span>给 Codex、Skill、OpenClaw 或其他 AI 工具使用</span></div>
+          <div class="card-header"><h2>接口配置</h2><span>每个调用方可以有独立 Key、默认参数和绑定上游</span></div>
           <div class="card-body">
-            <form id="clientConfigForm">
-              <label class="full">你的服务 API Key
-                <input id="imageApiToken" autocomplete="off" type="password" placeholder="留空表示保留当前 Key">
-              </label>
-              <label>默认生图模型
-                <input id="defaultImageModel" placeholder="gpt-image-2">
-              </label>
-              <label>默认文本模型
-                <input id="defaultTextModel" placeholder="gpt-5.5">
-              </label>
-              <label>默认尺寸
-                <input id="defaultSize" placeholder="1024x1024">
-              </label>
-              <label>默认质量
-                <select id="defaultQuality">
-                  <option value="auto">auto</option>
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                </select>
-              </label>
-              <label>默认输出格式
-                <select id="defaultOutputFormat">
-                  <option value="png">png</option>
-                  <option value="jpeg">jpeg</option>
-                  <option value="webp">webp</option>
-                </select>
-              </label>
-              <label>请求超时秒数
-                <input id="requestTimeoutSeconds" type="number" min="10" max="900" step="1">
-              </label>
-              <label>最大并发请求
-                <input id="maxConcurrentRequests" type="number" min="1" max="10" step="1">
-              </label>
-              <label>每分钟限流
-                <input id="rateLimitPerMinute" type="number" min="1" max="600" step="1">
-              </label>
+            <form id="clientConfigForm" class="config-editor">
+              <div id="interfaceList" class="config-list"></div>
               <div class="actions">
                 <button type="button" class="secondary" id="loadConfigBtn">加载配置</button>
+                <button type="button" class="secondary" id="addInterfaceBtn">新增接口</button>
                 <button type="submit" class="primary">保存接口配置</button>
               </div>
             </form>
@@ -719,17 +733,13 @@ export function renderAdminPage() {
 
       <section id="upstreamConfigView" class="view">
         <section class="card">
-          <div class="card-header"><h2>上游中转站</h2><span>你的服务器会用这里的 URL 和 Key 去访问上游生图服务</span></div>
+          <div class="card-header"><h2>上游中转站</h2><span>接口会按绑定顺序优先使用前面的上游，失败后自动切换</span></div>
           <div class="card-body">
-            <form id="upstreamConfigForm">
-              <label class="full">上游中转站 URL
-                <input id="upstreamBaseURL" placeholder="https://example.com/v1">
-              </label>
-              <label class="full">上游中转站 Key
-                <input id="upstreamApiKey" autocomplete="off" type="password" placeholder="留空表示保留当前 Key">
-              </label>
+            <form id="upstreamConfigForm" class="config-editor">
+              <div id="upstreamList" class="config-list"></div>
               <div class="actions">
                 <button type="button" class="secondary" id="loadUpstreamBtn">加载配置</button>
+                <button type="button" class="secondary" id="addUpstreamBtn">新增上游</button>
                 <button type="button" class="secondary" id="testUpstreamBtn">测试上游连接</button>
                 <button type="submit" class="primary">保存上游配置</button>
               </div>
@@ -803,19 +813,9 @@ export function renderAdminPage() {
       updatesView: ["版本更新", "检查当前版本与 GitHub Release 的对齐情况。"],
       accountView: ["账号与安全", "修改后台登录账号和密码。"]
     };
-    const configFields = [
-      "upstreamBaseURL",
-      "defaultImageModel",
-      "defaultTextModel",
-      "defaultSize",
-      "defaultQuality",
-      "defaultOutputFormat",
-      "requestTimeoutSeconds",
-      "maxConcurrentRequests",
-      "rateLimitPerMinute"
-    ];
     const statusEl = document.getElementById("status");
     const loginStatusEl = document.getElementById("loginStatus");
+    let currentConfig = { interfaces: [], upstreams: [] };
 
     function setStatus(message, kind = "") {
       statusEl.textContent = message;
@@ -879,19 +879,130 @@ export function renderAdminPage() {
       }
     }
 
+    function fallbackId(prefix, index) {
+      return prefix + "-" + String(index + 1);
+    }
+
+    function ensureConfigShape(config) {
+      const upstreams = Array.isArray(config?.upstreams) && config.upstreams.length
+        ? config.upstreams
+        : [{
+          id: "default",
+          name: "默认上游",
+          enabled: true,
+          baseURL: config?.upstreamBaseURL || "",
+          apiKeySet: !!config?.upstreamApiKeySet
+        }];
+      const interfaces = Array.isArray(config?.interfaces) && config.interfaces.length
+        ? config.interfaces
+        : [{
+          id: "default",
+          name: "默认接口",
+          enabled: true,
+          apiTokenSet: !!config?.imageApiTokenSet,
+          upstreamIds: upstreams[0]?.id ? [upstreams[0].id] : [],
+          defaultImageModel: config?.defaultImageModel || "gpt-image-2",
+          defaultTextModel: config?.defaultTextModel || "gpt-5.5",
+          defaultSize: config?.defaultSize || "1024x1024",
+          defaultQuality: config?.defaultQuality || "auto",
+          defaultOutputFormat: config?.defaultOutputFormat || "png",
+          requestTimeoutSeconds: config?.requestTimeoutSeconds || 120,
+          maxConcurrentRequests: config?.maxConcurrentRequests || 1,
+          rateLimitPerMinute: config?.rateLimitPerMinute || 10
+        }];
+      return {
+        ...config,
+        upstreams: upstreams.map((item, index) => ({
+          id: item.id || fallbackId("upstream", index),
+          name: item.name || "上游 " + (index + 1),
+          enabled: item.enabled !== false,
+          baseURL: item.baseURL || "",
+          apiKeySet: !!item.apiKeySet
+        })),
+        interfaces: interfaces.map((item, index) => ({
+          id: item.id || fallbackId("interface", index),
+          name: item.name || "接口 " + (index + 1),
+          enabled: item.enabled !== false,
+          apiTokenSet: !!item.apiTokenSet,
+          upstreamIds: Array.isArray(item.upstreamIds) ? item.upstreamIds : [],
+          defaultImageModel: item.defaultImageModel || "gpt-image-2",
+          defaultTextModel: item.defaultTextModel || "gpt-5.5",
+          defaultSize: item.defaultSize || "1024x1024",
+          defaultQuality: item.defaultQuality || "auto",
+          defaultOutputFormat: item.defaultOutputFormat || "png",
+          requestTimeoutSeconds: item.requestTimeoutSeconds || 120,
+          maxConcurrentRequests: item.maxConcurrentRequests || 1,
+          rateLimitPerMinute: item.rateLimitPerMinute || 10
+        }))
+      };
+    }
+
+    function qualityOptions(selected) {
+      return ["auto", "low", "medium", "high"]
+        .map((value) => '<option value="' + value + '"' + (value === selected ? " selected" : "") + '>' + value + '</option>')
+        .join("");
+    }
+
+    function formatOptions(selected) {
+      return ["png", "jpeg", "webp"]
+        .map((value) => '<option value="' + value + '"' + (value === selected ? " selected" : "") + '>' + value + '</option>')
+        .join("");
+    }
+
+    function upstreamOptions(selectedIds) {
+      const selected = new Set(selectedIds || []);
+      return currentConfig.upstreams
+        .map((upstream) => '<option value="' + escapeHTML(upstream.id) + '"' + (selected.has(upstream.id) ? " selected" : "") + '>' + escapeHTML(upstream.name + " · " + upstream.id) + '</option>')
+        .join("");
+    }
+
+    function renderInterfaceList() {
+      const html = currentConfig.interfaces.map((item, index) => [
+        '<section class="config-item" data-interface-index="' + index + '">',
+        '<div class="config-item-header"><div><strong>' + escapeHTML(item.name) + '</strong><br><span>' + escapeHTML(item.id) + ' · ' + (item.apiTokenSet ? "Key 已保存" : "未保存 Key") + '</span></div>',
+        '<button type="button" class="danger-button" data-remove-interface="' + index + '">删除</button></div>',
+        '<div class="grid-2">',
+        '<label>接口 ID<input data-interface-field="id" value="' + escapeHTML(item.id) + '"></label>',
+        '<label>接口名称<input data-interface-field="name" value="' + escapeHTML(item.name) + '"></label>',
+        '<label class="full">服务 API Key<input data-interface-field="apiToken" autocomplete="off" type="password" placeholder="' + (item.apiTokenSet ? "当前 Key 已保存，留空不修改" : "请输入服务 API Key") + '"></label>',
+        '<label class="checkbox-row"><input data-interface-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个接口</label>',
+        '<label>默认生图模型<input data-interface-field="defaultImageModel" value="' + escapeHTML(item.defaultImageModel) + '"></label>',
+        '<label>默认文本模型<input data-interface-field="defaultTextModel" value="' + escapeHTML(item.defaultTextModel) + '"></label>',
+        '<label>默认尺寸<input data-interface-field="defaultSize" value="' + escapeHTML(item.defaultSize) + '"></label>',
+        '<label>默认质量<select data-interface-field="defaultQuality">' + qualityOptions(item.defaultQuality) + '</select></label>',
+        '<label>默认输出格式<select data-interface-field="defaultOutputFormat">' + formatOptions(item.defaultOutputFormat) + '</select></label>',
+        '<label>请求超时秒数<input data-interface-field="requestTimeoutSeconds" type="number" min="10" max="900" step="1" value="' + escapeHTML(item.requestTimeoutSeconds) + '"></label>',
+        '<label>最大并发请求<input data-interface-field="maxConcurrentRequests" type="number" min="1" max="10" step="1" value="' + escapeHTML(item.maxConcurrentRequests) + '"></label>',
+        '<label>每分钟限流<input data-interface-field="rateLimitPerMinute" type="number" min="1" max="600" step="1" value="' + escapeHTML(item.rateLimitPerMinute) + '"></label>',
+        '<label class="full">绑定上游中转站（按选择顺序优先尝试）<select data-interface-field="upstreamIds" multiple>' + upstreamOptions(item.upstreamIds) + '</select></label>',
+        '</div>',
+        '</section>'
+      ].join("")).join("");
+      document.getElementById("interfaceList").innerHTML = html || '<div class="log-row empty">暂无接口配置。</div>';
+    }
+
+    function renderUpstreamList() {
+      const html = currentConfig.upstreams.map((item, index) => [
+        '<section class="config-item" data-upstream-index="' + index + '">',
+        '<div class="config-item-header"><div><strong>' + escapeHTML(item.name) + '</strong><br><span>' + escapeHTML(item.id) + ' · ' + (item.apiKeySet ? "Key 已保存" : "未保存 Key") + '</span></div>',
+        '<button type="button" class="danger-button" data-remove-upstream="' + index + '">删除</button></div>',
+        '<div class="grid-2">',
+        '<label>上游 ID<input data-upstream-field="id" value="' + escapeHTML(item.id) + '"></label>',
+        '<label>上游名称<input data-upstream-field="name" value="' + escapeHTML(item.name) + '"></label>',
+        '<label class="full">Base URL<input data-upstream-field="baseURL" value="' + escapeHTML(item.baseURL) + '" placeholder="https://example.com/v1"></label>',
+        '<label class="full">上游 API Key<input data-upstream-field="apiKey" autocomplete="off" type="password" placeholder="' + (item.apiKeySet ? "当前 Key 已保存，留空不修改" : "请输入上游 Key") + '"></label>',
+        '<label class="checkbox-row"><input data-upstream-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个上游</label>',
+        '</div>',
+        '</section>'
+      ].join("")).join("");
+      document.getElementById("upstreamList").innerHTML = html || '<div class="log-row empty">暂无上游配置。</div>';
+    }
+
     function fillConfig(config) {
-      for (const name of configFields) {
-        document.getElementById(name).value = config[name] ?? "";
-      }
-      document.getElementById("upstreamApiKey").placeholder = config.upstreamApiKeySet
-        ? "当前上游 Key 已保存，留空表示不修改"
-        : "尚未保存上游 Key";
-      document.getElementById("imageApiToken").placeholder = config.imageApiTokenSet
-        ? "当前服务 API Key 已保存，留空表示不修改"
-        : "尚未保存服务 API Key";
-      document.getElementById("upstreamApiKey").value = "";
-      document.getElementById("imageApiToken").value = "";
-      document.getElementById("accountUsername").value = config.adminUsername || "admin";
+      currentConfig = ensureConfigShape(config);
+      renderUpstreamList();
+      renderInterfaceList();
+      document.getElementById("accountUsername").value = currentConfig.adminUsername || "admin";
     }
 
     async function loadConfig() {
@@ -902,16 +1013,38 @@ export function renderAdminPage() {
       return data.config;
     }
 
-    function collectConfigPatch(includeSecrets = true) {
-      const body = {};
-      for (const name of configFields) {
-        body[name] = document.getElementById(name).value;
-      }
-      if (includeSecrets) {
-        body.upstreamApiKey = document.getElementById("upstreamApiKey").value;
-        body.imageApiToken = document.getElementById("imageApiToken").value;
-      }
-      return body;
+    function readInterfaceForms() {
+      return Array.from(document.querySelectorAll("[data-interface-index]")).map((section) => {
+        const value = (field) => section.querySelector('[data-interface-field="' + field + '"]');
+        return {
+          id: value("id").value,
+          name: value("name").value,
+          enabled: value("enabled").checked,
+          apiToken: value("apiToken").value,
+          upstreamIds: Array.from(value("upstreamIds").selectedOptions).map((option) => option.value),
+          defaultImageModel: value("defaultImageModel").value,
+          defaultTextModel: value("defaultTextModel").value,
+          defaultSize: value("defaultSize").value,
+          defaultQuality: value("defaultQuality").value,
+          defaultOutputFormat: value("defaultOutputFormat").value,
+          requestTimeoutSeconds: value("requestTimeoutSeconds").value,
+          maxConcurrentRequests: value("maxConcurrentRequests").value,
+          rateLimitPerMinute: value("rateLimitPerMinute").value
+        };
+      });
+    }
+
+    function readUpstreamForms() {
+      return Array.from(document.querySelectorAll("[data-upstream-index]")).map((section) => {
+        const value = (field) => section.querySelector('[data-upstream-field="' + field + '"]');
+        return {
+          id: value("id").value,
+          name: value("name").value,
+          enabled: value("enabled").checked,
+          baseURL: value("baseURL").value,
+          apiKey: value("apiKey").value
+        };
+      });
     }
 
     async function saveConfig(patch) {
@@ -1117,16 +1250,71 @@ export function renderAdminPage() {
     document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
     document.getElementById("loadConfigBtn").addEventListener("click", loadConfig);
     document.getElementById("loadUpstreamBtn").addEventListener("click", loadConfig);
+    document.getElementById("addInterfaceBtn").addEventListener("click", () => {
+      const index = currentConfig.interfaces.length;
+      currentConfig.interfaces.push({
+        id: fallbackId("interface", index),
+        name: "接口 " + (index + 1),
+        enabled: true,
+        apiTokenSet: false,
+        upstreamIds: currentConfig.upstreams[0]?.id ? [currentConfig.upstreams[0].id] : [],
+        defaultImageModel: "gpt-image-2",
+        defaultTextModel: "gpt-5.5",
+        defaultSize: "1024x1024",
+        defaultQuality: "auto",
+        defaultOutputFormat: "png",
+        requestTimeoutSeconds: 120,
+        maxConcurrentRequests: 1,
+        rateLimitPerMinute: 10
+      });
+      renderInterfaceList();
+    });
+    document.getElementById("addUpstreamBtn").addEventListener("click", () => {
+      const index = currentConfig.upstreams.length;
+      currentConfig.upstreams.push({
+        id: fallbackId("upstream", index),
+        name: "上游 " + (index + 1),
+        enabled: true,
+        baseURL: "",
+        apiKeySet: false
+      });
+      renderUpstreamList();
+      renderInterfaceList();
+    });
+    document.getElementById("interfaceList").addEventListener("click", (event) => {
+      const index = event.target?.dataset?.removeInterface;
+      if (index === undefined) return;
+      if (currentConfig.interfaces.length <= 1) {
+        setStatus("至少保留一个接口配置。", "danger");
+        return;
+      }
+      currentConfig.interfaces.splice(Number(index), 1);
+      renderInterfaceList();
+    });
+    document.getElementById("upstreamList").addEventListener("click", (event) => {
+      const index = event.target?.dataset?.removeUpstream;
+      if (index === undefined) return;
+      if (currentConfig.upstreams.length <= 1) {
+        setStatus("至少保留一个上游中转站。", "danger");
+        return;
+      }
+      const removed = currentConfig.upstreams.splice(Number(index), 1)[0];
+      currentConfig.interfaces = currentConfig.interfaces.map((item) => ({
+        ...item,
+        upstreamIds: item.upstreamIds.filter((id) => id !== removed.id)
+      }));
+      renderUpstreamList();
+      renderInterfaceList();
+    });
     document.getElementById("testUpstreamBtn").addEventListener("click", async () => {
       setStatus("正在测试上游连接...");
       try {
-        const data = await fetchAdminJSON("/config");
-        const url = data.config?.upstreamBaseURL || "";
-        if (!url) {
+        const firstEnabled = readUpstreamForms().find((item) => item.enabled && item.baseURL);
+        if (!firstEnabled) {
           setStatus("请先填写并保存上游中转站 URL。", "danger");
           return;
         }
-        setStatus("上游配置已读取。当前 URL：" + url, "ok");
+        setStatus("上游配置已读取。当前优先测试：" + firstEnabled.name + " · " + firstEnabled.baseURL, "ok");
       } catch (error) {
         setStatus(error.message || "上游连接测试失败。", "danger");
       }
@@ -1137,19 +1325,17 @@ export function renderAdminPage() {
 
     document.getElementById("clientConfigForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const patch = collectConfigPatch(true);
-      patch.upstreamBaseURL = undefined;
-      patch.upstreamApiKey = "";
-      await saveConfig(patch);
+      await saveConfig({
+        interfaces: readInterfaceForms(),
+        upstreams: readUpstreamForms()
+      });
     });
 
     document.getElementById("upstreamConfigForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       await saveConfig({
-        ...collectConfigPatch(false),
-        upstreamBaseURL: document.getElementById("upstreamBaseURL").value,
-        upstreamApiKey: document.getElementById("upstreamApiKey").value,
-        imageApiToken: ""
+        interfaces: readInterfaceForms(),
+        upstreams: readUpstreamForms()
       });
     });
 
