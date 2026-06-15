@@ -49,7 +49,7 @@ async function writeReadmeVersionSection(details) {
 
 | 项目 | 版本 |
 |---|---|
-| 我的项目版本 | \`${details.currentVersion}\` |
+| 我的 API 版本 | \`${details.currentVersion}\` |
 | 作者仓库版本 | \`${details.upstreamVersion}\` |
 | 对齐状态 | \`${statusText}\` |
 
@@ -90,7 +90,7 @@ async function main() {
 
   await writeBadge(`${outDir}/current-version.json`, {
     schemaVersion: 1,
-    label: "我的项目版本",
+    label: "API 版本",
     message: currentVersion,
     color: aligned ? "2ea44f" : "d29922"
   });

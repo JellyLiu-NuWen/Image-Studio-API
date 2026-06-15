@@ -4,22 +4,16 @@
 > 面向 Codex / OpenClaw / DeepSeek / MCP 等 AI 工具的私有生图接口
 
 ![license](https://img.shields.io/badge/license-AGPLv3-b22222)
-![go](https://img.shields.io/badge/go-%3E%3D1.25-00ADD8)
-![react](https://img.shields.io/badge/react-18-61DAFB)
-![wails](https://img.shields.io/badge/wails-v2.12-DF0000)
-![platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux%20%7C%20android-lightgrey)
+![node](https://img.shields.io/badge/node-%3E%3D20-43853D)
+![docker](https://img.shields.io/badge/docker-self--hosted-2496ED)
+![api](https://img.shields.io/badge/API-OpenAI--compatible-111827)
+![skill](https://img.shields.io/badge/Codex-skill-6f42c1)
 
 ## 这个 fork 想解决什么
 
-原项目 Image Studio 是一个优秀的开源图像生成 / 编辑客户端，主体是 Wails 桌面端和 Android WebView 壳层。我自己的需求不是再做一个 Web 版，而是把它整理成一个可以部署在自己服务器上的私有 API 服务，让 Codex 或其他 AI 先理解用户需求，再通过这个接口调用生图能力，最后把图片结果回传给用户。
+这个 fork 的目标是把 Image Studio 整理成一个可以部署在自己服务器上的私有 API 服务。Codex、OpenClaw、DeepSeek、MCP 或其他 AI 工具先理解用户需求，再通过这个服务调用生图接口，最后把图片结果回传给用户。
 
-所以这个 fork 的核心思路是:
-
-- 保留原作者项目作为上游基础，版本号尽量和作者版本对齐。
-- 在 `main` 分支提供自托管 API、后台配置页和 Codex Skill。
-- 在 `upstream-main` 分支保留作者原版镜像，方便比较和同步。
-- 真实模型 API Key 只放在服务器上，Codex / OpenClaw / DeepSeek 只拿一个私有调用 token。
-- 先支持 `IP:PORT` 的简单部署，HTTPS、反代、Tailscale、IP 白名单等安全增强可以后续再加。
+它不是桌面端、Android 端或 Cloudflare Worker 发行线。那些平台代码已经归档到 `legacy-platforms` 分支；作者原版镜像保留在 `upstream-main` 分支。
 
 ## 版本对齐
 
@@ -27,7 +21,7 @@
 
 | 项目 | 版本 |
 |---|---|
-| 我的项目版本 | `v1.2.5` |
+| 我的 API 版本 | `v1.2.5` |
 | 作者仓库版本 | `v1.2.5` |
 | 对齐状态 | `已对齐` |
 
@@ -115,9 +109,17 @@ IMAGE_STUDIO_API_TOKEN=your-client-token
 
 更多自托管说明见 [server/README.md](./server/README.md) 和 [docs/self-hosted-api.md](./docs/self-hosted-api.md)。
 
+## 分支策略
+
+| 分支 | 用途 |
+|---|---|
+| `main` | 自托管 API、后台、skills、Docker 发布 |
+| `upstream-main` | 原作者仓库镜像，用于版本对齐和同步 |
+| `legacy-platforms` | API-only 清理前的全平台 fork 快照 |
+
 ## 原项目说明
 
-本 README 只介绍这个 fork 的自托管 API 思路、部署和版本维护。原项目的桌面端能力、安装包、使用方式、排障说明、赞助信息和完整文档，请直接查看原作者仓库:
+原项目的桌面端能力、安装包、使用方式、排障说明、赞助信息和完整文档，请直接查看原作者仓库:
 
 - 原作者仓库: [RoseKhlifa/Image-Studio](https://github.com/RoseKhlifa/Image-Studio)
 - 原作者 README: [RoseKhlifa/Image-Studio#readme](https://github.com/RoseKhlifa/Image-Studio#readme)

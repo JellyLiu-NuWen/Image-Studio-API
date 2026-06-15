@@ -135,6 +135,8 @@ python skills/image-studio-generate/scripts/generate_image.py \
 
 短期自用可以直接开放 `IP:8787`。如果以后给更多设备或多人使用，建议加 HTTPS、IP 白名单、Tailscale 或反向代理访问控制。
 
+更多运维说明见 [docs/operations.md](../docs/operations.md)，Docker 更新说明见 [docs/docker-updates.md](../docs/docker-updates.md)。
+
 ## 本地验证
 
 ```bash

@@ -1,7 +1,7 @@
 {
-  "currentVersion": "unknown",
-  "upstreamVersion": "unknown",
-  "currentSha": "7fa55088cc50",
+  "currentVersion": "v1.2.5",
+  "upstreamVersion": "v1.2.5",
+  "currentSha": "90de13e3f0f9",
   "upstreamSha": "b592073e699f",
   "aligned": true
 }

@@ -1,6 +1,6 @@
 # 自托管 API 与 Codex Skill
 
-Image Studio 主应用是桌面端和 Android 壳层，不是可直接对外部署的 Web SaaS。若只想让 Codex 或其他 AI 工具调用生图能力，可以使用仓库新增的 `server/` 自托管 API 服务。
+这个 fork 的 `main` 分支面向自托管 API 服务。若想让 Codex 或其他 AI 工具调用生图能力，可以使用仓库内的 `server/` 服务。
 
 ## 架构
 
@@ -36,6 +36,8 @@ http://SERVER_IP:8787/admin
 - 请求超时、并发、限流
 
 完整说明见 [server/README.md](../server/README.md)。
+
+更多运维说明见 [operations.md](./operations.md)，Docker 更新说明见 [docker-updates.md](./docker-updates.md)。
 
 ## Codex Skill
 
