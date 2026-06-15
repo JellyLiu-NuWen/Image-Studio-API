@@ -1,0 +1,40 @@
+name: API CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check server syntax
+        run: npm --prefix server run check
+
+      - name: Run server tests
+        run: npm --prefix server test
+
+      - name: Run server smoke check
+        run: npm --prefix server run smoke
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run skill tests
+        run: python skills/image-studio-generate/scripts/test_generate_image.py

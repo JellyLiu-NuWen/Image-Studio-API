@@ -37,7 +37,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: refresh version badges"
-          file_pattern: badges/*.json
+          file_pattern: badges/*.json README.md
 
       - name: Create or update reminder issue
         if: steps.upstream.outputs.hasUpdates == 'true'

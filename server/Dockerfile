@@ -1,5 +1,10 @@
 FROM node:22-alpine
 
+ARG IMAGE_STUDIO_VERSION=dev
+LABEL org.opencontainers.image.title="Image Studio API"
+LABEL org.opencontainers.image.description="Self-hosted private Image Studio API for AI tools"
+LABEL org.opencontainers.image.version=$IMAGE_STUDIO_VERSION
+
 WORKDIR /app
 
 COPY shared ./shared
