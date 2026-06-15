@@ -88,7 +88,20 @@ test("renderAdminPage labels service api key as the skill calling key", () => {
 
   assert.match(html, /Skill 调用 Key/);
   assert.match(html, /配置到 Codex、skills、OpenClaw 或其他 AI 工具里/);
-  assert.match(html, /data-secret-role="client-token"/);
+  assert.match(html, /secretRole: "client-token"/);
+});
+
+test("renderAdminPage uses one field to edit and reveal each api key", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /function secretKeyField/);
+  assert.doesNotMatch(html, /function secretRevealField/);
+  assert.match(html, /fieldAttribute: 'data-interface-field="apiToken"'/);
+  assert.match(html, /fieldAttribute: 'data-upstream-field="apiKey"'/);
+  assert.match(html, /data-secret-output/);
+  assert.doesNotMatch(html, /查看已保存 Skill 调用 Key/);
+  assert.doesNotMatch(html, /查看已保存上游 API Key/);
+  assert.doesNotMatch(html, /readonly type="password" value=""/);
 });
 
 test("renderAdminPage validates release link protocol before rendering href", () => {

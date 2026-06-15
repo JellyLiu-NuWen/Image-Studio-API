@@ -1283,19 +1283,17 @@ export function renderAdminPage() {
       return '<span class="config-url-cell" title="' + escapeHTML(value || "未配置") + '">' + escapeHTML(value || "未配置") + '</span>';
     }
 
-    function secretRevealField({ kind, id, isSet, label }) {
+    function secretKeyField({ kind, id, isSet, label, fieldAttribute, secretRole = "", placeholder, help }) {
       const disabled = isSet ? "" : " disabled";
-      const placeholder = isSet ? "点击右侧按钮显示完整 Key" : "当前没有保存 Key";
+      const roleAttribute = secretRole ? ' data-secret-role="' + escapeHTML(secretRole) + '"' : "";
       return [
-        '<div class="full">',
-        '<label>' + escapeHTML(label),
+        '<label class="full">' + escapeHTML(label),
         '<div class="secret-row">',
-        '<input data-secret-output="' + escapeHTML(kind) + '" readonly type="password" value="" placeholder="' + escapeHTML(placeholder) + '">',
+        '<input ' + fieldAttribute + roleAttribute + ' data-secret-output="' + escapeHTML(kind) + '" autocomplete="new-password" inputmode="latin" spellcheck="false" type="password" placeholder="' + escapeHTML(placeholder) + '">',
         '<button type="button" class="secondary" data-reveal-secret="' + escapeHTML(kind) + '" data-secret-id="' + escapeHTML(id) + '"' + disabled + '>显示已保存 Key</button>',
         '</div>',
-        '</label>',
-        '<p class="secret-note">默认隐藏完整 Key。只有已登录后台后，手动点击才会读取并显示；上方输入框留空表示不修改。</p>',
-        '</div>'
+        '<span class="field-help">' + escapeHTML(help) + '</span>',
+        '</label>'
       ].join("");
     }
 
@@ -1418,8 +1416,16 @@ export function renderAdminPage() {
         '<div class="config-form-grid">',
         '<label>接口 ID<input data-interface-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>接口名称<input data-interface-field="name" value="' + escapeHTML(item.name) + '"></label>',
-        '<label class="full">Skill 调用 Key<input data-interface-field="apiToken" data-secret-role="client-token" autocomplete="new-password" inputmode="latin" spellcheck="false" type="password" placeholder="' + (item.apiTokenSet ? "当前 Key 已保存，留空不修改" : "请输入给 skills 使用的调用 Key") + '"><span class="field-help">配置到 Codex、skills、OpenClaw 或其他 AI 工具里，请求时作为 Authorization: Bearer 使用。</span></label>',
-        secretRevealField({ kind: "interface", id: item.id, isSet: item.apiTokenSet || item.apiToken, label: "查看已保存 Skill 调用 Key" }),
+        secretKeyField({
+          kind: "interface",
+          id: item.id,
+          isSet: item.apiTokenSet || item.apiToken,
+          label: "Skill 调用 Key",
+          fieldAttribute: 'data-interface-field="apiToken"',
+          secretRole: "client-token",
+          placeholder: item.apiTokenSet ? "当前 Key 已保存，留空不修改" : "请输入给 skills 使用的调用 Key",
+          help: "配置到 Codex、skills、OpenClaw 或其他 AI 工具里，请求时作为 Authorization: Bearer 使用。留空不修改；点击右侧按钮可在这个输入框里显示已保存 Key。"
+        }),
         '<label class="checkbox-row"><input data-interface-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个接口</label>',
         '<label>默认生图模型<input data-interface-field="defaultImageModel" value="' + escapeHTML(item.defaultImageModel) + '"></label>',
         '<label>默认文本模型<input data-interface-field="defaultTextModel" value="' + escapeHTML(item.defaultTextModel) + '"></label>',
@@ -1474,8 +1480,15 @@ export function renderAdminPage() {
         '<label>上游 ID<input data-upstream-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>上游名称<input data-upstream-field="name" value="' + escapeHTML(item.name) + '"></label>',
         '<label class="full">Base URL<input data-upstream-field="baseURL" value="' + escapeHTML(item.baseURL) + '" placeholder="https://example.com/v1"></label>',
-        '<label class="full">上游 API Key<input data-upstream-field="apiKey" autocomplete="new-password" inputmode="latin" spellcheck="false" type="password" placeholder="' + (item.apiKeySet ? "当前 Key 已保存，留空不修改" : "请输入上游 Key") + '"><span class="field-help">这是服务器访问上游中转站时使用的 Key，不需要配置到 skills。</span></label>',
-        secretRevealField({ kind: "upstream", id: item.id, isSet: item.apiKeySet || item.apiKey, label: "查看已保存上游 API Key" }),
+        secretKeyField({
+          kind: "upstream",
+          id: item.id,
+          isSet: item.apiKeySet || item.apiKey,
+          label: "上游 API Key",
+          fieldAttribute: 'data-upstream-field="apiKey"',
+          placeholder: item.apiKeySet ? "当前 Key 已保存，留空不修改" : "请输入上游 Key",
+          help: "这是服务器访问上游中转站时使用的 Key，不需要配置到 skills。留空不修改；点击右侧按钮可在这个输入框里显示已保存 Key。"
+        }),
         '<label class="checkbox-row"><input data-upstream-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个上游</label>',
         '</div>',
         '</section>'
@@ -1855,7 +1868,7 @@ export function renderAdminPage() {
       if (!button) return;
       const kind = button.dataset.revealSecret;
       const id = button.dataset.secretId;
-      const output = configDrawerBody.querySelector('[data-secret-output="' + kind + '"]');
+      const output = button.closest(".secret-row")?.querySelector('[data-secret-output="' + kind + '"]');
       if (!output || !id) return;
       if (output.type === "text" && output.value) {
         output.type = "password";
