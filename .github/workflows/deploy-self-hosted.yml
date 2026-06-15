@@ -1,0 +1,109 @@
+name: Deploy Self Hosted
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_root:
+        description: Server deploy root.
+        required: true
+        default: /www/docker/image-studio-api
+      host_port:
+        description: Public host port mapped to container port 8787.
+        required: true
+        default: "80"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.IMAGE_STUDIO_DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.IMAGE_STUDIO_DEPLOY_PORT || '22' }}
+      DEPLOY_USER: ${{ secrets.IMAGE_STUDIO_DEPLOY_USER || 'root' }}
+      DEPLOY_ROOT: ${{ inputs.deploy_root }}
+      HOST_PORT: ${{ inputs.host_port }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deploy secrets
+        env:
+          DEPLOY_KEY: ${{ secrets.IMAGE_STUDIO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST" || { echo "IMAGE_STUDIO_DEPLOY_HOST is required"; exit 1; }
+          test -n "$DEPLOY_KEY" || { echo "IMAGE_STUDIO_DEPLOY_KEY is required"; exit 1; }
+
+      - name: Create deploy archive
+        run: git archive --format=tar --output=/tmp/image-studio-api-deploy.tar HEAD
+
+      - name: Configure SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.IMAGE_STUDIO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/image_studio_deploy_key
+          chmod 600 ~/.ssh/image_studio_deploy_key
+          ssh-keyscan -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload archive
+        run: |
+          set -euo pipefail
+          scp -P "$DEPLOY_PORT" -i ~/.ssh/image_studio_deploy_key \
+            /tmp/image-studio-api-deploy.tar \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/image-studio-api-deploy.tar"
+
+      - name: Deploy on server
+        run: |
+          set -euo pipefail
+          ssh -p "$DEPLOY_PORT" -i ~/.ssh/image_studio_deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "DEPLOY_ROOT='$DEPLOY_ROOT' HOST_PORT='$HOST_PORT' GITHUB_SHA='$GITHUB_SHA' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          deploy_root="${DEPLOY_ROOT:-/www/docker/image-studio-api}"
+          host_port="${HOST_PORT:-80}"
+          short_sha="${GITHUB_SHA:0:8}"
+          release_id="$(date +%Y%m%d-%H%M%S)-${short_sha}"
+          release_dir="${deploy_root}/releases/${release_id}"
+          current_link="${deploy_root}/current"
+
+          mkdir -p "$release_dir"
+          tar -xf /tmp/image-studio-api-deploy.tar -C "$release_dir"
+
+          if [ -f "${current_link}/.env" ]; then
+            cp "${current_link}/.env" "${release_dir}/.env"
+          fi
+          if [ -f "${current_link}/server/.env" ]; then
+            mkdir -p "${release_dir}/server"
+            cp "${current_link}/server/.env" "${release_dir}/server/.env"
+          fi
+
+          touch "${release_dir}/.env"
+          if grep -q '^IMAGE_STUDIO_API_HOST_PORT=' "${release_dir}/.env"; then
+            sed -i "s/^IMAGE_STUDIO_API_HOST_PORT=.*/IMAGE_STUDIO_API_HOST_PORT=${host_port}/" "${release_dir}/.env"
+          else
+            printf '\nIMAGE_STUDIO_API_HOST_PORT=%s\n' "$host_port" >> "${release_dir}/.env"
+          fi
+
+          if [ -e "$current_link" ] && [ ! -L "$current_link" ]; then
+            echo "$current_link exists and is not a symlink"
+            exit 1
+          fi
+
+          ln -sfnT "$release_dir" "$current_link"
+          cd "$current_link"
+          docker compose -p current -f docker-compose.self-hosted.yml up -d --build
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:${host_port}/healthz"; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker compose -p current -f docker-compose.self-hosted.yml logs --tail=120
+          exit 1
+          REMOTE
