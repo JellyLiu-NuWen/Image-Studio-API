@@ -37,6 +37,34 @@ test("renderAdminPage exposes the operations-console template controls", () => {
   assert.match(html, /data-interface-field="upstreamIds"/);
 });
 
+test("renderAdminPage exposes richer dashboard operations panels", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /id="dashboardHealthPanel"/);
+  assert.match(html, /id="dashboardLatencyPanel"/);
+  assert.match(html, /id="dashboardUpstreamPanel"/);
+  assert.match(html, /id="dashboardRecentPanel"/);
+  assert.match(html, /成功率/);
+  assert.match(html, /错误率/);
+  assert.match(html, /上游概况/);
+  assert.match(html, /最近生图任务/);
+  assert.match(html, /renderDashboardExtras/);
+});
+
+test("renderAdminPage exposes log filters summaries and expandable details", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /class="log-toolbar"/);
+  assert.match(html, /id="generationLogSearch"/);
+  assert.match(html, /id="apiLogSearch"/);
+  assert.match(html, /id="generationLogSummary"/);
+  assert.match(html, /id="apiLogSummary"/);
+  assert.match(html, /data-log-detail/);
+  assert.match(html, /function filterRecords/);
+  assert.match(html, /function renderLogTable/);
+  assert.match(html, /查看详情/);
+});
+
 test("renderAdminPage shows interface and upstream configs as full width table editors", () => {
   const html = renderAdminPage();
 

@@ -281,6 +281,21 @@ export function renderAdminPage() {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
     }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .dashboard-stack {
+      display: grid;
+      gap: 16px;
+    }
     .card {
       min-width: 0;
       border: 1px solid var(--border);
@@ -331,6 +346,76 @@ export function renderAdminPage() {
       overflow-wrap: anywhere;
     }
     .metric small {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .metric.compact {
+      padding: 13px;
+      box-shadow: none;
+      background: linear-gradient(180deg, #fff 0%, var(--surface-alt) 100%);
+    }
+    .metric.compact strong {
+      font-size: 21px;
+    }
+    .metric.good strong { color: var(--success); }
+    .metric.warn strong { color: var(--warning); }
+    .metric.danger strong { color: var(--danger); }
+    .health-list,
+    .compact-list {
+      display: grid;
+      gap: 10px;
+    }
+    .health-row,
+    .compact-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-alt);
+    }
+    .health-row strong,
+    .compact-row strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .health-row span,
+    .compact-row span {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .progress-track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e7edf3;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+    .progress-fill.warn { background: var(--warning); }
+    .progress-fill.danger { background: var(--danger); }
+    .latency-bars {
+      display: grid;
+      gap: 12px;
+    }
+    .latency-bar {
+      display: grid;
+      gap: 7px;
+    }
+    .latency-bar header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       color: var(--text-muted);
       font-size: 12px;
       line-height: 1.35;
@@ -447,6 +532,36 @@ export function renderAdminPage() {
       border-radius: 12px;
       background: #fff;
     }
+    .log-panel {
+      display: grid;
+      gap: 12px;
+    }
+    .log-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .log-summary {
+      display: grid;
+      gap: 4px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .log-summary strong {
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .log-toolbar input {
+      min-height: 42px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -485,6 +600,54 @@ export function renderAdminPage() {
     .status-tag.failed {
       background: #fff0ee;
       color: var(--danger);
+    }
+    .detail-toggle {
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 8px;
+      background: var(--surface-soft);
+      border-color: var(--border);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .detail-row {
+      background: var(--surface-alt);
+    }
+    .detail-cell {
+      padding-top: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-box {
+      display: grid;
+      gap: 8px;
+      padding: 14px 12px 16px;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .detail-box strong {
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .detail-meta span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
     }
     .config-editor {
       display: grid;
@@ -944,20 +1107,40 @@ export function renderAdminPage() {
 
       <section id="dashboardView" class="view active">
         <div class="grid-4" aria-label="仪表盘指标">
-          <div class="metric"><span>活跃请求</span><strong id="summaryActive">0</strong><small>当前正在处理的调用</small></div>
-          <div class="metric"><span>API 成功</span><strong id="summaryApiSuccess">0</strong><small>已通过鉴权的调用</small></div>
-          <div class="metric"><span>生图成功</span><strong id="summaryGenSuccess">0</strong><small>完成的图片任务</small></div>
-          <div class="metric"><span>P95 响应</span><strong id="summaryLatency">0ms</strong><small>最近响应尾延迟</small></div>
+          <div class="metric compact"><span>活跃请求</span><strong id="summaryActive">0</strong><small>当前正在处理的调用</small></div>
+          <div class="metric compact"><span>API 成功</span><strong id="summaryApiSuccess">0</strong><small>已通过鉴权的调用</small></div>
+          <div class="metric compact"><span>生图成功</span><strong id="summaryGenSuccess">0</strong><small>完成的图片任务</small></div>
+          <div class="metric compact"><span>P95 响应</span><strong id="summaryLatency">0ms</strong><small>最近响应尾延迟</small></div>
         </div>
-        <div class="grid-2">
-          <section class="card">
-            <div class="card-header"><h2>运行指标</h2><span>吞吐、错误与响应速度</span></div>
-            <div class="card-body" id="metricsPanel"><div class="muted">暂无指标，请刷新数据。</div></div>
-          </section>
-          <section class="card">
-            <div class="card-header"><h2>版本状态</h2><span>当前版本与仓库版本对比</span></div>
-            <div class="card-body"><div id="updateStatus" class="update-status"><strong>尚未检查版本</strong><span>刷新数据后会显示版本对齐情况。</span></div></div>
-          </section>
+        <div class="dashboard-grid">
+          <div class="dashboard-stack">
+            <section class="card">
+              <div class="card-header"><h2>运行指标</h2><span>吞吐、错误与响应速度</span></div>
+              <div class="card-body" id="metricsPanel"><div class="muted">暂无指标，请刷新数据。</div></div>
+            </section>
+            <section class="card">
+              <div class="card-header"><h2>最近生图任务</h2><span>最近 5 条生图与 API 活动</span></div>
+              <div class="card-body"><div id="dashboardRecentPanel" class="compact-list"><div class="muted">暂无记录，请刷新数据。</div></div></div>
+            </section>
+          </div>
+          <div class="dashboard-stack">
+            <section class="card">
+              <div class="card-header"><h2>版本状态</h2><span>当前版本与仓库版本对比</span></div>
+              <div class="card-body"><div id="updateStatus" class="update-status"><strong>尚未检查版本</strong><span>刷新数据后会显示版本对齐情况。</span></div></div>
+            </section>
+            <section class="card">
+              <div class="card-header"><h2>健康概览</h2><span>成功率、错误率与在线状态</span></div>
+              <div class="card-body" id="dashboardHealthPanel"><div class="muted">暂无健康数据。</div></div>
+            </section>
+            <section class="card">
+              <div class="card-header"><h2>延迟分布</h2><span>API 与生图响应速度</span></div>
+              <div class="card-body" id="dashboardLatencyPanel"><div class="muted">暂无延迟数据。</div></div>
+            </section>
+            <section class="card">
+              <div class="card-header"><h2>上游概况</h2><span>接口与上游绑定情况</span></div>
+              <div class="card-body" id="dashboardUpstreamPanel"><div class="muted">暂无上游数据。</div></div>
+            </section>
+          </div>
         </div>
       </section>
 
@@ -1030,11 +1213,23 @@ export function renderAdminPage() {
         <div class="grid-2">
           <section class="card">
             <div class="card-header"><h2>生图日志</h2><span>最近图片生成请求</span></div>
-            <div class="card-body"><div id="generationLogs" class="table-wrap"><div class="log-row empty">暂无记录。</div></div></div>
+            <div class="card-body">
+              <div class="log-toolbar">
+                <div class="log-summary" id="generationLogSummary">暂无统计。</div>
+                <input id="generationLogSearch" type="search" placeholder="搜索时间、端点、状态、上游...">
+              </div>
+              <div id="generationLogs" class="log-panel"><div class="log-row empty">暂无记录。</div></div>
+            </div>
           </section>
           <section class="card">
             <div class="card-header"><h2>API 调用日志</h2><span>后台与接口请求记录</span></div>
-            <div class="card-body"><div id="apiLogs" class="table-wrap"><div class="log-row empty">暂无记录。</div></div></div>
+            <div class="card-body">
+              <div class="log-toolbar">
+                <div class="log-summary" id="apiLogSummary">暂无统计。</div>
+                <input id="apiLogSearch" type="search" placeholder="搜索时间、方法、路径、状态...">
+              </div>
+              <div id="apiLogs" class="log-panel"><div class="log-row empty">暂无记录。</div></div>
+            </div>
           </section>
         </div>
       </section>
@@ -1111,6 +1306,8 @@ export function renderAdminPage() {
     let selectedInterfaceIndex = 0;
     let selectedUpstreamIndex = 0;
     let configDrawerMode = null;
+    let latestGenerationRecords = [];
+    let latestApiRecords = [];
 
     function setStatus(message, kind = "") {
       statusEl.textContent = message;
@@ -1129,6 +1326,22 @@ export function renderAdminPage() {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+    }
+
+    function clampPercent(value) {
+      const number = Number.parseFloat(value);
+      if (!Number.isFinite(number)) return 0;
+      return Math.max(0, Math.min(100, number));
+    }
+
+    function percent(part, total) {
+      const numericTotal = Number(total);
+      if (!Number.isFinite(numericTotal) || numericTotal <= 0) return 0;
+      return Math.round((Number(part) || 0) * 1000 / numericTotal) / 10;
+    }
+
+    function ms(value) {
+      return (Number(value) || 0) + "ms";
     }
 
     async function fetchAdminJSON(path, options = {}) {
@@ -1577,23 +1790,88 @@ export function renderAdminPage() {
       ].join("");
     }
 
+    function progressRow(label, value, detail, kind = "") {
+      return [
+        '<div class="health-row">',
+        '<div><strong>' + escapeHTML(label) + '</strong><span>' + escapeHTML(detail) + '</span></div>',
+        '<strong>' + escapeHTML(value) + '</strong>',
+        '</div>',
+        '<div class="progress-track"><div class="progress-fill ' + escapeHTML(kind) + '" style="width:' + clampPercent(value) + '%"></div></div>'
+      ].join("");
+    }
+
+    function latencyRow(label, p50, p95) {
+      const width = clampPercent((Number(p95) || 0) / 1000 * 100);
+      const kind = p95 >= 30000 ? "danger" : p95 >= 5000 ? "warn" : "";
+      return [
+        '<div class="latency-bar">',
+        '<header><span>' + escapeHTML(label) + '</span><strong>P50 ' + escapeHTML(ms(p50)) + ' · P95 ' + escapeHTML(ms(p95)) + '</strong></header>',
+        '<div class="progress-track"><div class="progress-fill ' + kind + '" style="width:' + width + '%"></div></div>',
+        '</div>'
+      ].join("");
+    }
+
+    function renderDashboardExtras(metrics, generationRecords, apiRecords) {
+      const api = metrics?.api ?? {};
+      const generations = metrics?.generations ?? {};
+      const apiSuccessRate = percent(api.success ?? 0, api.total ?? 0);
+      const apiErrorRate = percent(api.error ?? 0, api.total ?? 0);
+      const generationSuccessRate = percent(generations.success ?? 0, generations.total ?? 0);
+      const enabledInterfaces = currentConfig.interfaces.filter((item) => item.enabled).length;
+      const enabledUpstreams = currentConfig.upstreams.filter((item) => item.enabled).length;
+      const boundUpstreamCount = new Set(currentConfig.interfaces.flatMap((item) => item.upstreamIds || [])).size;
+      document.getElementById("dashboardHealthPanel").innerHTML = [
+        '<div class="health-list">',
+        progressRow("API 成功率", apiSuccessRate + "%", "成功 " + (api.success ?? 0) + " / 总数 " + (api.total ?? 0)),
+        progressRow("API 错误率", apiErrorRate + "%", "错误 " + (api.error ?? 0) + " / 总数 " + (api.total ?? 0), apiErrorRate > 10 ? "danger" : apiErrorRate > 0 ? "warn" : ""),
+        progressRow("生图成功率", generationSuccessRate + "%", "成功 " + (generations.success ?? 0) + " / 总数 " + (generations.total ?? 0)),
+        '</div>'
+      ].join("");
+      document.getElementById("dashboardLatencyPanel").innerHTML = [
+        '<div class="latency-bars">',
+        latencyRow("API 响应", api.p50DurationMs ?? 0, api.p95DurationMs ?? 0),
+        latencyRow("生图响应", generations.p50DurationMs ?? 0, generations.p95DurationMs ?? 0),
+        '</div>'
+      ].join("");
+      document.getElementById("dashboardUpstreamPanel").innerHTML = [
+        '<div class="grid-3">',
+        metricCard("启用接口", enabledInterfaces, "可被 Skill/API 调用"),
+        metricCard("启用上游", enabledUpstreams, "可用于请求转发"),
+        metricCard("已绑定上游", boundUpstreamCount, "接口绑定的上游数量"),
+        '</div>'
+      ].join("");
+      const recent = [
+        ...generationRecords.slice(0, 3).map((record) => ({ ...record, kind: "生图" })),
+        ...apiRecords.slice(0, 3).map((record) => ({ ...record, kind: "API" }))
+      ].sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0)).slice(0, 5);
+      document.getElementById("dashboardRecentPanel").innerHTML = recent.length
+        ? recent.map((record) => [
+          '<div class="compact-row">',
+          '<div><strong>' + escapeHTML(record.kind + " · " + (record.endpoint || record.path || "-")) + '</strong>',
+          '<span>' + escapeHTML(formatTime(record.createdAt)) + ' · ' + escapeHTML(record.durationMs ?? 0) + ' ms</span></div>',
+          formatStatus(record.status),
+          '</div>'
+        ].join("")).join("")
+        : '<div class="muted">暂无最近任务。</div>';
+    }
+
     function renderMetrics(metrics) {
       const api = metrics?.api ?? {};
       const generations = metrics?.generations ?? {};
       document.getElementById("summaryActive").textContent = metrics?.activeRequests ?? 0;
       document.getElementById("summaryApiSuccess").textContent = api.success ?? 0;
       document.getElementById("summaryGenSuccess").textContent = generations.success ?? 0;
-      document.getElementById("summaryLatency").textContent = (api.p95DurationMs ?? 0) + "ms";
+      document.getElementById("summaryLatency").textContent = ms(api.p95DurationMs ?? 0);
       document.getElementById("metricsPanel").innerHTML = [
         '<div class="grid-4">',
         metricCard("API 总数", api.total ?? 0, "全部接口调用"),
         metricCard("API 错误", api.error ?? 0, "失败或被拒绝调用"),
         metricCard("生图总数", generations.total ?? 0, "全部图片任务"),
         metricCard("生图失败", generations.failed ?? 0, "失败图片任务"),
-        metricCard("API P50", (api.p50DurationMs ?? 0) + "ms", "接口中位耗时"),
-        metricCard("API P95", (api.p95DurationMs ?? 0) + "ms", "接口尾延迟"),
-        metricCard("生图 P50", (generations.p50DurationMs ?? 0) + "ms", "生图中位耗时"),
-        metricCard("生图 P95", (generations.p95DurationMs ?? 0) + "ms", "生图尾延迟"),
+        metricCard("API 成功率", percent(api.success ?? 0, api.total ?? 0) + "%", "成功调用占比"),
+        metricCard("API 错误率", percent(api.error ?? 0, api.total ?? 0) + "%", "错误调用占比"),
+        metricCard("生图 P50", ms(generations.p50DurationMs ?? 0), "生图中位耗时"),
+        metricCard("生图 P95", ms(generations.p95DurationMs ?? 0), "生图尾延迟"),
         '</div>'
       ].join("");
     }
@@ -1617,7 +1895,8 @@ export function renderAdminPage() {
 
     function formatStatus(status) {
       const value = String(status || "记录");
-      const failed = value === "failed" || value === "error";
+      const numeric = Number(value);
+      const failed = value === "failed" || value === "error" || numeric >= 400;
       return '<span class="status-tag ' + (failed ? "failed" : "") + '">' + escapeHTML(value) + '</span>';
     }
 
@@ -1630,24 +1909,84 @@ export function renderAdminPage() {
       }
     }
 
-    function renderRows(id, records) {
+    function statusMatches(record, filter) {
+      if (!filter || filter === "all") return true;
+      const status = String(record?.status || "");
+      if (filter === "success") return status === "success" || (Number(status) >= 200 && Number(status) <= 399);
+      if (filter === "failed") return status === "failed" || Number(status) >= 400;
+      return true;
+    }
+
+    function filterRecords(records, search, statusFilter) {
+      const query = String(search || "").trim().toLowerCase();
+      return records.filter((record) => {
+        if (!statusMatches(record, statusFilter)) return false;
+        if (!query) return true;
+        return JSON.stringify(record).toLowerCase().includes(query);
+      });
+    }
+
+    function logSummaryHTML(records, isGeneration) {
+      const total = records.length;
+      const failed = records.filter((record) => statusMatches(record, "failed")).length;
+      const success = Math.max(0, total - failed);
+      const p95 = records.map((record) => Number(record?.durationMs)).filter(Number.isFinite).sort((a, b) => a - b);
+      const p95Value = p95.length ? p95[Math.min(p95.length - 1, Math.ceil(p95.length * 0.95) - 1)] : 0;
+      return [
+        '<strong>' + escapeHTML(isGeneration ? "生图统计" : "API 统计") + '</strong>',
+        '<span>总数 ' + total + ' · 成功 ' + success + ' · 失败 ' + failed + ' · P95 ' + p95Value + ' ms</span>'
+      ].join("");
+    }
+
+    function detailHTML(record, isGeneration) {
+      const summary = summarizeRecord(record);
+      const meta = isGeneration
+        ? [
+          "接口: " + (record?.interfaceId || "-"),
+          "上游: " + (record?.upstreamId || "-"),
+          "上游状态: " + (record?.upstreamStatus ?? "-")
+        ]
+        : [
+          "鉴权: " + (record?.authKind || "-"),
+          "错误: " + (record?.errorSummary || "-")
+        ];
+      return [
+        '<div class="detail-box">',
+        '<strong>请求详情</strong>',
+        '<div class="detail-meta">' + meta.map((item) => '<span>' + escapeHTML(item) + '</span>').join("") + '</div>',
+        '<span>' + escapeHTML(summary) + '</span>',
+        '</div>'
+      ].join("");
+    }
+
+    function renderLogTable(id, records, options = {}) {
       const container = document.getElementById(id);
+      const isGeneration = id === "generationLogs";
+      const searchEl = document.getElementById(isGeneration ? "generationLogSearch" : "apiLogSearch");
+      const summaryEl = document.getElementById(isGeneration ? "generationLogSummary" : "apiLogSummary");
+      const filtered = filterRecords(records, searchEl?.value || "", options.status || "all");
+      if (summaryEl) summaryEl.innerHTML = logSummaryHTML(filtered, isGeneration);
       if (!Array.isArray(records) || records.length === 0) {
         container.innerHTML = '<div class="log-row empty">暂无记录。</div>';
         return;
       }
-      const isGeneration = id === "generationLogs";
+      if (!filtered.length) {
+        container.innerHTML = '<div class="log-row empty">没有匹配的日志记录。</div>';
+        return;
+      }
       const headers = isGeneration
-        ? ["时间", "状态", "端点", "上游状态", "响应耗时"]
-        : ["时间", "方法", "路径", "鉴权", "状态", "响应耗时"];
-      const rows = records.map((record) => {
+        ? ["时间", "状态", "端点", "接口", "上游", "耗时", "详情"]
+        : ["时间", "方法", "路径", "鉴权", "状态", "耗时", "详情"];
+      const rows = filtered.map((record, index) => {
         const values = isGeneration
           ? [
             formatTime(record?.createdAt),
             formatStatus(record?.status),
             escapeHTML(record?.endpoint || "-"),
-            escapeHTML(record?.upstreamStatus ?? "-"),
-            escapeHTML((record?.durationMs ?? 0) + " ms")
+            escapeHTML(record?.interfaceId || "-"),
+            escapeHTML(record?.upstreamId || "-"),
+            escapeHTML((record?.durationMs ?? 0) + " ms"),
+            '<button type="button" class="detail-toggle" data-log-detail="' + id + '-' + index + '">查看详情</button>'
           ]
           : [
             formatTime(record?.createdAt),
@@ -1655,18 +1994,26 @@ export function renderAdminPage() {
             escapeHTML(record?.path || "-"),
             escapeHTML(record?.authKind || "-"),
             formatStatus(record?.status),
-            escapeHTML((record?.durationMs ?? 0) + " ms")
+            escapeHTML((record?.durationMs ?? 0) + " ms"),
+            '<button type="button" class="detail-toggle" data-log-detail="' + id + '-' + index + '">查看详情</button>'
           ];
-        return "<tr>" + values.map((value) => "<td>" + value + "</td>").join("") + "</tr>";
+        return [
+          "<tr>" + values.map((value) => "<td>" + value + "</td>").join("") + "</tr>",
+          '<tr class="detail-row hidden" id="' + id + '-' + index + '"><td class="detail-cell" colspan="' + headers.length + '">' + detailHTML(record, isGeneration) + '</td></tr>'
+        ].join("");
       }).join("");
       container.innerHTML = [
-        "<table>",
+        '<div class="table-wrap"><table>',
         "<thead><tr>" + headers.map((header) => "<th>" + escapeHTML(header) + "</th>").join("") + "</tr></thead>",
         "<tbody>",
         rows,
         "</tbody>",
-        "</table>"
+        "</table></div>"
       ].join("");
+    }
+
+    function renderRows(id, records) {
+      renderLogTable(id, records);
     }
 
     function safeHTTPSURL(releaseURL) {
@@ -1707,9 +2054,12 @@ export function renderAdminPage() {
           fetchAdminJSON("/logs?type=api"),
           fetchAdminJSON("/update/check")
         ]);
+        latestGenerationRecords = Array.isArray(generationData.records) ? generationData.records : [];
+        latestApiRecords = Array.isArray(apiData.records) ? apiData.records : [];
         renderMetrics(metricsData.metrics);
-        renderRows("generationLogs", generationData.records);
-        renderRows("apiLogs", apiData.records);
+        renderDashboardExtras(metricsData.metrics, latestGenerationRecords, latestApiRecords);
+        renderRows("generationLogs", latestGenerationRecords);
+        renderRows("apiLogs", latestApiRecords);
         renderUpdate(updateData.update);
         setStatus("数据已刷新。", "ok");
       } catch (error) {
@@ -1758,6 +2108,18 @@ export function renderAdminPage() {
     });
 
     document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+    document.getElementById("generationLogSearch").addEventListener("input", () => renderLogTable("generationLogs", latestGenerationRecords));
+    document.getElementById("apiLogSearch").addEventListener("input", () => renderLogTable("apiLogs", latestApiRecords));
+    document.getElementById("generationLogs").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-log-detail]");
+      if (!button) return;
+      document.getElementById(button.dataset.logDetail)?.classList.toggle("hidden");
+    });
+    document.getElementById("apiLogs").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-log-detail]");
+      if (!button) return;
+      document.getElementById(button.dataset.logDetail)?.classList.toggle("hidden");
+    });
     document.getElementById("loadConfigBtn").addEventListener("click", loadConfig);
     document.getElementById("loadUpstreamBtn").addEventListener("click", loadConfig);
     document.getElementById("addInterfaceBtn").addEventListener("click", () => {
