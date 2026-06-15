@@ -21,7 +21,8 @@ const updateService = createUpdateService({
 });
 const app = createSelfHostedApp({
   store,
-  adminToken: process.env.ADMIN_TOKEN || "",
+  adminUsername: process.env.ADMIN_USERNAME || "admin",
+  adminPassword: process.env.ADMIN_PASSWORD || "",
   apiLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "api-calls.jsonl") }),
   generationLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "generations.jsonl") }),
   updateService,

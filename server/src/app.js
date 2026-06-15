@@ -1,4 +1,13 @@
-import { getBearer, isBearerAuthorized } from "./auth.js";
+import {
+  clearSessionCookie,
+  createSessionCookie,
+  createSessionToken,
+  getBearer,
+  hashPassword,
+  isBearerAuthorized,
+  parseCookies,
+  verifyPassword,
+} from "./auth.js";
 import { json, methodNotAllowed, notFound, tooManyRequests, unauthorized } from "./http.js";
 import { mergeConfigUpdate, normalizeConfig, publicConfig } from "./config.js";
 import { forwardOpenAIPath } from "./upstreamProxy.js";
@@ -36,13 +45,13 @@ function createRateLimiter(now = () => Date.now()) {
   };
 }
 
-function requireAdminAuth(request, adminToken) {
-  if (!adminToken) {
-    return unauthorized("Server is missing ADMIN_TOKEN");
-  }
-  if (!isBearerAuthorized(request, adminToken)) {
-    return unauthorized("Admin authorization required");
-  }
+function requireAdminAuth(request, sessions) {
+  return requireDashboardSession(request, sessions);
+}
+
+function requireDashboardSession(request, sessions) {
+  const token = parseCookies(request).image_studio_session || "";
+  if (!token || !sessions.has(token)) return unauthorized("请先登录后台");
   return null;
 }
 
@@ -51,8 +60,9 @@ function createRequestId() {
   return `req_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function classifyAuthKind(request, adminToken, config = null) {
-  if (adminToken && isBearerAuthorized(request, adminToken)) return "admin";
+function classifyAuthKind(request, sessions, config = null) {
+  const token = parseCookies(request).image_studio_session || "";
+  if (token && sessions.has(token)) return "admin";
   if (config?.imageApiToken && isBearerAuthorized(request, config.imageApiToken)) return "client";
   return "none";
 }
@@ -84,9 +94,95 @@ async function handleAdminConfig({ request, store }) {
   return json({ ok: true, config: publicConfig(saved) });
 }
 
+async function resolveAdminAccount(store, fallbackUsername, fallbackPassword) {
+  const config = normalizeConfig(await store.load());
+  if (config.adminPasswordHash) return config;
+  if (!fallbackPassword) return config;
+  const withHash = {
+    ...config,
+    adminUsername: fallbackUsername || config.adminUsername || "admin",
+    adminPasswordHash: await hashPassword(fallbackPassword),
+  };
+  return store.save(withHash);
+}
+
+async function handleLogin({ request, store, sessions, fallbackUsername, fallbackPassword }) {
+  if (request.method !== "POST") return methodNotAllowed();
+  const body = await request.json().catch(() => ({}));
+  const account = await resolveAdminAccount(store, fallbackUsername, fallbackPassword);
+  const username = String(body.username || "").trim();
+  const password = String(body.password || "");
+  if (!account.adminPasswordHash || username !== account.adminUsername) {
+    return unauthorized("账号或密码错误");
+  }
+  if (!(await verifyPassword(password, account.adminPasswordHash))) {
+    return unauthorized("账号或密码错误");
+  }
+  const sessionToken = createSessionToken();
+  sessions.set(sessionToken, { username: account.adminUsername, createdAt: Date.now() });
+  return json({
+    ok: true,
+    account: { username: account.adminUsername },
+  }, {
+    headers: {
+      "set-cookie": createSessionCookie(sessionToken),
+    },
+  });
+}
+
+function handleLogout({ request, sessions }) {
+  if (request.method !== "POST") return methodNotAllowed();
+  const token = parseCookies(request).image_studio_session || "";
+  if (token) sessions.delete(token);
+  return json({ ok: true }, {
+    headers: {
+      "set-cookie": clearSessionCookie(),
+    },
+  });
+}
+
+async function handleSession({ request, store, sessions }) {
+  if (request.method !== "GET") return methodNotAllowed();
+  const token = parseCookies(request).image_studio_session || "";
+  if (!token || !sessions.has(token)) {
+    return json({ authenticated: false });
+  }
+  const config = normalizeConfig(await store.load());
+  return json({
+    authenticated: true,
+    account: { username: config.adminUsername },
+  });
+}
+
+async function handleAccountUpdate({ request, store }) {
+  if (request.method !== "POST") return methodNotAllowed();
+  const current = normalizeConfig(await store.load());
+  const body = await request.json().catch(() => ({}));
+  const currentPassword = String(body.currentPassword || "");
+  const newPassword = String(body.newPassword || "");
+  const username = String(body.username || current.adminUsername || "admin").trim();
+  if (!current.adminPasswordHash) return unauthorized("后台账号还没有初始化密码");
+  if (!(await verifyPassword(currentPassword, current.adminPasswordHash))) {
+    return unauthorized("当前密码不正确");
+  }
+  if (!username) {
+    return json({ error: { message: "账号不能为空" } }, { status: 400 });
+  }
+  if (newPassword.trim().length < 8) {
+    return json({ error: { message: "新密码至少需要 8 个字符" } }, { status: 400 });
+  }
+  const saved = await store.save({
+    ...current,
+    adminUsername: username,
+    adminPasswordHash: await hashPassword(newPassword),
+  });
+  return json({ ok: true, account: { username: saved.adminUsername } });
+}
+
 export function createSelfHostedApp({
   store,
-  adminToken = process.env.ADMIN_TOKEN || "",
+  adminUsername = process.env.ADMIN_USERNAME || "admin",
+  adminPassword = process.env.ADMIN_PASSWORD || "",
   apiLogStore = null,
   generationLogStore = null,
   updateService = null,
@@ -96,6 +192,7 @@ export function createSelfHostedApp({
   if (!store) throw new Error("createSelfHostedApp requires a config store");
   if (!fetchImpl) throw new Error("createSelfHostedApp requires fetch");
   const rateLimiter = createRateLimiter(now);
+  const sessions = new Map();
   let activeRequests = 0;
 
   async function handle(request) {
@@ -115,9 +212,33 @@ export function createSelfHostedApp({
         return response;
       }
 
+      if (url.pathname === "/api/login") {
+        authKind = "login";
+        response = await handleLogin({
+          request,
+          store,
+          sessions,
+          fallbackUsername: adminUsername,
+          fallbackPassword: adminPassword,
+        });
+        return response;
+      }
+
+      if (url.pathname === "/api/logout") {
+        authKind = classifyAuthKind(request, sessions);
+        response = handleLogout({ request, sessions });
+        return response;
+      }
+
+      if (url.pathname === "/api/session") {
+        authKind = classifyAuthKind(request, sessions);
+        response = await handleSession({ request, store, sessions });
+        return response;
+      }
+
       if (url.pathname === "/api/config") {
-        authKind = classifyAuthKind(request, adminToken);
-        const authError = requireAdminAuth(request, adminToken);
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
         if (authError) {
           response = authError;
           return response;
@@ -126,9 +247,20 @@ export function createSelfHostedApp({
         return response;
       }
 
+      if (url.pathname === "/api/account") {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        response = await handleAccountUpdate({ request, store });
+        return response;
+      }
+
       if (url.pathname === "/api/logs") {
-        authKind = classifyAuthKind(request, adminToken);
-        const authError = requireAdminAuth(request, adminToken);
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
         if (authError) {
           response = authError;
           return response;
@@ -145,8 +277,8 @@ export function createSelfHostedApp({
       }
 
       if (url.pathname === "/api/metrics") {
-        authKind = classifyAuthKind(request, adminToken);
-        const authError = requireAdminAuth(request, adminToken);
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
         if (authError) {
           response = authError;
           return response;
@@ -166,8 +298,8 @@ export function createSelfHostedApp({
       }
 
       if (url.pathname === "/api/update/check") {
-        authKind = classifyAuthKind(request, adminToken);
-        const authError = requireAdminAuth(request, adminToken);
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
         if (authError) {
           response = authError;
           return response;
@@ -199,7 +331,7 @@ export function createSelfHostedApp({
         )
       ) {
         const config = normalizeConfig(await store.load());
-        authKind = classifyAuthKind(request, adminToken, config);
+        authKind = classifyAuthKind(request, sessions, config);
         const authError = requireClientAuth(request, config);
         if (authError) {
           response = authError;

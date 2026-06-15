@@ -31,7 +31,8 @@ async function main() {
       HOST: "127.0.0.1",
       PORT: String(port),
       CONFIG_PATH: join(tempDir, "config.json"),
-      ADMIN_TOKEN: "admin-token",
+      ADMIN_USERNAME: "admin",
+      ADMIN_PASSWORD: "admin-password",
       IMAGE_API_TOKEN: "client-token",
       UPSTREAM_BASE_URL: "https://upstream.example/v1",
       UPSTREAM_API_KEY: "upstream-key",
@@ -52,8 +53,15 @@ async function main() {
     await waitForHealth(baseURL);
     const admin = await fetch(`${baseURL}/admin`);
     if (!admin.ok) throw new Error(`/admin returned ${admin.status}`);
+    const login = await fetch(`${baseURL}/api/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ username: "admin", password: "admin-password" }),
+    });
+    if (!login.ok) throw new Error(`/api/login returned ${login.status}`);
+    const cookie = login.headers.get("set-cookie")?.split(";")[0] || "";
     const config = await fetch(`${baseURL}/api/config`, {
-      headers: { authorization: "Bearer admin-token" },
+      headers: { cookie },
     });
     if (!config.ok) throw new Error(`/api/config returned ${config.status}`);
     const data = await config.json();

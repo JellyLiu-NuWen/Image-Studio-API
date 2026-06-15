@@ -10,6 +10,8 @@ import {
 } from "../../shared/kernel/requestModel.js";
 
 export const DEFAULT_CONFIG = {
+  adminUsername: "admin",
+  adminPasswordHash: "",
   upstreamBaseURL: "",
   upstreamApiKey: "",
   imageApiToken: "",
@@ -74,6 +76,8 @@ function positiveInteger(value, fallback, min, max) {
 
 export function configFromEnv(env = process.env) {
   return normalizeConfig({
+    adminUsername: firstValue(env.ADMIN_USERNAME, env.IMAGE_STUDIO_ADMIN_USERNAME),
+    adminPasswordHash: firstValue(env.ADMIN_PASSWORD_HASH, env.IMAGE_STUDIO_ADMIN_PASSWORD_HASH),
     upstreamBaseURL: firstValue(env.UPSTREAM_BASE_URL, env.IMAGE_STUDIO_UPSTREAM_BASE_URL),
     upstreamApiKey: firstValue(env.UPSTREAM_API_KEY, env.IMAGE_STUDIO_UPSTREAM_API_KEY),
     imageApiToken: firstValue(env.IMAGE_API_TOKEN, env.IMAGE_STUDIO_API_TOKEN),
@@ -95,6 +99,8 @@ export function normalizeConfig(input = {}, previous = {}) {
     ...input,
   };
   return {
+    adminUsername: String(merged.adminUsername || DEFAULT_CONFIG.adminUsername).trim() || DEFAULT_CONFIG.adminUsername,
+    adminPasswordHash: String(merged.adminPasswordHash || "").trim(),
     upstreamBaseURL: normalizeBaseURL(merged.upstreamBaseURL),
     upstreamApiKey: String(merged.upstreamApiKey || "").trim(),
     imageApiToken: String(merged.imageApiToken || "").trim(),
@@ -112,6 +118,8 @@ export function normalizeConfig(input = {}, previous = {}) {
 export function publicConfig(config) {
   const normalized = normalizeConfig(config);
   return {
+    adminUsername: normalized.adminUsername,
+    adminPasswordSet: !!normalized.adminPasswordHash,
     upstreamBaseURL: normalized.upstreamBaseURL,
     upstreamApiKeySet: !!normalized.upstreamApiKey,
     imageApiTokenSet: !!normalized.imageApiToken,
@@ -129,6 +137,8 @@ export function publicConfig(config) {
 export function mergeConfigUpdate(current, patch) {
   const next = {
     ...current,
+    adminUsername: patch.adminUsername ?? current.adminUsername,
+    adminPasswordHash: patch.adminPasswordHash ?? current.adminPasswordHash,
     upstreamBaseURL: patch.upstreamBaseURL ?? current.upstreamBaseURL,
     defaultImageModel: patch.defaultImageModel ?? current.defaultImageModel,
     defaultTextModel: patch.defaultTextModel ?? current.defaultTextModel,

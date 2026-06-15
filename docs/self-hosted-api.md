@@ -30,7 +30,7 @@ docker compose -f docker-compose.self-hosted.yml up -d --build
 http://SERVER_IP:8787/admin
 ```
 
-使用 `ADMIN_TOKEN` 登录后配置:
+使用后台账号密码登录后配置:
 
 - 上游 Base URL
 - 上游 API Key
@@ -72,7 +72,7 @@ outputs/image-studio/
 
 ## 安全提醒
 
-即使只是自己用，也建议设置足够长的 `ADMIN_TOKEN` 和 `IMAGE_API_TOKEN`。如果直接暴露 `IP:端口`，请至少在云服务器安全组中只开放必要端口，并保留限流配置。
+即使只是自己用，也建议设置足够长的后台密码和 `IMAGE_API_TOKEN`。如果直接暴露 `IP:端口`，请至少在云服务器安全组中只开放必要端口，并保留限流配置。
 
 ## 分支维护
 

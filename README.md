@@ -43,7 +43,7 @@ node scripts/write-version-badges.mjs
 
 | 信息 | 说明 |
 |---|---|
-| `ADMIN_TOKEN` | 进入 `/admin` 后台配置页的管理 token |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 第一次进入后台的账号密码，之后可在后台修改 |
 | `IMAGE_API_TOKEN` | Codex / 其他 AI 调用本服务时使用的 token |
 | `UPSTREAM_BASE_URL` | OpenAI-compatible 图像上游地址，例如 `https://api.openai.com/v1` |
 | `UPSTREAM_API_KEY` | 真正的模型服务 API Key，只保存在服务器 |

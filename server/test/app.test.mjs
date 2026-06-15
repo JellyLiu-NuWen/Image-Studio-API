@@ -4,6 +4,11 @@ import { createSelfHostedApp } from "../src/app.js";
 import { createMemoryLogStore } from "../src/logStore.js";
 import { parseDotEnv } from "../src/config.js";
 
+const ADMIN_OPTIONS = {
+  adminUsername: "admin",
+  adminPassword: "admin-pass",
+};
+
 function jsonRequest(path, body, headers = {}) {
   return new Request(`http://localhost${path}`, {
     method: "POST",
@@ -31,10 +36,18 @@ function memoryStore(initial = {}) {
   };
 }
 
+async function loginHeaders(app, username = "admin", password = "admin-pass") {
+  const response = await app.handle(jsonRequest("/api/login", { username, password }));
+  assert.equal(response.status, 200);
+  const cookie = response.headers.get("set-cookie") || "";
+  assert.match(cookie, /image_studio_session=/);
+  return { cookie: cookie.split(";")[0] };
+}
+
 test("health check is public", async () => {
   const app = createSelfHostedApp({
     store: memoryStore(),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async () => {
       throw new Error("health check must not call upstream");
     },
@@ -55,7 +68,7 @@ test("image generation rejects missing client token", async () => {
       upstreamBaseURL: "https://upstream.example",
       upstreamApiKey: "upstream-key",
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async () => {
       throw new Error("unauthorized requests must not call upstream");
     },
@@ -81,7 +94,7 @@ test("image generation forwards with the server-side upstream key and defaults",
       defaultQuality: "auto",
       defaultOutputFormat: "png",
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async (url, init) => {
       captured = {
         url: String(url),
@@ -125,11 +138,12 @@ test("admin config updates non-secret values and keeps blank secrets unchanged",
   });
   const app = createSelfHostedApp({
     store,
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async () => {
       throw new Error("config update must not call upstream");
     },
   });
+  const headers = await loginHeaders(app);
 
   const response = await app.handle(jsonRequest("/api/config", {
     upstreamBaseURL: "https://new.example/v1",
@@ -138,14 +152,14 @@ test("admin config updates non-secret values and keeps blank secrets unchanged",
     defaultImageModel: "gpt-image-2",
     defaultSize: "1536x1024",
     requestTimeoutSeconds: 180,
-  }, {
-    authorization: "Bearer admin-token",
-  }));
+  }, headers));
 
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     ok: true,
     config: {
+      adminUsername: "admin",
+      adminPasswordSet: true,
       upstreamBaseURL: "https://new.example",
       upstreamApiKeySet: true,
       imageApiTokenSet: true,
@@ -163,12 +177,12 @@ test("admin config updates non-secret values and keeps blank secrets unchanged",
   assert.equal(store.current().imageApiToken, "old-client-token");
 });
 
-test("admin config rejects the client token", async () => {
+test("admin config rejects bearer tokens because dashboard uses login sessions", async () => {
   const app = createSelfHostedApp({
     store: memoryStore({
       imageApiToken: "client-token",
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async () => {
       throw new Error("unauthorized admin requests must not call upstream");
     },
@@ -177,11 +191,11 @@ test("admin config rejects the client token", async () => {
   const response = await app.handle(jsonRequest("/api/config", {
     upstreamBaseURL: "https://new.example",
   }, {
-    authorization: "Bearer client-token",
+    authorization: "Bearer admin-token",
   }));
 
   assert.equal(response.status, 401);
-  assert.match((await response.json()).error.message, /Admin authorization required/);
+  assert.match((await response.json()).error.message, /请先登录/);
 });
 
 test("admin can read logs and metrics while client or missing token is rejected", async () => {
@@ -194,7 +208,7 @@ test("admin can read logs and metrics while client or missing token is rejected"
       upstreamApiKey: "upstream-key",
       rateLimitPerMinute: 10,
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     apiLogStore,
     generationLogStore,
     fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
@@ -218,8 +232,9 @@ test("admin can read logs and metrics while client or missing token is rejected"
   }));
   assert.equal(clientToken.status, 401);
 
+  const adminHeaders = await loginHeaders(app);
   const logs = await app.handle(new Request("http://localhost/api/logs?type=generations", {
-    headers: { authorization: "Bearer admin-token" },
+    headers: adminHeaders,
   }));
   assert.equal(logs.status, 200);
   const logsBody = await logs.json();
@@ -229,7 +244,7 @@ test("admin can read logs and metrics while client or missing token is rejected"
   assert.equal(logsBody.records[0].upstreamStatus, 200);
 
   const metrics = await app.handle(new Request("http://localhost/api/metrics", {
-    headers: { authorization: "Bearer admin-token" },
+    headers: adminHeaders,
   }));
   assert.equal(metrics.status, 200);
   const metricsBody = await metrics.json();
@@ -250,7 +265,7 @@ test("admin update check requires admin authorization", async () => {
     store: memoryStore({
       imageApiToken: "client-token",
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     updateService: {
       async checkLatest() {
         throw new Error("unauthorized update check must not call service");
@@ -279,7 +294,7 @@ test("admin update check returns update service result", async () => {
   };
   const app = createSelfHostedApp({
     store: memoryStore(),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     updateService: {
       async checkLatest() {
         return update;
@@ -291,7 +306,7 @@ test("admin update check returns update service result", async () => {
   });
 
   const response = await app.handle(new Request("http://localhost/api/update/check", {
-    headers: { authorization: "Bearer admin-token" },
+    headers: await loginHeaders(app),
   }));
 
   assert.equal(response.status, 200);
@@ -301,20 +316,20 @@ test("admin update check returns update service result", async () => {
 test("admin update check reports unconfigured without a service and rejects non-GET", async () => {
   const app = createSelfHostedApp({
     store: memoryStore(),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async () => {
       throw new Error("update check must not call upstream fetch");
     },
   });
 
   const response = await app.handle(new Request("http://localhost/api/update/check", {
-    headers: { authorization: "Bearer admin-token" },
+    headers: await loginHeaders(app),
   }));
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { update: { status: "unconfigured" } });
 
   const post = await app.handle(jsonRequest("/api/update/check", {}, {
-    authorization: "Bearer admin-token",
+    ...(await loginHeaders(app)),
   }));
   assert.equal(post.status, 405);
 });
@@ -327,7 +342,7 @@ test("image generation applies the configured per-minute rate limit", async () =
       upstreamApiKey: "upstream-key",
       rateLimitPerMinute: 1,
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -360,7 +375,7 @@ test("image generation applies the configured concurrency limit", async () => {
       maxConcurrentRequests: 1,
       rateLimitPerMinute: 10,
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async () => {
       await new Promise((resolve) => {
         releaseFetch = resolve;
@@ -401,7 +416,7 @@ test("image generation passes a timeout signal to upstream fetch", async () => {
       upstreamApiKey: "upstream-key",
       requestTimeoutSeconds: 30,
     }),
-    adminToken: "admin-token",
+    ...ADMIN_OPTIONS,
     fetchImpl: async (_url, init) => {
       capturedSignal = init.signal;
       return new Response(JSON.stringify({ data: [] }), {
@@ -425,14 +440,53 @@ test("image generation passes a timeout signal to upstream fetch", async () => {
 test("dotenv parser supports comments, quotes, and plain values", () => {
   assert.deepEqual(parseDotEnv(`
 # local config
-ADMIN_TOKEN="admin token"
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="admin pass"
 IMAGE_API_TOKEN='client-token'
 PORT=8787
 EMPTY=
   `), {
-    ADMIN_TOKEN: "admin token",
+    ADMIN_USERNAME: "admin",
+    ADMIN_PASSWORD: "admin pass",
     IMAGE_API_TOKEN: "client-token",
     PORT: "8787",
     EMPTY: "",
   });
+});
+
+test("admin login session can update the dashboard account password", async () => {
+  const store = memoryStore();
+  const app = createSelfHostedApp({
+    store,
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      throw new Error("account update must not call upstream");
+    },
+  });
+  const headers = await loginHeaders(app);
+
+  const update = await app.handle(jsonRequest("/api/account", {
+    username: "owner",
+    currentPassword: "admin-pass",
+    newPassword: "new-admin-pass",
+  }, headers));
+  assert.equal(update.status, 200);
+  assert.deepEqual(await update.json(), {
+    ok: true,
+    account: { username: "owner" },
+  });
+  assert.equal(store.current().adminUsername, "owner");
+  assert.match(store.current().adminPasswordHash, /^scrypt\$/);
+
+  const oldLogin = await app.handle(jsonRequest("/api/login", {
+    username: "admin",
+    password: "admin-pass",
+  }));
+  assert.equal(oldLogin.status, 401);
+
+  const newLogin = await app.handle(jsonRequest("/api/login", {
+    username: "owner",
+    password: "new-admin-pass",
+  }));
+  assert.equal(newLogin.status, 200);
 });

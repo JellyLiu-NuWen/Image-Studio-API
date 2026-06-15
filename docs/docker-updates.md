@@ -12,7 +12,7 @@ The container does not replace itself by default because mounting the Docker soc
 
 ## Release Check
 
-Set `IMAGE_STUDIO_VERSION` to the running release tag and `IMAGE_STUDIO_GITHUB_REPOSITORY` to the GitHub repository, for example `owner/repo`. The admin dashboard can then call `/api/update/check` with `ADMIN_TOKEN` and compare the running version with the latest GitHub Release.
+Set `IMAGE_STUDIO_VERSION` to the running release tag and `IMAGE_STUDIO_GITHUB_REPOSITORY` to the GitHub repository, for example `owner/repo`. The admin dashboard can then call `/api/update/check` after login and compare the running version with the latest GitHub Release.
 
 If the repository is not configured, the update check reports `unconfigured`. If GitHub cannot be reached or returns an error, the update check reports `error` without crashing the admin API.
 

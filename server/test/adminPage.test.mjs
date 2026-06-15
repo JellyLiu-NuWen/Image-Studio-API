@@ -12,13 +12,15 @@ test("renderAdminPage includes admin dashboard sections", () => {
   assert.match(html, /id="updateStatus"/);
 });
 
-test("renderAdminPage exposes the refreshed admin console landmarks", () => {
+test("renderAdminPage exposes the Chinese sidebar admin system landmarks", () => {
   const html = renderAdminPage();
 
-  assert.match(html, /Service online/);
-  assert.match(html, /Configuration/);
-  assert.match(html, /Live Operations/);
-  assert.match(html, /Recent Activity/);
+  assert.match(html, /登录 Image Studio API/);
+  assert.match(html, /仪表盘/);
+  assert.match(html, /接口配置/);
+  assert.match(html, /上游中转站/);
+  assert.match(html, /账号与安全/);
+  assert.match(html, /退出登录/);
 });
 
 test("renderAdminPage validates release link protocol before rendering href", () => {

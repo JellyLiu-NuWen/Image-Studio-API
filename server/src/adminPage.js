@@ -4,137 +4,193 @@ export function renderAdminPage() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Image Studio Self-Hosted API</title>
+  <title>Image Studio API 管理后台</title>
   <style>
     :root {
       color-scheme: light;
-      --bg: #eef1f4;
+      --bg: #eef2f6;
       --surface: #ffffff;
       --surface-alt: #f7f9fb;
-      --surface-soft: #f2f5f8;
-      --border: #d7dde5;
-      --border-strong: #c7d0da;
+      --surface-soft: #f1f5f8;
+      --border: #d8e0e8;
+      --border-strong: #c5d0dc;
       --text: #17212b;
-      --text-muted: #5d6b7b;
-      --text-soft: #7a8795;
-      --accent: #196c5f;
-      --accent-strong: #14584e;
-      --accent-soft: #e6f3f0;
-      --success: #1b7f4d;
-      --warning: #9a5b12;
+      --text-muted: #5e6c7c;
+      --text-soft: #8190a0;
+      --accent: #176b5f;
+      --accent-strong: #12574d;
+      --accent-soft: #e5f3ef;
+      --success: #18794e;
       --danger: #b42318;
-      --shadow: 0 16px 45px rgba(17, 24, 39, 0.08);
+      --warning: #956216;
+      --shadow: 0 16px 42px rgba(17, 24, 39, 0.08);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
     }
     * { box-sizing: border-box; }
-    html { background: var(--bg); }
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 24px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0)),
-        var(--bg);
+      background: var(--bg);
       color: var(--text);
     }
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
+    a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .shell {
-      width: min(1320px, 100%);
-      margin: 0 auto;
+    .hidden { display: none !important; }
+    .login-page {
+      min-height: 100vh;
       display: grid;
-      gap: 16px;
+      place-items: center;
+      padding: 24px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0)),
+        var(--bg);
     }
-    .topbar {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 20px 22px;
+    .login-card {
+      width: min(440px, 100%);
+      display: grid;
+      gap: 22px;
+      padding: 28px;
       border: 1px solid var(--border);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.82);
-      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      background: var(--surface);
       box-shadow: var(--shadow);
     }
-    .brand {
-      display: grid;
-      gap: 8px;
-      min-width: 0;
-    }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: fit-content;
-      padding: 5px 10px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent-strong);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0;
+    .login-card h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
       line-height: 1.2;
-    }
-    .eyebrow-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 0 4px rgba(27, 127, 77, 0.12);
-      flex: 0 0 auto;
-    }
-    h1 {
-      margin: 0;
-      font-size: 26px;
-      line-height: 1.15;
       letter-spacing: 0;
     }
-    .subtitle {
+    .login-card p {
       margin: 0;
-      max-width: 72ch;
       color: var(--text-muted);
       line-height: 1.6;
     }
-    .topbar-meta {
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+      padding: 20px;
+      border-right: 1px solid var(--border);
+      background: #fbfcfd;
+    }
+    .sidebar-brand {
       display: grid;
       gap: 8px;
-      justify-items: end;
-      text-align: right;
-      min-width: 180px;
     }
-    .meta-line {
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+    }
+    .sidebar-brand strong {
+      font-size: 16px;
+      line-height: 1.25;
+    }
+    .sidebar-brand span {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .nav-list {
+      display: grid;
+      align-content: start;
+      gap: 6px;
+    }
+    .nav-button {
+      width: 100%;
+      min-height: 40px;
       display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 12px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-muted);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+    }
+    .nav-button:hover {
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .nav-button.active {
+      border-color: rgba(23, 107, 95, 0.18);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+    .sidebar-footer {
+      display: grid;
+      gap: 10px;
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .main {
+      min-width: 0;
+      padding: 24px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .topbar p {
+      margin: 5px 0 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      gap: 8px;
     }
     .pill {
       display: inline-flex;
       align-items: center;
-      min-height: 28px;
+      min-height: 30px;
       padding: 0 10px;
       border: 1px solid var(--border);
       border-radius: 999px;
-      background: #fff;
+      background: var(--surface);
       color: var(--text-muted);
       font-size: 12px;
-      font-weight: 600;
-      line-height: 1;
+      font-weight: 700;
       white-space: nowrap;
     }
     .pill.ok {
-      border-color: rgba(27, 127, 77, 0.2);
-      background: rgba(27, 127, 77, 0.08);
+      border-color: rgba(24, 121, 78, 0.22);
+      background: rgba(24, 121, 78, 0.08);
       color: var(--success);
-    }
-    .pill.muted {
-      background: var(--surface-alt);
     }
     .status {
       min-height: 20px;
@@ -142,18 +198,27 @@ export function renderAdminPage() {
       font-size: 13px;
       line-height: 1.45;
     }
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+    .view {
+      display: none;
       gap: 16px;
-      align-items: start;
+    }
+    .view.active { display: grid; }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
     }
     .card {
+      min-width: 0;
       border: 1px solid var(--border);
       border-radius: 14px;
       background: var(--surface);
       box-shadow: var(--shadow);
-      min-width: 0;
     }
     .card-header {
       display: flex;
@@ -169,7 +234,7 @@ export function renderAdminPage() {
       line-height: 1.25;
       letter-spacing: 0;
     }
-    .card-header .hint {
+    .card-header span {
       color: var(--text-soft);
       font-size: 12px;
       line-height: 1.4;
@@ -178,40 +243,29 @@ export function renderAdminPage() {
     .card-body {
       padding: 18px 20px 20px;
     }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
     .metric {
       display: grid;
       gap: 8px;
-      min-width: 0;
-      padding: 14px;
+      padding: 15px;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--surface-alt);
+      border-radius: 13px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
     }
     .metric span {
       color: var(--text-soft);
       font-size: 12px;
       line-height: 1.35;
-      letter-spacing: 0;
     }
     .metric strong {
       font-size: 24px;
       line-height: 1.1;
-      letter-spacing: 0;
       overflow-wrap: anywhere;
     }
     .metric small {
       color: var(--text-muted);
       font-size: 12px;
       line-height: 1.35;
-    }
-    .stack {
-      display: grid;
-      gap: 16px;
     }
     form {
       display: grid;
@@ -221,9 +275,9 @@ export function renderAdminPage() {
     label {
       display: grid;
       gap: 7px;
+      color: var(--text);
       font-size: 13px;
       font-weight: 700;
-      color: var(--text);
     }
     label.full { grid-column: 1 / -1; }
     input, select {
@@ -232,17 +286,17 @@ export function renderAdminPage() {
       border: 1px solid var(--border-strong);
       border-radius: 10px;
       padding: 10px 12px;
-      font: inherit;
       background: #fff;
       color: var(--text);
-      transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+      font: inherit;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
     }
-    input::placeholder { color: #94a0ad; }
+    input::placeholder { color: #94a2b0; }
     input:focus,
     select:focus {
       outline: none;
-      border-color: rgba(25, 108, 95, 0.55);
-      box-shadow: 0 0 0 4px rgba(25, 108, 95, 0.12);
+      border-color: rgba(23, 107, 95, 0.55);
+      box-shadow: 0 0 0 4px rgba(23, 107, 95, 0.12);
     }
     .actions {
       grid-column: 1 / -1;
@@ -258,68 +312,40 @@ export function renderAdminPage() {
       min-height: 42px;
       padding: 0 16px;
       font: inherit;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
-      transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+      transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
     }
-    button:hover { transform: translateY(-1px); }
     button:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 4px rgba(25, 108, 95, 0.14);
+      box-shadow: 0 0 0 4px rgba(23, 107, 95, 0.14);
     }
-    button.primary {
+    .primary {
       background: var(--accent);
-      color: #fff;
       border-color: var(--accent);
-      box-shadow: 0 10px 24px rgba(25, 108, 95, 0.18);
+      color: #fff;
     }
-    button.primary:hover {
+    .primary:hover {
       background: var(--accent-strong);
       border-color: var(--accent-strong);
     }
-    button.secondary {
+    .secondary {
       background: var(--surface-soft);
-      color: var(--text);
       border-color: var(--border);
+      color: var(--text);
     }
-    button.secondary:hover {
-      background: #e9eef3;
-      border-color: #c9d3dd;
+    .secondary:hover {
+      background: #e8eef4;
+      border-color: #c8d4df;
     }
-    .dashboard-grid {
-      display: grid;
-      gap: 16px;
+    .danger-button {
+      background: #fff4f2;
+      border-color: rgba(180, 35, 24, 0.24);
+      color: var(--danger);
     }
-    .panel {
-      border-top: 1px solid var(--border);
-      padding-top: 16px;
-    }
-    .panel:first-child {
-      border-top: 0;
-      padding-top: 0;
-    }
-    .section-title {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .section-title h3,
-    .section-title h2 {
-      margin: 0;
-      font-size: 15px;
-      line-height: 1.3;
-    }
-    .section-title span {
-      color: var(--text-soft);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-    .log-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+    .muted {
+      color: var(--text-muted);
+      line-height: 1.55;
     }
     .log-list {
       display: grid;
@@ -330,236 +356,258 @@ export function renderAdminPage() {
       gap: 4px;
       padding: 12px 0;
       border-top: 1px solid var(--border);
-      color: var(--text);
       font-size: 13px;
       line-height: 1.45;
       overflow-wrap: anywhere;
     }
-    .log-row:first-child { border-top: 0; padding-top: 0; }
-    .log-row.empty { color: var(--text-soft); }
+    .log-row:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
     .log-row strong { color: var(--text); }
     .log-row.ok strong { color: var(--success); }
     .log-row.danger strong { color: var(--danger); }
-    .log-row .meta {
-      color: var(--text-muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-    .update-card {
-      display: grid;
-      gap: 12px;
-    }
-    .update-card .update-status {
+    .log-row.empty { color: var(--text-soft); }
+    .update-status {
       display: grid;
       gap: 6px;
       padding: 14px;
       border: 1px solid var(--border);
       border-radius: 12px;
       background: var(--surface-alt);
+      overflow-wrap: anywhere;
     }
-    .update-card .update-status strong {
+    .update-status strong {
       font-size: 15px;
-      line-height: 1.3;
+      line-height: 1.35;
     }
-    .update-card .update-status span {
+    .update-status span {
       color: var(--text-muted);
       font-size: 13px;
       line-height: 1.45;
-      overflow-wrap: anywhere;
     }
-    .muted {
-      color: var(--text-muted);
+    @media (max-width: 1040px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
-    .compact {
-      font-size: 12px;
-      line-height: 1.4;
-    }
-    @media (max-width: 1100px) {
-      .layout { grid-template-columns: 1fr; }
-      .topbar { flex-direction: column; }
-      .topbar-meta { justify-items: start; text-align: left; }
-      .meta-line { justify-content: flex-start; }
-    }
-    @media (max-width: 820px) {
-      body { padding: 16px; }
-      .summary-grid,
-      .log-grid { grid-template-columns: 1fr; }
-      form { grid-template-columns: 1fr; }
-      .card-header,
-      .section-title { align-items: flex-start; flex-direction: column; }
+    @media (max-width: 760px) {
+      .main { padding: 16px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .topbar-actions { justify-content: flex-start; }
+      .grid-4,
+      .grid-2,
+      form,
+      .nav-list { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
-      <div class="brand">
-        <span class="eyebrow"><span class="eyebrow-dot"></span>Service online</span>
-        <h1>Image Studio Self-Hosted API</h1>
-        <p class="subtitle">A private image API console for your own server. Configure upstream access, watch request metrics, and keep the client token separate from your upstream key.</p>
+  <section id="loginPage" class="login-page">
+    <form id="loginForm" class="login-card">
+      <div>
+        <h1>登录 Image Studio API</h1>
+        <p>使用后台账号密码进入管理系统。生图调用仍然使用接口配置里的服务 API Key。</p>
       </div>
-      <div class="topbar-meta" aria-label="Service status">
-        <div class="meta-line">
-          <span class="pill ok">Self-hosted</span>
-          <span class="pill muted">v1.2.5</span>
-        </div>
-        <div class="status" id="status">Load config to begin.</div>
-      </div>
-    </header>
+      <label>账号
+        <input id="loginUsername" autocomplete="username" placeholder="admin">
+      </label>
+      <label>密码
+        <input id="loginPassword" autocomplete="current-password" type="password" placeholder="请输入后台密码">
+      </label>
+      <button type="submit" class="primary">登录后台</button>
+      <div id="loginStatus" class="status"></div>
+    </form>
+  </section>
 
-    <section class="summary-grid" aria-label="Live operations summary">
-      <div class="metric">
-        <span>Active requests</span>
-        <strong id="summaryActive">0</strong>
-        <small>Current in-flight calls</small>
+  <section id="appShell" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">IS</div>
+        <strong>Image Studio API</strong>
+        <span>自托管生图中转管理系统</span>
       </div>
-      <div class="metric">
-        <span>API success</span>
-        <strong id="summaryApiSuccess">0</strong>
-        <small>Authorized service calls</small>
+      <nav class="nav-list" aria-label="后台导航">
+        <button class="nav-button active" type="button" data-view="dashboardView">仪表盘</button>
+        <button class="nav-button" type="button" data-view="clientConfigView">接口配置</button>
+        <button class="nav-button" type="button" data-view="upstreamConfigView">上游中转站</button>
+        <button class="nav-button" type="button" data-view="logsView">调用日志</button>
+        <button class="nav-button" type="button" data-view="updatesView">版本更新</button>
+        <button class="nav-button" type="button" data-view="accountView">账号与安全</button>
+      </nav>
+      <div class="sidebar-footer">
+        <span id="currentAccount">当前账号：admin</span>
+        <button type="button" class="secondary" id="logoutBtn">退出登录</button>
       </div>
-      <div class="metric">
-        <span>Generation success</span>
-        <strong id="summaryGenSuccess">0</strong>
-        <small>Completed image jobs</small>
-      </div>
-      <div class="metric">
-        <span>P95 latency</span>
-        <strong id="summaryLatency">0ms</strong>
-        <small>Latest response tail</small>
-      </div>
-    </section>
+    </aside>
 
-    <section class="layout" aria-label="Admin workspace">
-      <section class="card">
-        <div class="card-header">
-          <div>
-            <h2>Configuration</h2>
-            <div class="hint">Keep secrets on the server. Blank secret fields preserve the saved value.</div>
-          </div>
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">仪表盘</h1>
+          <p id="pageDescription">查看服务状态、调用量、响应速度和生图任务概览。</p>
         </div>
-        <div class="card-body">
-          <form id="configForm">
-            <label class="full">Admin Token
-              <input id="adminToken" autocomplete="off" type="password" placeholder="ADMIN_TOKEN">
-            </label>
-            <label class="full">Upstream Base URL
-              <input id="upstreamBaseURL" placeholder="https://api.openai.com/v1">
-            </label>
-            <label class="full">Upstream API Key
-              <input id="upstreamApiKey" autocomplete="off" type="password" placeholder="Leave blank to keep current key">
-            </label>
-            <label class="full">Image API Token
-              <input id="imageApiToken" autocomplete="off" type="password" placeholder="Leave blank to keep current token">
-            </label>
-            <label>Default Image Model
-              <input id="defaultImageModel" placeholder="gpt-image-2">
-            </label>
-            <label>Default Text Model
-              <input id="defaultTextModel" placeholder="gpt-5.5">
-            </label>
-            <label>Default Size
-              <input id="defaultSize" placeholder="1024x1024">
-            </label>
-            <label>Default Quality
-              <select id="defaultQuality">
-                <option value="auto">auto</option>
-                <option value="low">low</option>
-                <option value="medium">medium</option>
-                <option value="high">high</option>
-              </select>
-            </label>
-            <label>Default Output Format
-              <select id="defaultOutputFormat">
-                <option value="png">png</option>
-                <option value="jpeg">jpeg</option>
-                <option value="webp">webp</option>
-              </select>
-            </label>
-            <label>Request Timeout Seconds
-              <input id="requestTimeoutSeconds" type="number" min="10" max="900" step="1">
-            </label>
-            <label>Max Concurrent Requests
-              <input id="maxConcurrentRequests" type="number" min="1" max="10" step="1">
-            </label>
-            <label>Rate Limit Per Minute
-              <input id="rateLimitPerMinute" type="number" min="1" max="600" step="1">
-            </label>
-            <div class="actions">
-              <button type="button" class="secondary" id="loadBtn">Load Config</button>
-              <button type="button" class="secondary" id="dashboardBtn">Refresh Dashboard</button>
-              <button type="submit" class="primary">Save Config</button>
-            </div>
-          </form>
+        <div class="topbar-actions">
+          <span class="pill ok">服务在线</span>
+          <span class="pill">自托管</span>
+          <button type="button" class="secondary" id="refreshBtn">刷新数据</button>
+        </div>
+      </header>
+      <div id="status" class="status"></div>
+
+      <section id="dashboardView" class="view active">
+        <div class="grid-4" aria-label="仪表盘指标">
+          <div class="metric"><span>活跃请求</span><strong id="summaryActive">0</strong><small>当前正在处理的调用</small></div>
+          <div class="metric"><span>API 成功</span><strong id="summaryApiSuccess">0</strong><small>已通过鉴权的调用</small></div>
+          <div class="metric"><span>生图成功</span><strong id="summaryGenSuccess">0</strong><small>完成的图片任务</small></div>
+          <div class="metric"><span>P95 响应</span><strong id="summaryLatency">0ms</strong><small>最近响应尾延迟</small></div>
+        </div>
+        <div class="grid-2">
+          <section class="card">
+            <div class="card-header"><h2>运行指标</h2><span>吞吐、错误与响应速度</span></div>
+            <div class="card-body" id="metricsPanel"><div class="muted">暂无指标，请刷新数据。</div></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><h2>版本状态</h2><span>当前版本与仓库版本对比</span></div>
+            <div class="card-body"><div id="updateStatus" class="update-status"><strong>尚未检查版本</strong><span>刷新数据后会显示版本对齐情况。</span></div></div>
+          </section>
         </div>
       </section>
 
-      <section class="stack">
+      <section id="clientConfigView" class="view">
         <section class="card">
-          <div class="card-header">
-            <div>
-              <h2>Live Operations</h2>
-              <div class="hint">Metrics and version check refresh from the server API.</div>
-            </div>
-          </div>
-          <div class="card-body dashboard-grid">
-            <div class="panel">
-              <div class="section-title">
-                <h3>Metrics</h3>
-                <span>Response speed and throughput</span>
-              </div>
-              <div id="metricsPanel">
-                <div class="muted">No metrics loaded yet.</div>
-              </div>
-            </div>
-            <div class="panel update-card">
-              <div class="section-title">
-                <h3>Update status</h3>
-                <span>Current release versus upstream</span>
-              </div>
-              <div id="updateStatus" class="update-status">
-                <strong>Update status is not connected yet.</strong>
-                <span>Load the dashboard to check version alignment.</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <h2>Recent Activity</h2>
-              <div class="hint">Image jobs and API calls are recorded separately.</div>
-            </div>
-          </div>
+          <div class="card-header"><h2>接口配置</h2><span>给 Codex、Skill、OpenClaw 或其他 AI 工具使用</span></div>
           <div class="card-body">
-            <div class="log-grid">
-              <div class="panel">
-                <div class="section-title">
-                  <h3>Generation Logs</h3>
-                  <span>Recent image requests</span>
-                </div>
-                <div id="generationLogs" class="log-list">
-                  <div class="log-row empty">No records yet.</div>
-                </div>
+            <form id="clientConfigForm">
+              <label class="full">你的服务 API Key
+                <input id="imageApiToken" autocomplete="off" type="password" placeholder="留空表示保留当前 Key">
+              </label>
+              <label>默认生图模型
+                <input id="defaultImageModel" placeholder="gpt-image-2">
+              </label>
+              <label>默认文本模型
+                <input id="defaultTextModel" placeholder="gpt-5.5">
+              </label>
+              <label>默认尺寸
+                <input id="defaultSize" placeholder="1024x1024">
+              </label>
+              <label>默认质量
+                <select id="defaultQuality">
+                  <option value="auto">auto</option>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+              </label>
+              <label>默认输出格式
+                <select id="defaultOutputFormat">
+                  <option value="png">png</option>
+                  <option value="jpeg">jpeg</option>
+                  <option value="webp">webp</option>
+                </select>
+              </label>
+              <label>请求超时秒数
+                <input id="requestTimeoutSeconds" type="number" min="10" max="900" step="1">
+              </label>
+              <label>最大并发请求
+                <input id="maxConcurrentRequests" type="number" min="1" max="10" step="1">
+              </label>
+              <label>每分钟限流
+                <input id="rateLimitPerMinute" type="number" min="1" max="600" step="1">
+              </label>
+              <div class="actions">
+                <button type="button" class="secondary" id="loadConfigBtn">加载配置</button>
+                <button type="submit" class="primary">保存接口配置</button>
               </div>
-              <div class="panel">
-                <div class="section-title">
-                  <h3>API Logs</h3>
-                  <span>Recent API calls</span>
-                </div>
-                <div id="apiLogs" class="log-list">
-                  <div class="log-row empty">No records yet.</div>
-                </div>
-              </div>
-            </div>
+            </form>
           </div>
         </section>
       </section>
-    </section>
-  </main>
+
+      <section id="upstreamConfigView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>上游中转站</h2><span>你的服务器会用这里的 URL 和 Key 去访问上游生图服务</span></div>
+          <div class="card-body">
+            <form id="upstreamConfigForm">
+              <label class="full">上游中转站 URL
+                <input id="upstreamBaseURL" placeholder="https://example.com/v1">
+              </label>
+              <label class="full">上游中转站 Key
+                <input id="upstreamApiKey" autocomplete="off" type="password" placeholder="留空表示保留当前 Key">
+              </label>
+              <div class="actions">
+                <button type="button" class="secondary" id="loadUpstreamBtn">加载配置</button>
+                <button type="submit" class="primary">保存上游配置</button>
+              </div>
+            </form>
+            <p class="muted">调用链：Codex / Skill -> 你的服务器 IP + 服务 API Key -> 后台配置的中转站 URL + 中转站 Key -> 生图模型。</p>
+          </div>
+        </section>
+      </section>
+
+      <section id="logsView" class="view">
+        <div class="grid-2">
+          <section class="card">
+            <div class="card-header"><h2>生图日志</h2><span>最近图片生成请求</span></div>
+            <div class="card-body"><div id="generationLogs" class="log-list"><div class="log-row empty">暂无记录。</div></div></div>
+          </section>
+          <section class="card">
+            <div class="card-header"><h2>API 调用日志</h2><span>后台与接口请求记录</span></div>
+            <div class="card-body"><div id="apiLogs" class="log-list"><div class="log-row empty">暂无记录。</div></div></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="updatesView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>版本更新</h2><span>检查 GitHub Release 是否有新版本</span></div>
+          <div class="card-body">
+            <div id="updateStatusMirror" class="update-status"><strong>尚未检查版本</strong><span>点击刷新数据检查当前版本。</span></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="accountView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>账号与安全</h2><span>修改后台登录账号和密码</span></div>
+          <div class="card-body">
+            <form id="accountForm">
+              <label>后台账号
+                <input id="accountUsername" autocomplete="username" placeholder="admin">
+              </label>
+              <label>当前密码
+                <input id="currentPassword" autocomplete="current-password" type="password" placeholder="请输入当前密码">
+              </label>
+              <label class="full">新密码
+                <input id="newPassword" autocomplete="new-password" type="password" placeholder="至少 8 个字符">
+              </label>
+              <div class="actions">
+                <button type="submit" class="primary">保存账号密码</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </section>
+    </main>
+  </section>
+
   <script>
-    const fields = [
+    const views = {
+      dashboardView: ["仪表盘", "查看服务状态、调用量、响应速度和生图任务概览。"],
+      clientConfigView: ["接口配置", "管理给 Codex、Skill、OpenClaw 或其他 AI 工具调用的服务 Key 和默认参数。"],
+      upstreamConfigView: ["上游中转站", "配置你的服务器转发到上游中转站时使用的 URL 和 Key。"],
+      logsView: ["调用日志", "查看生图日志、API 调用日志和响应耗时。"],
+      updatesView: ["版本更新", "检查当前版本与 GitHub Release 的对齐情况。"],
+      accountView: ["账号与安全", "修改后台登录账号和密码。"]
+    };
+    const configFields = [
       "upstreamBaseURL",
       "defaultImageModel",
       "defaultTextModel",
@@ -570,17 +618,17 @@ export function renderAdminPage() {
       "maxConcurrentRequests",
       "rateLimitPerMinute"
     ];
-    const secretFields = ["upstreamApiKey", "imageApiToken"];
     const statusEl = document.getElementById("status");
-    const adminTokenEl = document.getElementById("adminToken");
-
-    function tokenHeader() {
-      return { authorization: "Bearer " + adminTokenEl.value.trim() };
-    }
+    const loginStatusEl = document.getElementById("loginStatus");
 
     function setStatus(message, kind = "") {
       statusEl.textContent = message;
       statusEl.className = "status " + kind;
+    }
+
+    function setLoginStatus(message, kind = "") {
+      loginStatusEl.textContent = message;
+      loginStatusEl.className = "status " + kind;
     }
 
     function escapeHTML(value) {
@@ -592,13 +640,92 @@ export function renderAdminPage() {
         .replaceAll("'", "&#39;");
     }
 
-    async function fetchAdminJSON(path) {
-      const response = await fetch("/api" + path, { headers: tokenHeader() });
+    async function fetchAdminJSON(path, options = {}) {
+      const response = await fetch("/api" + path, {
+        credentials: "same-origin",
+        ...options,
+        headers: {
+          ...(options.body ? { "content-type": "application/json" } : {}),
+          ...(options.headers || {})
+        }
+      });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.error?.message || "Request failed.");
+        throw new Error(data.error?.message || "请求失败");
       }
       return data;
+    }
+
+    function showApp(account) {
+      document.getElementById("loginPage").classList.add("hidden");
+      document.getElementById("appShell").classList.remove("hidden");
+      const username = account?.username || "admin";
+      document.getElementById("currentAccount").textContent = "当前账号：" + username;
+      document.getElementById("accountUsername").value = username;
+    }
+
+    function showLogin() {
+      document.getElementById("appShell").classList.add("hidden");
+      document.getElementById("loginPage").classList.remove("hidden");
+    }
+
+    function switchView(viewId) {
+      for (const element of document.querySelectorAll(".view")) {
+        element.classList.toggle("active", element.id === viewId);
+      }
+      for (const button of document.querySelectorAll(".nav-button")) {
+        button.classList.toggle("active", button.dataset.view === viewId);
+      }
+      document.getElementById("pageTitle").textContent = views[viewId]?.[0] || "管理后台";
+      document.getElementById("pageDescription").textContent = views[viewId]?.[1] || "";
+      if (viewId === "logsView" || viewId === "dashboardView" || viewId === "updatesView") {
+        loadDashboard();
+      }
+    }
+
+    function fillConfig(config) {
+      for (const name of configFields) {
+        document.getElementById(name).value = config[name] ?? "";
+      }
+      document.getElementById("upstreamApiKey").placeholder = config.upstreamApiKeySet
+        ? "当前上游 Key 已保存，留空表示不修改"
+        : "尚未保存上游 Key";
+      document.getElementById("imageApiToken").placeholder = config.imageApiTokenSet
+        ? "当前服务 API Key 已保存，留空表示不修改"
+        : "尚未保存服务 API Key";
+      document.getElementById("upstreamApiKey").value = "";
+      document.getElementById("imageApiToken").value = "";
+      document.getElementById("accountUsername").value = config.adminUsername || "admin";
+    }
+
+    async function loadConfig() {
+      setStatus("正在加载配置...");
+      const data = await fetchAdminJSON("/config");
+      fillConfig(data.config);
+      setStatus("配置已加载。", "ok");
+      return data.config;
+    }
+
+    function collectConfigPatch(includeSecrets = true) {
+      const body = {};
+      for (const name of configFields) {
+        body[name] = document.getElementById(name).value;
+      }
+      if (includeSecrets) {
+        body.upstreamApiKey = document.getElementById("upstreamApiKey").value;
+        body.imageApiToken = document.getElementById("imageApiToken").value;
+      }
+      return body;
+    }
+
+    async function saveConfig(patch) {
+      setStatus("正在保存配置...");
+      const data = await fetchAdminJSON("/config", {
+        method: "POST",
+        body: JSON.stringify(patch)
+      });
+      fillConfig(data.config);
+      setStatus("配置已保存。", "ok");
     }
 
     function metricCard(label, value, hint) {
@@ -619,23 +746,32 @@ export function renderAdminPage() {
       document.getElementById("summaryGenSuccess").textContent = generations.success ?? 0;
       document.getElementById("summaryLatency").textContent = (api.p95DurationMs ?? 0) + "ms";
       document.getElementById("metricsPanel").innerHTML = [
-        '<div class="summary-grid">',
-        metricCard("API total", api.total ?? 0, "All tracked API calls"),
-        metricCard("API error", api.error ?? 0, "Rejected or failed calls"),
-        metricCard("Generation total", generations.total ?? 0, "All tracked image jobs"),
-        metricCard("Generation error", generations.failed ?? 0, "Failed image jobs"),
-        metricCard("API p50", (api.p50DurationMs ?? 0) + "ms", "Median API response time"),
-        metricCard("API p95", (api.p95DurationMs ?? 0) + "ms", "Tail latency"),
-        metricCard("Generation p50", (generations.p50DurationMs ?? 0) + "ms", "Median generation time"),
-        metricCard("Generation p95", (generations.p95DurationMs ?? 0) + "ms", "Tail generation time"),
+        '<div class="grid-4">',
+        metricCard("API 总数", api.total ?? 0, "全部接口调用"),
+        metricCard("API 错误", api.error ?? 0, "失败或被拒绝调用"),
+        metricCard("生图总数", generations.total ?? 0, "全部图片任务"),
+        metricCard("生图失败", generations.failed ?? 0, "失败图片任务"),
+        metricCard("API P50", (api.p50DurationMs ?? 0) + "ms", "接口中位耗时"),
+        metricCard("API P95", (api.p95DurationMs ?? 0) + "ms", "接口尾延迟"),
+        metricCard("生图 P50", (generations.p50DurationMs ?? 0) + "ms", "生图中位耗时"),
+        metricCard("生图 P95", (generations.p95DurationMs ?? 0) + "ms", "生图尾延迟"),
         '</div>'
       ].join("");
     }
 
     function summarizeRecord(record) {
       const parts = [];
+      const labels = {
+        createdAt: "时间",
+        path: "路径",
+        endpoint: "端点",
+        method: "方法",
+        status: "状态",
+        upstreamStatus: "上游状态",
+        durationMs: "耗时(ms)"
+      };
       for (const key of ["createdAt", "path", "endpoint", "method", "status", "upstreamStatus", "durationMs"]) {
-        if (record?.[key] !== undefined) parts.push(key + ": " + record[key]);
+        if (record?.[key] !== undefined) parts.push(labels[key] + ": " + record[key]);
       }
       return parts.length ? parts.join(" | ") : JSON.stringify(record);
     }
@@ -643,12 +779,12 @@ export function renderAdminPage() {
     function renderRows(id, records) {
       const container = document.getElementById(id);
       if (!Array.isArray(records) || records.length === 0) {
-        container.innerHTML = '<div class="log-row empty">No records yet.</div>';
+        container.innerHTML = '<div class="log-row empty">暂无记录。</div>';
         return;
       }
       container.innerHTML = records.map((record) => (
-        '<div class="log-row ' + escapeHTML(record?.status === "error" ? "danger" : "ok") + '">' +
-        '<strong>' + escapeHTML(record?.status ?? record?.method ?? "record") + '</strong>' +
+        '<div class="log-row ' + escapeHTML(record?.status === "failed" || record?.status === "error" ? "danger" : "ok") + '">' +
+        '<strong>' + escapeHTML(record?.status ?? record?.method ?? "记录") + '</strong>' +
         '<div>' + escapeHTML(summarizeRecord(record)) + '</div>' +
         '</div>'
       )).join("");
@@ -664,116 +800,131 @@ export function renderAdminPage() {
     }
 
     function renderUpdate(update) {
-      const container = document.getElementById("updateStatus");
       const current = update?.currentVersion ?? "";
       const latest = update?.latestVersion ?? "";
       const status = update?.status ?? "unknown";
       const releaseURL = update?.releaseURL ?? "";
       const safeReleaseURL = safeHTTPSURL(releaseURL);
       const rows = [
-        "<strong>Version status: " + escapeHTML(status) + "</strong>",
-        "<span>Current: " + escapeHTML(current || "unknown") + "</span>",
-        "<span>Latest: " + escapeHTML(latest || "unknown") + "</span>"
+        "<strong>版本状态：" + escapeHTML(status) + "</strong>",
+        "<span>当前版本：" + escapeHTML(current || "未知") + "</span>",
+        "<span>仓库版本：" + escapeHTML(latest || "未知") + "</span>"
       ];
       if (safeReleaseURL) {
-        rows.push('<span>Release: <a href="' + escapeHTML(safeReleaseURL) + '" rel="noreferrer" target="_blank">' + escapeHTML(safeReleaseURL) + '</a></span>');
+        rows.push('<span>Release：<a href="' + escapeHTML(safeReleaseURL) + '" rel="noreferrer" target="_blank">' + escapeHTML(safeReleaseURL) + '</a></span>');
       } else if (releaseURL) {
-        rows.push("<span>Release: " + escapeHTML(releaseURL) + "</span>");
+        rows.push("<span>Release：" + escapeHTML(releaseURL) + "</span>");
       }
-      container.className = "update-status";
-      container.innerHTML = rows.join("");
-    }
-
-    async function checkUpdate() {
-      const container = document.getElementById("updateStatus");
-      container.className = "update-status";
-      container.innerHTML = "<strong>Checking for updates...</strong><span>Comparing the running release with upstream.</span>";
-      const data = await fetchAdminJSON("/update/check");
-      renderUpdate(data.update);
+      const html = rows.join("");
+      document.getElementById("updateStatus").innerHTML = html;
+      document.getElementById("updateStatusMirror").innerHTML = html;
     }
 
     async function loadDashboard() {
-      if (!adminTokenEl.value.trim()) return;
-      checkUpdate().catch((error) => {
-        const container = document.getElementById("updateStatus");
-        container.className = "update-status";
-        container.innerHTML = "<strong class='danger'>Update check failed.</strong><span>" + escapeHTML(error.message || "Unable to refresh update status.") + "</span>";
-      });
       try {
-        const [metricsData, generationData, apiData] = await Promise.all([
+        const [metricsData, generationData, apiData, updateData] = await Promise.all([
           fetchAdminJSON("/metrics"),
           fetchAdminJSON("/logs?type=generations"),
-          fetchAdminJSON("/logs?type=api")
+          fetchAdminJSON("/logs?type=api"),
+          fetchAdminJSON("/update/check")
         ]);
         renderMetrics(metricsData.metrics);
         renderRows("generationLogs", generationData.records);
         renderRows("apiLogs", apiData.records);
+        renderUpdate(updateData.update);
+        setStatus("数据已刷新。", "ok");
       } catch (error) {
-        setStatus(error.message || "Failed to load dashboard.", "danger");
+        setStatus(error.message || "刷新失败。", "danger");
       }
     }
 
-    function fillConfig(config) {
-      for (const name of fields) {
-        document.getElementById(name).value = config[name] ?? "";
+    async function bootstrap() {
+      try {
+        const session = await fetchAdminJSON("/session");
+        if (!session.authenticated) {
+          showLogin();
+          return;
+        }
+        showApp(session.account);
+        await loadConfig();
+        await loadDashboard();
+      } catch {
+        showLogin();
       }
-      document.getElementById("upstreamApiKey").placeholder = config.upstreamApiKeySet
-        ? "Current key is saved. Leave blank to keep it."
-        : "No key saved yet.";
-      document.getElementById("imageApiToken").placeholder = config.imageApiTokenSet
-        ? "Current token is saved. Leave blank to keep it."
-        : "No token saved yet.";
-      for (const name of secretFields) document.getElementById(name).value = "";
     }
 
-    async function loadConfig() {
-      if (!adminTokenEl.value.trim()) {
-        setStatus("Enter ADMIN_TOKEN first.", "danger");
-        return;
-      }
-      setStatus("Loading...");
-      const response = await fetch("/api/config", { headers: tokenHeader() });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setStatus(data.error?.message || "Failed to load config.", "danger");
-        return;
-      }
-      fillConfig(data.config);
-      setStatus("Config loaded.", "ok");
-      await loadDashboard();
-    }
-
-    async function saveConfig(event) {
+    document.getElementById("loginForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!adminTokenEl.value.trim()) {
-        setStatus("Enter ADMIN_TOKEN first.", "danger");
-        return;
+      setLoginStatus("正在登录...");
+      try {
+        const data = await fetchAdminJSON("/login", {
+          method: "POST",
+          body: JSON.stringify({
+            username: document.getElementById("loginUsername").value,
+            password: document.getElementById("loginPassword").value
+          })
+        });
+        setLoginStatus("");
+        showApp(data.account);
+        await loadConfig();
+        await loadDashboard();
+      } catch (error) {
+        setLoginStatus(error.message || "登录失败。", "danger");
       }
-      const body = {};
-      for (const name of fields.concat(secretFields)) {
-        body[name] = document.getElementById(name).value;
-      }
-      setStatus("Saving...");
-      const response = await fetch("/api/config", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          ...tokenHeader()
-        },
-        body: JSON.stringify(body)
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setStatus(data.error?.message || "Failed to save config.", "danger");
-        return;
-      }
-      fillConfig(data.config);
-      setStatus("Config saved.", "ok");
-    }
+    });
 
-    document.getElementById("loadBtn").addEventListener("click", loadConfig);
-    document.getElementById("dashboardBtn").addEventListener("click", loadDashboard);
-    document.getElementById("configForm").addEventListener("submit", saveConfig);
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await fetchAdminJSON("/logout", { method: "POST", body: "{}" }).catch(() => ({}));
+      showLogin();
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+    document.getElementById("loadConfigBtn").addEventListener("click", loadConfig);
+    document.getElementById("loadUpstreamBtn").addEventListener("click", loadConfig);
+    document.querySelectorAll(".nav-button").forEach((button) => {
+      button.addEventListener("click", () => switchView(button.dataset.view));
+    });
+
+    document.getElementById("clientConfigForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const patch = collectConfigPatch(true);
+      patch.upstreamBaseURL = undefined;
+      patch.upstreamApiKey = "";
+      await saveConfig(patch);
+    });
+
+    document.getElementById("upstreamConfigForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await saveConfig({
+        ...collectConfigPatch(false),
+        upstreamBaseURL: document.getElementById("upstreamBaseURL").value,
+        upstreamApiKey: document.getElementById("upstreamApiKey").value,
+        imageApiToken: ""
+      });
+    });
+
+    document.getElementById("accountForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setStatus("正在保存账号...");
+      try {
+        const data = await fetchAdminJSON("/account", {
+          method: "POST",
+          body: JSON.stringify({
+            username: document.getElementById("accountUsername").value,
+            currentPassword: document.getElementById("currentPassword").value,
+            newPassword: document.getElementById("newPassword").value
+          })
+        });
+        document.getElementById("currentPassword").value = "";
+        document.getElementById("newPassword").value = "";
+        showApp(data.account);
+        setStatus("账号密码已更新。", "ok");
+      } catch (error) {
+        setStatus(error.message || "账号保存失败。", "danger");
+      }
+    });
+
+    bootstrap();
   </script>
 </body>
 </html>`;

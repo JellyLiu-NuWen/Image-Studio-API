@@ -17,11 +17,11 @@
 
 ## 安全模型
 
-服务使用三类密钥:
+服务使用三类凭据:
 
 | 变量 | 用途 | 谁应该知道 |
 |---|---|---|
-| `ADMIN_TOKEN` | 进入 `/admin` 和调用 `/api/config` | 只有管理员 |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 初始后台登录账号密码，登录后可在后台修改 | 只有管理员 |
 | `IMAGE_API_TOKEN` | Codex / 其他 AI 客户端调用生图接口 | 受信任客户端 |
 | `UPSTREAM_API_KEY` | 服务端调用模型上游 | 只有服务器 |
 
@@ -39,7 +39,8 @@ cp server/.env.example server/.env
 编辑 `server/.env`:
 
 ```env
-ADMIN_TOKEN=replace-with-a-long-admin-token
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=replace-with-a-long-admin-password
 IMAGE_API_TOKEN=replace-with-a-long-client-token
 UPSTREAM_BASE_URL=https://api.openai.com/v1
 UPSTREAM_API_KEY=replace-with-your-upstream-key
@@ -71,7 +72,7 @@ curl http://SERVER_IP:8787/healthz
 http://SERVER_IP:8787/admin
 ```
 
-输入 `ADMIN_TOKEN` 后可以修改上游地址、上游 API Key、客户端 token、默认模型、尺寸、质量、限流和并发。
+使用后台账号密码登录后，可以修改上游地址、上游 API Key、客户端 token、默认模型、尺寸、质量、限流、并发和后台账号密码。
 
 ## 直接 Node 运行
 
@@ -86,7 +87,8 @@ node src/index.js
 PowerShell 示例:
 
 ```powershell
-$env:ADMIN_TOKEN="replace-with-a-long-admin-token"
+$env:ADMIN_USERNAME="admin"
+$env:ADMIN_PASSWORD="replace-with-a-long-admin-password"
 $env:IMAGE_API_TOKEN="replace-with-a-long-client-token"
 $env:UPSTREAM_BASE_URL="https://api.openai.com/v1"
 $env:UPSTREAM_API_KEY="replace-with-your-upstream-key"
