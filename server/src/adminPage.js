@@ -90,11 +90,72 @@ export function renderAdminPage() {
       min-height: 24px;
       color: #59636e;
     }
+    .dashboard {
+      margin-top: 28px;
+      display: grid;
+      gap: 16px;
+    }
+    .dashboard h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+    .panel {
+      border: 1px solid #d8d8d0;
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfbf8;
+      color: #1f2328;
+    }
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .metric {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+    .metric span {
+      color: #59636e;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .metric strong {
+      font-size: 20px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+    .log-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .log-row {
+      display: grid;
+      gap: 4px;
+      padding: 10px 0;
+      border-top: 1px solid #e2e2dc;
+      color: #394049;
+      font-size: 13px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .log-row:first-child { border-top: 0; padding-top: 0; }
+    .log-row.empty { color: #59636e; }
+    .log-row strong { color: #1f2328; }
     .danger { color: #a5332a; }
     .ok { color: #176b5f; }
     @media (max-width: 720px) {
       main { padding: 18px; }
       form { grid-template-columns: 1fr; }
+      .metrics-grid, .log-grid { grid-template-columns: 1fr; }
     }
     @media (prefers-color-scheme: dark) {
       :root { background: #111416; color: #f4f4f0; }
@@ -103,6 +164,10 @@ export function renderAdminPage() {
       label { color: #d7dce1; }
       input, select { background: #101316; color: #f4f4f0; border-color: #394049; }
       button.secondary { background: #23292e; color: #f4f4f0; border-color: #394049; }
+      .panel { background: #15191c; border-color: #30363d; color: #f4f4f0; }
+      .metric span, .log-row.empty { color: #a8b0b8; }
+      .log-row { border-color: #30363d; color: #d7dce1; }
+      .log-row strong { color: #f4f4f0; }
     }
   </style>
 </head>
@@ -158,10 +223,36 @@ export function renderAdminPage() {
       </label>
       <div class="actions">
         <button type="button" class="secondary" id="loadBtn">Load Config</button>
+        <button type="button" class="secondary" id="dashboardBtn">Refresh Dashboard</button>
         <button type="submit">Save Config</button>
         <span id="status" class="status"></span>
       </div>
     </form>
+    <section class="dashboard" aria-label="Admin Dashboard">
+      <h2>Dashboard</h2>
+      <div id="metricsPanel" class="panel">
+        <h3>Metrics</h3>
+        <p>No metrics loaded yet.</p>
+      </div>
+      <div class="log-grid">
+        <div class="panel">
+          <h3>Generation Logs</h3>
+          <div id="generationLogs" class="log-list">
+            <div class="log-row empty">No records yet.</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>API Logs</h3>
+          <div id="apiLogs" class="log-list">
+            <div class="log-row empty">No records yet.</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Updates</h3>
+        <div id="updateStatus" class="log-row empty">Update status is not connected yet.</div>
+      </div>
+    </section>
   </main>
   <script>
     const fields = [
@@ -186,6 +277,85 @@ export function renderAdminPage() {
     function setStatus(message, kind = "") {
       statusEl.textContent = message;
       statusEl.className = "status " + kind;
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    async function fetchAdminJSON(path) {
+      const response = await fetch("/api" + path, { headers: tokenHeader() });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error?.message || "Request failed.");
+      }
+      return data;
+    }
+
+    function metricCard(label, value) {
+      return '<div class="metric"><span>' + escapeHTML(label) + '</span><strong>' + escapeHTML(value) + '</strong></div>';
+    }
+
+    function renderMetrics(metrics) {
+      const api = metrics?.api ?? {};
+      const generations = metrics?.generations ?? {};
+      document.getElementById("metricsPanel").innerHTML = [
+        "<h3>Metrics</h3>",
+        '<div class="metrics-grid">',
+        metricCard("Active requests", metrics?.activeRequests ?? 0),
+        metricCard("API total", api.total ?? 0),
+        metricCard("API success", api.success ?? 0),
+        metricCard("API error", api.error ?? 0),
+        metricCard("API p50 ms", api.p50DurationMs ?? 0),
+        metricCard("API p95 ms", api.p95DurationMs ?? 0),
+        metricCard("Generations total", generations.total ?? 0),
+        metricCard("Generations success", generations.success ?? 0),
+        metricCard("Generations failed", generations.failed ?? 0),
+        metricCard("Generations p50 ms", generations.p50DurationMs ?? 0),
+        metricCard("Generations p95 ms", generations.p95DurationMs ?? 0),
+        "</div>"
+      ].join("");
+    }
+
+    function summarizeRecord(record) {
+      const parts = [];
+      for (const key of ["timestamp", "endpoint", "method", "status", "upstreamStatus", "durationMs"]) {
+        if (record?.[key] !== undefined) parts.push(key + ": " + record[key]);
+      }
+      return parts.length ? parts.join(" | ") : JSON.stringify(record);
+    }
+
+    function renderRows(id, records) {
+      const container = document.getElementById(id);
+      if (!Array.isArray(records) || records.length === 0) {
+        container.innerHTML = '<div class="log-row empty">No records yet.</div>';
+        return;
+      }
+      container.innerHTML = records.map((record) => (
+        '<div class="log-row"><strong>' + escapeHTML(record?.status ?? record?.method ?? "record") + '</strong><span>' +
+        escapeHTML(summarizeRecord(record)) + '</span></div>'
+      )).join("");
+    }
+
+    async function loadDashboard() {
+      if (!adminTokenEl.value.trim()) return;
+      try {
+        const [metricsData, generationData, apiData] = await Promise.all([
+          fetchAdminJSON("/metrics"),
+          fetchAdminJSON("/logs?type=generations"),
+          fetchAdminJSON("/logs?type=api")
+        ]);
+        renderMetrics(metricsData.metrics);
+        renderRows("generationLogs", generationData.records);
+        renderRows("apiLogs", apiData.records);
+      } catch (error) {
+        setStatus(error.message || "Failed to load dashboard.", "danger");
+      }
     }
 
     function fillConfig(config) {
@@ -215,6 +385,7 @@ export function renderAdminPage() {
       }
       fillConfig(data.config);
       setStatus("Config loaded.", "ok");
+      await loadDashboard();
     }
 
     async function saveConfig(event) {
@@ -246,6 +417,7 @@ export function renderAdminPage() {
     }
 
     document.getElementById("loadBtn").addEventListener("click", loadConfig);
+    document.getElementById("dashboardBtn").addEventListener("click", loadDashboard);
     document.getElementById("configForm").addEventListener("submit", saveConfig);
   </script>
 </body>
