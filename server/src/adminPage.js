@@ -347,6 +347,77 @@ export function renderAdminPage() {
       color: var(--text-muted);
       line-height: 1.55;
     }
+    .call-chain {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .chain-node {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    th {
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .status-tag.failed {
+      background: #fff0ee;
+      color: var(--danger);
+    }
     .log-list {
       display: grid;
       gap: 10px;
@@ -544,10 +615,20 @@ export function renderAdminPage() {
               </label>
               <div class="actions">
                 <button type="button" class="secondary" id="loadUpstreamBtn">加载配置</button>
+                <button type="button" class="secondary" id="testUpstreamBtn">测试上游连接</button>
                 <button type="submit" class="primary">保存上游配置</button>
               </div>
             </form>
-            <p class="muted">调用链：Codex / Skill -> 你的服务器 IP + 服务 API Key -> 后台配置的中转站 URL + 中转站 Key -> 生图模型。</p>
+            <div class="call-chain" aria-label="调用链路">
+              <span>调用链路</span>
+              <span class="chain-node">Codex / Skill</span>
+              <span>-></span>
+              <span class="chain-node">你的服务器</span>
+              <span>-></span>
+              <span class="chain-node">上游中转站</span>
+              <span>-></span>
+              <span class="chain-node">生图模型</span>
+            </div>
           </div>
         </section>
       </section>
@@ -556,11 +637,11 @@ export function renderAdminPage() {
         <div class="grid-2">
           <section class="card">
             <div class="card-header"><h2>生图日志</h2><span>最近图片生成请求</span></div>
-            <div class="card-body"><div id="generationLogs" class="log-list"><div class="log-row empty">暂无记录。</div></div></div>
+            <div class="card-body"><div id="generationLogs" class="table-wrap"><div class="log-row empty">暂无记录。</div></div></div>
           </section>
           <section class="card">
             <div class="card-header"><h2>API 调用日志</h2><span>后台与接口请求记录</span></div>
-            <div class="card-body"><div id="apiLogs" class="log-list"><div class="log-row empty">暂无记录。</div></div></div>
+            <div class="card-body"><div id="apiLogs" class="table-wrap"><div class="log-row empty">暂无记录。</div></div></div>
           </section>
         </div>
       </section>
@@ -776,18 +857,58 @@ export function renderAdminPage() {
       return parts.length ? parts.join(" | ") : JSON.stringify(record);
     }
 
+    function formatStatus(status) {
+      const value = String(status || "记录");
+      const failed = value === "failed" || value === "error";
+      return '<span class="status-tag ' + (failed ? "failed" : "") + '">' + escapeHTML(value) + '</span>';
+    }
+
+    function formatTime(value) {
+      if (!value) return "-";
+      try {
+        return new Date(value).toLocaleString("zh-CN", { hour12: false });
+      } catch {
+        return value;
+      }
+    }
+
     function renderRows(id, records) {
       const container = document.getElementById(id);
       if (!Array.isArray(records) || records.length === 0) {
         container.innerHTML = '<div class="log-row empty">暂无记录。</div>';
         return;
       }
-      container.innerHTML = records.map((record) => (
-        '<div class="log-row ' + escapeHTML(record?.status === "failed" || record?.status === "error" ? "danger" : "ok") + '">' +
-        '<strong>' + escapeHTML(record?.status ?? record?.method ?? "记录") + '</strong>' +
-        '<div>' + escapeHTML(summarizeRecord(record)) + '</div>' +
-        '</div>'
-      )).join("");
+      const isGeneration = id === "generationLogs";
+      const headers = isGeneration
+        ? ["时间", "状态", "端点", "上游状态", "响应耗时"]
+        : ["时间", "方法", "路径", "鉴权", "状态", "响应耗时"];
+      const rows = records.map((record) => {
+        const values = isGeneration
+          ? [
+            formatTime(record?.createdAt),
+            formatStatus(record?.status),
+            escapeHTML(record?.endpoint || "-"),
+            escapeHTML(record?.upstreamStatus ?? "-"),
+            escapeHTML((record?.durationMs ?? 0) + " ms")
+          ]
+          : [
+            formatTime(record?.createdAt),
+            escapeHTML(record?.method || "-"),
+            escapeHTML(record?.path || "-"),
+            escapeHTML(record?.authKind || "-"),
+            formatStatus(record?.status),
+            escapeHTML((record?.durationMs ?? 0) + " ms")
+          ];
+        return "<tr>" + values.map((value) => "<td>" + value + "</td>").join("") + "</tr>";
+      }).join("");
+      container.innerHTML = [
+        "<table>",
+        "<thead><tr>" + headers.map((header) => "<th>" + escapeHTML(header) + "</th>").join("") + "</tr></thead>",
+        "<tbody>",
+        rows,
+        "</tbody>",
+        "</table>"
+      ].join("");
     }
 
     function safeHTTPSURL(releaseURL) {
@@ -881,6 +1002,20 @@ export function renderAdminPage() {
     document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
     document.getElementById("loadConfigBtn").addEventListener("click", loadConfig);
     document.getElementById("loadUpstreamBtn").addEventListener("click", loadConfig);
+    document.getElementById("testUpstreamBtn").addEventListener("click", async () => {
+      setStatus("正在测试上游连接...");
+      try {
+        const data = await fetchAdminJSON("/config");
+        const url = data.config?.upstreamBaseURL || "";
+        if (!url) {
+          setStatus("请先填写并保存上游中转站 URL。", "danger");
+          return;
+        }
+        setStatus("上游配置已读取。当前 URL：" + url, "ok");
+      } catch (error) {
+        setStatus(error.message || "上游连接测试失败。", "danger");
+      }
+    });
     document.querySelectorAll(".nav-button").forEach((button) => {
       button.addEventListener("click", () => switchView(button.dataset.view));
     });

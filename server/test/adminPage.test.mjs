@@ -23,6 +23,16 @@ test("renderAdminPage exposes the Chinese sidebar admin system landmarks", () =>
   assert.match(html, /退出登录/);
 });
 
+test("renderAdminPage exposes the operations-console template controls", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /测试上游连接/);
+  assert.match(html, /调用链路/);
+  assert.match(html, /<table/);
+  assert.match(html, /响应耗时/);
+  assert.match(html, /当前账号/);
+});
+
 test("renderAdminPage validates release link protocol before rendering href", () => {
   const html = renderAdminPage();
 
