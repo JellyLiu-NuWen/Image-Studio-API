@@ -10,9 +10,6 @@ permissions:
   contents: write
   packages: write
 
-env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/image-studio-api
-
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -29,6 +26,13 @@ jobs:
             VERSION="${GITHUB_SHA::12}"
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve image name
+        id: image
+        shell: bash
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "name=ghcr.io/${owner}/image-studio-api" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -47,8 +51,8 @@ jobs:
           file: server/Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-            ${{ env.IMAGE_NAME }}:latest
+            ${{ steps.image.outputs.name }}:${{ steps.version.outputs.version }}
+            ${{ steps.image.outputs.name }}:latest
           build-args: |
             IMAGE_STUDIO_VERSION=${{ steps.version.outputs.version }}
 
