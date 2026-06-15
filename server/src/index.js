@@ -1,7 +1,8 @@
 import { createServer } from "node:http";
-import { resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { createSelfHostedApp } from "./app.js";
 import { createFileConfigStore, loadDotEnv } from "./config.js";
+import { createJsonlLogStore } from "./logStore.js";
 import { renderAdminPage } from "./adminPage.js";
 
 await loadDotEnv(resolve(process.env.ENV_FILE || ".env"));
@@ -9,11 +10,14 @@ await loadDotEnv(resolve(process.env.ENV_FILE || ".env"));
 const host = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT || 8787);
 const configPath = resolve(process.env.CONFIG_PATH || "data/config.json");
+const dataDir = dirname(configPath);
 
 const store = createFileConfigStore(configPath);
 const app = createSelfHostedApp({
   store,
   adminToken: process.env.ADMIN_TOKEN || "",
+  apiLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "api-calls.jsonl") }),
+  generationLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "generations.jsonl") }),
   fetchImpl: globalThis.fetch,
 });
 

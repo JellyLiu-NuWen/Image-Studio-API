@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createSelfHostedApp } from "../src/app.js";
+import { createMemoryLogStore } from "../src/logStore.js";
 import { parseDotEnv } from "../src/config.js";
 
 function jsonRequest(path, body, headers = {}) {
@@ -181,6 +182,69 @@ test("admin config rejects the client token", async () => {
 
   assert.equal(response.status, 401);
   assert.match((await response.json()).error.message, /Admin authorization required/);
+});
+
+test("admin can read logs and metrics while client or missing token is rejected", async () => {
+  const apiLogStore = createMemoryLogStore();
+  const generationLogStore = createMemoryLogStore();
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example",
+      upstreamApiKey: "upstream-key",
+      rateLimitPerMinute: 10,
+    }),
+    adminToken: "admin-token",
+    apiLogStore,
+    generationLogStore,
+    fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+
+  const generation = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "logged",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+  assert.equal(generation.status, 200);
+
+  const noToken = await app.handle(new Request("http://localhost/api/logs"));
+  assert.equal(noToken.status, 401);
+
+  const clientToken = await app.handle(new Request("http://localhost/api/logs", {
+    headers: { authorization: "Bearer client-token" },
+  }));
+  assert.equal(clientToken.status, 401);
+
+  const logs = await app.handle(new Request("http://localhost/api/logs?type=generations", {
+    headers: { authorization: "Bearer admin-token" },
+  }));
+  assert.equal(logs.status, 200);
+  const logsBody = await logs.json();
+  assert.equal(logsBody.records.length, 1);
+  assert.equal(logsBody.records[0].status, "success");
+  assert.equal(logsBody.records[0].endpoint, "/v1/images/generations");
+  assert.equal(logsBody.records[0].upstreamStatus, 200);
+
+  const metrics = await app.handle(new Request("http://localhost/api/metrics", {
+    headers: { authorization: "Bearer admin-token" },
+  }));
+  assert.equal(metrics.status, 200);
+  const metricsBody = await metrics.json();
+  assert.equal(metricsBody.metrics.apiCalls.total >= 4, true);
+  assert.equal(metricsBody.metrics.apiCalls.success >= 2, true);
+  assert.equal(metricsBody.metrics.apiCalls.error >= 2, true);
+  assert.deepEqual(metricsBody.metrics.generations, {
+    total: 1,
+    success: 1,
+    failed: 0,
+    durationMs: {
+      p50: logsBody.records[0].durationMs,
+      p95: logsBody.records[0].durationMs,
+    },
+  });
 });
 
 test("image generation applies the configured per-minute rate limit", async () => {
