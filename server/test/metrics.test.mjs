@@ -20,24 +20,20 @@ test("summarizeMetrics counts statuses and duration percentiles", () => {
   });
 
   assert.deepEqual(metrics, {
-    apiCalls: {
+    activeRequests: 2,
+    api: {
       total: 4,
       success: 2,
       error: 2,
-      durationMs: {
-        p50: 200,
-        p95: 300,
-      },
+      p50DurationMs: 200,
+      p95DurationMs: 300,
     },
     generations: {
       total: 4,
       success: 1,
       failed: 3,
-      durationMs: {
-        p50: 500,
-        p95: 600,
-      },
+      p50DurationMs: 500,
+      p95DurationMs: 600,
     },
-    activeRequests: 2,
   });
 });

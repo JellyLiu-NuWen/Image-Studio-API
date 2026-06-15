@@ -233,17 +233,15 @@ test("admin can read logs and metrics while client or missing token is rejected"
   }));
   assert.equal(metrics.status, 200);
   const metricsBody = await metrics.json();
-  assert.equal(metricsBody.metrics.apiCalls.total >= 4, true);
-  assert.equal(metricsBody.metrics.apiCalls.success >= 2, true);
-  assert.equal(metricsBody.metrics.apiCalls.error >= 2, true);
+  assert.equal(metricsBody.metrics.api.total >= 4, true);
+  assert.equal(metricsBody.metrics.api.success >= 2, true);
+  assert.equal(metricsBody.metrics.api.error >= 2, true);
   assert.deepEqual(metricsBody.metrics.generations, {
     total: 1,
     success: 1,
     failed: 0,
-    durationMs: {
-      p50: logsBody.records[0].durationMs,
-      p95: logsBody.records[0].durationMs,
-    },
+    p50DurationMs: logsBody.records[0].durationMs,
+    p95DurationMs: logsBody.records[0].durationMs,
   });
 });
 

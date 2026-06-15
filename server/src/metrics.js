@@ -23,24 +23,20 @@ export function summarizeMetrics({
   const generationFailed = generations.filter((record) => record?.status === "failed").length;
 
   return {
-    apiCalls: {
+    activeRequests,
+    api: {
       total: apiTotal,
       success: apiSuccess,
       error: apiError,
-      durationMs: {
-        p50: percentile(apiCalls, 0.5),
-        p95: percentile(apiCalls, 0.95),
-      },
+      p50DurationMs: percentile(apiCalls, 0.5),
+      p95DurationMs: percentile(apiCalls, 0.95),
     },
     generations: {
       total: generations.length,
       success: generationSuccess,
       failed: generationFailed,
-      durationMs: {
-        p50: percentile(generations, 0.5),
-        p95: percentile(generations, 0.95),
-      },
+      p50DurationMs: percentile(generations, 0.5),
+      p95DurationMs: percentile(generations, 0.95),
     },
-    activeRequests,
   };
 }
