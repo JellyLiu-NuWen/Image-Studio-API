@@ -17,9 +17,12 @@ Codex / OpenClaw / DeepSeek / MCP
 ## 快速部署
 
 ```bash
+cp .env.example .env
 cp server/.env.example server/.env
 docker compose -f docker-compose.self-hosted.yml up -d --build
 ```
+
+根目录 `.env` 用于 Docker 部署选项，例如 `IMAGE_STUDIO_API_HOST_PORT=80` 可以把公网入口改成 `http://SERVER_IP/admin`。`server/.env` 用于服务端密钥和上游配置。
 
 然后访问:
 

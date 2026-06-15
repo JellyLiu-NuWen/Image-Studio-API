@@ -29,13 +29,14 @@ From the repository root on the host:
   -HealthUrl http://localhost:8787/healthz
 ```
 
-`docker-compose.self-hosted.yml` reads `IMAGE_STUDIO_API_IMAGE` and `IMAGE_STUDIO_API_TAG`. The script sets those environment variables for the current run, pulls the requested image, restarts the service, and health checks it.
+`docker-compose.self-hosted.yml` reads `IMAGE_STUDIO_API_IMAGE`, `IMAGE_STUDIO_API_TAG`, and `IMAGE_STUDIO_API_HOST_PORT`. The script sets the image variables for the current run, pulls the requested image, restarts the service, and health checks it.
 
 For persistent pinning, set these variables in your shell profile, CI job, or a host-side `.env` before running Compose:
 
 ```powershell
 $env:IMAGE_STUDIO_API_IMAGE="ghcr.io/jellyliu-nuwen/image-studio-api"
 $env:IMAGE_STUDIO_API_TAG="v1.2.5"
+$env:IMAGE_STUDIO_API_HOST_PORT="8787"
 docker compose -f .\docker-compose.self-hosted.yml up -d
 ```
 

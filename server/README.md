@@ -32,6 +32,7 @@
 在仓库根目录执行:
 
 ```bash
+cp .env.example .env
 cp server/.env.example server/.env
 ```
 
@@ -43,6 +44,13 @@ IMAGE_API_TOKEN=replace-with-a-long-client-token
 UPSTREAM_BASE_URL=https://api.openai.com/v1
 UPSTREAM_API_KEY=replace-with-your-upstream-key
 PORT=8787
+```
+
+根目录 `.env` 控制 Docker 宿主机端口和镜像 tag:
+
+```env
+IMAGE_STUDIO_API_HOST_PORT=8787
+IMAGE_STUDIO_API_TAG=v1.2.5
 ```
 
 启动:

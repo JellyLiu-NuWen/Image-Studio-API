@@ -48,7 +48,8 @@ node scripts/write-version-badges.mjs
 | `UPSTREAM_BASE_URL` | OpenAI-compatible 图像上游地址，例如 `https://api.openai.com/v1` |
 | `UPSTREAM_API_KEY` | 真正的模型服务 API Key，只保存在服务器 |
 | `DEFAULT_IMAGE_MODEL` | 默认图像模型，例如 `gpt-image-2` 或你的上游兼容模型 |
-| `PORT` | 服务监听端口，默认 `8787` |
+| `PORT` | 容器内服务监听端口，默认 `8787`，通常不用改 |
+| `IMAGE_STUDIO_API_HOST_PORT` | Docker 暴露到服务器公网的端口，默认 `8787` |
 
 最小调用链:
 
@@ -66,13 +67,20 @@ Codex / OpenClaw / DeepSeek / MCP
 ```bash
 git clone https://github.com/JellyLiu-NuWen/Image-Studio-API.git
 cd Image-Studio-API
+cp .env.example .env
 cp server/.env.example server/.env
 ```
 
-编辑 `server/.env` 后启动:
+编辑 `server/.env` 后启动。默认公网入口是 `http://SERVER_IP:8787`:
 
 ```bash
 docker compose -f docker-compose.self-hosted.yml up -d --build
+```
+
+如果云服务器只开放了 `80`，可以在根目录 `.env` 里改:
+
+```env
+IMAGE_STUDIO_API_HOST_PORT=80
 ```
 
 如果不用 Docker，也可以直接 Node 运行:
