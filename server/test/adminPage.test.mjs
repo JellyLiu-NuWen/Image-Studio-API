@@ -15,7 +15,8 @@ test("renderAdminPage includes admin dashboard sections", () => {
 test("renderAdminPage exposes the Chinese sidebar admin system landmarks", () => {
   const html = renderAdminPage();
 
-  assert.match(html, /登录 Image Studio API/);
+  assert.match(html, /登录后进入管理后台/);
+  assert.match(html, /账号密码登录/);
   assert.match(html, /仪表盘/);
   assert.match(html, /接口配置/);
   assert.match(html, /上游中转站/);

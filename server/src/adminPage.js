@@ -43,15 +43,83 @@ export function renderAdminPage() {
       display: grid;
       place-items: center;
       padding: 24px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0)),
-        var(--bg);
+      background: linear-gradient(180deg, #f6f9fb 0%, #edf2f6 100%);
+    }
+    .login-shell {
+      width: min(1080px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(360px, 420px);
+      gap: 20px;
+      align-items: stretch;
+    }
+    .login-copy {
+      display: grid;
+      align-content: start;
+      gap: 18px;
+      padding: 30px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,249,252,0.96));
+      box-shadow: var(--shadow);
+    }
+    .login-copy h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+    .login-copy p {
+      margin: 0;
+      max-width: 46ch;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .login-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .login-points {
+      display: grid;
+      gap: 12px;
+      padding-top: 8px;
+    }
+    .login-point {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .login-point > span {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .login-point strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .login-point span:last-child {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.55;
     }
     .login-card {
-      width: min(440px, 100%);
+      width: 100%;
+      align-self: stretch;
       display: grid;
+      grid-template-columns: 1fr;
+      align-content: center;
       gap: 22px;
-      padding: 28px;
+      padding: 30px;
       border: 1px solid var(--border);
       border-radius: 16px;
       background: var(--surface);
@@ -458,6 +526,7 @@ export function renderAdminPage() {
       line-height: 1.45;
     }
     @media (max-width: 1040px) {
+      .login-shell { grid-template-columns: 1fr; }
       .app-shell { grid-template-columns: 1fr; }
       .sidebar {
         position: static;
@@ -471,6 +540,10 @@ export function renderAdminPage() {
     }
     @media (max-width: 760px) {
       .main { padding: 16px; }
+      .login-page { padding: 16px; }
+      .login-copy,
+      .login-card { padding: 20px; }
+      .login-copy h1 { font-size: 28px; }
       .topbar { align-items: flex-start; flex-direction: column; }
       .topbar-actions { justify-content: flex-start; }
       .grid-4,
@@ -482,20 +555,62 @@ export function renderAdminPage() {
 </head>
 <body>
   <section id="loginPage" class="login-page">
-    <form id="loginForm" class="login-card">
-      <div>
-        <h1>登录 Image Studio API</h1>
-        <p>使用后台账号密码进入管理系统。生图调用仍然使用接口配置里的服务 API Key。</p>
-      </div>
-      <label>账号
-        <input id="loginUsername" autocomplete="username" placeholder="admin">
-      </label>
-      <label>密码
-        <input id="loginPassword" autocomplete="current-password" type="password" placeholder="请输入后台密码">
-      </label>
-      <button type="submit" class="primary">登录后台</button>
-      <div id="loginStatus" class="status"></div>
-    </form>
+    <div class="login-shell">
+      <section class="login-copy">
+        <div class="sidebar-brand">
+          <div class="brand-mark">IS</div>
+          <strong>Image Studio API</strong>
+          <span>自托管生图中转管理系统</span>
+        </div>
+        <div>
+          <h1>登录后进入管理后台</h1>
+          <p>这里是你的私有控制台。你可以管理接口 Key、上游中转站、调用日志和版本对齐；生图请求仍然通过你的服务 API Key 统一转发。</p>
+        </div>
+        <div class="login-badges">
+          <span class="pill ok">服务在线</span>
+          <span class="pill">账号密码登录</span>
+          <span class="pill">自托管部署</span>
+          <span class="pill">日志与版本</span>
+        </div>
+        <div class="login-points" aria-label="登录页说明">
+          <div class="login-point">
+            <span>1</span>
+            <div>
+              <strong>先登录，再配置</strong>
+              <span>登录后才能修改服务 Key、上游地址和后台账号密码。</span>
+            </div>
+          </div>
+          <div class="login-point">
+            <span>2</span>
+            <div>
+              <strong>调用链路清晰</strong>
+              <span>Codex 或其他 AI 只需要连你的服务器，剩下的中转细节都在后台里管理。</span>
+            </div>
+          </div>
+          <div class="login-point">
+            <span>3</span>
+            <div>
+              <strong>版本对齐可查看</strong>
+              <span>进入后台后能直接看当前版本和作者仓库版本的对比状态。</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <form id="loginForm" class="login-card">
+        <div>
+          <h1>登录后台</h1>
+          <p>使用管理员账号密码进入控制台。</p>
+        </div>
+        <label>账号
+          <input id="loginUsername" autocomplete="username" placeholder="admin">
+        </label>
+        <label>密码
+          <input id="loginPassword" autocomplete="current-password" type="password" placeholder="请输入后台密码">
+        </label>
+        <button type="submit" class="primary">登录后台</button>
+        <div id="loginStatus" class="status"></div>
+      </form>
+    </div>
   </section>
 
   <section id="appShell" class="app-shell hidden">
