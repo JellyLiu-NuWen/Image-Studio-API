@@ -324,7 +324,7 @@ export function renderAdminPage() {
 
     function summarizeRecord(record) {
       const parts = [];
-      for (const key of ["timestamp", "endpoint", "method", "status", "upstreamStatus", "durationMs"]) {
+      for (const key of ["createdAt", "path", "endpoint", "method", "status", "upstreamStatus", "durationMs"]) {
         if (record?.[key] !== undefined) parts.push(key + ": " + record[key]);
       }
       return parts.length ? parts.join(" | ") : JSON.stringify(record);
@@ -342,8 +342,39 @@ export function renderAdminPage() {
       )).join("");
     }
 
+    function renderUpdate(update) {
+      const container = document.getElementById("updateStatus");
+      const current = update?.currentVersion ?? "";
+      const latest = update?.latestVersion ?? "";
+      const status = update?.status ?? "unknown";
+      const releaseURL = update?.releaseURL ?? "";
+      const rows = [
+        "<strong>Status: " + escapeHTML(status) + "</strong>",
+        "<span>Current: " + escapeHTML(current || "unknown") + "</span>",
+        "<span>Latest: " + escapeHTML(latest || "unknown") + "</span>"
+      ];
+      if (releaseURL) {
+        rows.push('<span>Release: <a href="' + escapeHTML(releaseURL) + '" rel="noreferrer" target="_blank">' + escapeHTML(releaseURL) + '</a></span>');
+      }
+      container.className = status === "newer" ? "log-row ok" : "log-row";
+      container.innerHTML = rows.join("");
+    }
+
+    async function checkUpdate() {
+      const container = document.getElementById("updateStatus");
+      container.className = "log-row empty";
+      container.textContent = "Checking for updates...";
+      const data = await fetchAdminJSON("/update/check");
+      renderUpdate(data.update);
+    }
+
     async function loadDashboard() {
       if (!adminTokenEl.value.trim()) return;
+      checkUpdate().catch((error) => {
+        const container = document.getElementById("updateStatus");
+        container.className = "log-row danger";
+        container.textContent = error.message || "Update check failed.";
+      });
       try {
         const [metricsData, generationData, apiData] = await Promise.all([
           fetchAdminJSON("/metrics"),

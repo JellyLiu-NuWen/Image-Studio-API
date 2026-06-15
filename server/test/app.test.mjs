@@ -245,6 +245,80 @@ test("admin can read logs and metrics while client or missing token is rejected"
   });
 });
 
+test("admin update check requires admin authorization", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+    }),
+    adminToken: "admin-token",
+    updateService: {
+      async checkLatest() {
+        throw new Error("unauthorized update check must not call service");
+      },
+    },
+    fetchImpl: async () => {
+      throw new Error("update check must not call upstream fetch");
+    },
+  });
+
+  const noToken = await app.handle(new Request("http://localhost/api/update/check"));
+  assert.equal(noToken.status, 401);
+
+  const clientToken = await app.handle(new Request("http://localhost/api/update/check", {
+    headers: { authorization: "Bearer client-token" },
+  }));
+  assert.equal(clientToken.status, 401);
+});
+
+test("admin update check returns update service result", async () => {
+  const update = {
+    currentVersion: "v1.2.5",
+    latestVersion: "v1.2.6",
+    status: "newer",
+    releaseURL: "https://github.com/owner/repo/releases/tag/v1.2.6",
+  };
+  const app = createSelfHostedApp({
+    store: memoryStore(),
+    adminToken: "admin-token",
+    updateService: {
+      async checkLatest() {
+        return update;
+      },
+    },
+    fetchImpl: async () => {
+      throw new Error("update check must not call upstream fetch");
+    },
+  });
+
+  const response = await app.handle(new Request("http://localhost/api/update/check", {
+    headers: { authorization: "Bearer admin-token" },
+  }));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { update });
+});
+
+test("admin update check reports unconfigured without a service and rejects non-GET", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore(),
+    adminToken: "admin-token",
+    fetchImpl: async () => {
+      throw new Error("update check must not call upstream fetch");
+    },
+  });
+
+  const response = await app.handle(new Request("http://localhost/api/update/check", {
+    headers: { authorization: "Bearer admin-token" },
+  }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { update: { status: "unconfigured" } });
+
+  const post = await app.handle(jsonRequest("/api/update/check", {}, {
+    authorization: "Bearer admin-token",
+  }));
+  assert.equal(post.status, 405);
+});
+
 test("image generation applies the configured per-minute rate limit", async () => {
   const app = createSelfHostedApp({
     store: memoryStore({

@@ -4,6 +4,7 @@ import { createSelfHostedApp } from "./app.js";
 import { createFileConfigStore, loadDotEnv } from "./config.js";
 import { createJsonlLogStore } from "./logStore.js";
 import { renderAdminPage } from "./adminPage.js";
+import { createUpdateService } from "./updateService.js";
 
 await loadDotEnv(resolve(process.env.ENV_FILE || ".env"));
 
@@ -13,11 +14,17 @@ const configPath = resolve(process.env.CONFIG_PATH || "data/config.json");
 const dataDir = dirname(configPath);
 
 const store = createFileConfigStore(configPath);
+const updateService = createUpdateService({
+  currentVersion: process.env.IMAGE_STUDIO_VERSION || "dev",
+  repository: process.env.IMAGE_STUDIO_GITHUB_REPOSITORY || "",
+  fetchImpl: globalThis.fetch,
+});
 const app = createSelfHostedApp({
   store,
   adminToken: process.env.ADMIN_TOKEN || "",
   apiLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "api-calls.jsonl") }),
   generationLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "generations.jsonl") }),
+  updateService,
   fetchImpl: globalThis.fetch,
 });
 

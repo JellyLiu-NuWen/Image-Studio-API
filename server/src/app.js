@@ -89,6 +89,7 @@ export function createSelfHostedApp({
   adminToken = process.env.ADMIN_TOKEN || "",
   apiLogStore = null,
   generationLogStore = null,
+  updateService = null,
   fetchImpl = globalThis.fetch,
   now = () => Date.now(),
 } = {}) {
@@ -160,6 +161,25 @@ export function createSelfHostedApp({
         ]);
         response = json({
           metrics: summarizeMetrics({ apiCalls, generations, activeRequests }),
+        });
+        return response;
+      }
+
+      if (url.pathname === "/api/update/check") {
+        authKind = classifyAuthKind(request, adminToken);
+        const authError = requireAdminAuth(request, adminToken);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        if (request.method !== "GET") {
+          response = methodNotAllowed();
+          return response;
+        }
+        response = json({
+          update: updateService
+            ? await updateService.checkLatest()
+            : { status: "unconfigured" },
         });
         return response;
       }
