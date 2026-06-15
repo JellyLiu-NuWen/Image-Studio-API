@@ -67,6 +67,23 @@ test("checkLatest reports unconfigured when no repository is set", async () => {
   });
 });
 
+test("checkLatest reports unconfigured for malformed repository values", async () => {
+  const service = createUpdateService({
+    currentVersion: "v1.2.5",
+    repository: "owner/repo/releases/latest",
+    fetchImpl: async () => {
+      throw new Error("malformed repository must not fetch");
+    },
+  });
+
+  assert.deepEqual(await service.checkLatest(), {
+    currentVersion: "v1.2.5",
+    latestVersion: "",
+    status: "unconfigured",
+    releaseURL: "",
+  });
+});
+
 test("checkLatest returns error for failed or throwing GitHub requests", async () => {
   const failingService = createUpdateService({
     currentVersion: "v1.2.5",

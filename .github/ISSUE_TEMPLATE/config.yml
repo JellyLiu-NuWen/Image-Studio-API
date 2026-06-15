@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 提 Issue 前先看故障排查
-    url: https://github.com/RoseKhlifa/Image-Studio/blob/main/docs/troubleshooting.md
-    about: 先排查 BASE_URL、Key 权限、524/504、模型兼容性和 Android 保存行为等常见非软件问题。
-  - name: 使用问题与反馈渠道
-    url: https://github.com/RoseKhlifa/Image-Studio/blob/main/docs/feedback.md
-    about: 使用咨询、上游兼容性讨论、测试版反馈和 QQ 群入口见这里。
+  - name: 原作者 Image Studio
+    url: https://github.com/RoseKhlifa/Image-Studio
+    about: 桌面端、Android 端、安装包和原项目能力请到原作者仓库查看。
+  - name: 自托管 API 文档
+    url: https://github.com/JellyLiu-NuWen/Image-Studio-API/blob/main/docs/self-hosted-api.md
+    about: 部署前请先阅读自托管 API、token、Docker 和 skill 配置说明。

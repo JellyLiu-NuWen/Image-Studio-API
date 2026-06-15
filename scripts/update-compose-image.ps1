@@ -8,6 +8,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$ComposeFile = (Resolve-Path -LiteralPath $ComposeFile).Path
 
 function Invoke-Compose {
   param([string[]]$Arguments)

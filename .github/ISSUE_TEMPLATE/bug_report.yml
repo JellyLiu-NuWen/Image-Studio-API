@@ -1,35 +1,37 @@
 name: Bug report
-description: 已完成故障排查，并确认问题来自 Image Studio 自身
+description: 自托管 API 服务问题反馈
 title: "[Bug]: "
 body:
   - type: markdown
     attributes:
       value: |
-        提交前请先阅读 [docs/troubleshooting.md](https://github.com/RoseKhlifa/Image-Studio/blob/main/docs/troubleshooting.md)。
+        这个仓库的 `main` 分支只维护 Image-Studio-API 自托管服务、后台、Docker 和 skill。
 
-        如果问题来自 `BASE_URL`、`API Key`、模型权限、账户余额、IP 白名单、上游 524/504、relay 兼容性或服务商临时故障，请不要提交 Bug Issue。
+        如果是原桌面端、Android 端、Cloudflare Worker 或安装包问题，请先看原作者仓库:
+        https://github.com/RoseKhlifa/Image-Studio
+
+        如果问题来自上游 `BASE_URL`、API Key 权限、账户余额、IP 白名单、模型未开通、relay 兼容性或服务商临时故障，请先完成自查。
 
   - type: checkboxes
     id: preflight
     attributes:
       label: 提交前确认
       options:
-        - label: 我已经阅读故障排查文档，并完成了对应自查。
+        - label: 我确认问题发生在本仓库的自托管 API 服务、后台、Docker 或 skill 中。
           required: true
-        - label: 我已经确认这不是 BASE_URL、API Key、模型权限、余额、白名单、上游超时或 relay 兼容性问题。
+        - label: 我已经确认这不是上游 BASE_URL、API Key、模型权限、余额、白名单或 relay 兼容性问题。
           required: true
-        - label: 我已经查看过 raw 响应、日志或历史详情中的真实报错。
+        - label: 我已经查看过 `/data/logs`、HTTP raw 响应或后台错误信息，并已脱敏。
           required: true
 
   - type: dropdown
-    id: platform
+    id: deployment
     attributes:
-      label: 平台
+      label: 部署方式
       options:
-        - Windows
-        - macOS
-        - Linux
-        - Android
+        - Docker Compose
+        - Direct Node
+        - Other container runtime
         - Other
     validations:
       required: true
@@ -37,20 +39,24 @@ body:
   - type: input
     id: version
     attributes:
-      label: 应用版本
-      description: 例如 v0.1.6，或 Actions artifact 的构建日期 / commit
-      placeholder: v0.1.6
+      label: API 版本 / 镜像 tag / commit
+      description: 例如 v1.2.5、latest、或 commit SHA
+      placeholder: v1.2.5
     validations:
       required: true
 
   - type: dropdown
-    id: api_shape
+    id: affected_area
     attributes:
-      label: API 形态
+      label: 影响范围
       options:
-        - Responses API
-        - Images API
-        - Both
+        - /v1/images/generations
+        - /v1/images/edits
+        - /v1/responses
+        - /v1/models
+        - /admin
+        - Docker deployment
+        - Codex skill
         - Unknown
     validations:
       required: true
@@ -58,18 +64,18 @@ body:
   - type: input
     id: upstream_type
     attributes:
-      label: BASE_URL 类型
+      label: 上游 BASE_URL 类型
       description: 可脱敏，例如官方 / OpenAI 兼容中转 / 自建网关
       placeholder: OpenAI 兼容中转
     validations:
       required: true
 
   - type: input
-    id: text_model
+    id: endpoint
     attributes:
-      label: 文本模型 ID
-      description: 如果未使用可填 N/A
-      placeholder: gpt-5.5
+      label: 服务地址
+      description: 请脱敏公网 IP 或域名，保留端口和路径即可
+      placeholder: http://SERVER_IP:8787
     validations:
       required: true
 
@@ -97,7 +103,7 @@ body:
     id: actual
     attributes:
       label: 实际结果
-      placeholder: 发生了什么，页面提示什么，结果保存到了哪里或没有保存
+      placeholder: HTTP 状态码、响应体、后台提示或 skill 输出
     validations:
       required: true
 
@@ -113,7 +119,7 @@ body:
     id: evidence
     attributes:
       label: raw 响应 / 日志 / 截图
-      description: 请脱敏后粘贴。至少提供 HTTP 状态码、错误 message 或能定位问题的截图。
+      description: 请脱敏后粘贴。不要包含 ADMIN_TOKEN、IMAGE_API_TOKEN、UPSTREAM_API_KEY。
       placeholder: |
         status: 500
         message: ...

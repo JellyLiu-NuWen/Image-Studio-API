@@ -1,12 +1,12 @@
 # Kernel Request Model
 
-这里收口的是跨端共享的“请求规范层”，只负责定义发给上游 OpenAI 兼容接口的请求形态，不负责具体传输。
+这里收口的是 API 服务共享的“请求规范层”，只负责定义发给上游 OpenAI 兼容接口的请求形态，不负责具体传输。
 
 ## 目标
 
 - 统一 `Responses API` 请求体构造
 - 统一提示词优化请求体构造
-- 让 browser worker、frontend remote runtime、后续 JS 宿主都复用同一套字段规范
+- 让 `server/` 和后续 JS 宿主复用同一套字段规范
 
 ## 当前约定
 
@@ -26,13 +26,11 @@
 
 - `shared/kernel/requestModel.js`
   - 只做字段规范、默认值、重试判定、错误摘要
-- `frontend/src/platform/runtime/remoteKernel.ts`
-  - 负责浏览器/Android 传输、SSE 解析、Images multipart
-- `go-cli/pkg/client/*`
-  - 负责桌面 Go 传输和落盘链路
+- `server/src/upstreamProxy.js`
+  - 负责 HTTP 传输、超时、鉴权代理和 OpenAI-compatible 路由
 
 ## 修改原则
 
 - 如果只是字段规范变化，优先改这里
-- 如果是传输差异，比如 `fetch`、Android native HTTP、Go multipart，实现留在各自宿主层
+- 如果是传输差异，比如 `fetch`、multipart 或响应转发，实现留在 `server/` 层
 - 不要在多个入口重复维护同一份 `Responses` JSON 结构

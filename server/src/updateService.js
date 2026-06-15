@@ -13,6 +13,12 @@ function emptyResult(currentVersion, status) {
   };
 }
 
+function normalizeRepository(repository) {
+  const normalized = String(repository || "").trim();
+  if (!normalized) return "";
+  return /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(normalized) ? normalized : "";
+}
+
 export function compareReleaseVersions(current, latest) {
   const currentParts = parseReleaseVersion(current);
   const latestParts = parseReleaseVersion(latest);
@@ -31,7 +37,7 @@ export function createUpdateService({
   fetchImpl = globalThis.fetch,
 } = {}) {
   const normalizedCurrentVersion = String(currentVersion || "dev").trim() || "dev";
-  const normalizedRepository = String(repository || "").trim();
+  const normalizedRepository = normalizeRepository(repository);
 
   return {
     async checkLatest() {

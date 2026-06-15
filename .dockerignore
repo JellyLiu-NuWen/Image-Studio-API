@@ -1,0 +1,15 @@
+.git
+.github
+.tmp
+badges
+docs
+outputs
+data
+node_modules
+server/node_modules
+server/.env
+server/.env.*
+!server/.env.example
+*.log
+*.tmp
+Dockerfile

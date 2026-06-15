@@ -1,13 +1,19 @@
 name: Feature request
-description: 提交新的功能建议或交互改进建议
+description: 自托管 API / 后台 / skill 功能建议
 title: "[Feature]: "
 body:
+  - type: markdown
+    attributes:
+      value: |
+        这个仓库的 `main` 分支只维护自托管 API、后台、Docker、日志指标和 skill 调用。
+        原桌面端、Android 端和安装包功能请到原作者仓库反馈。
+
   - type: textarea
     id: problem
     attributes:
       label: 你想解决什么问题
-      description: 先描述场景和痛点，再描述功能本身
-      placeholder: 当前在什么场景下不方便，现有能力缺了什么
+      description: 先描述 API 调用、部署、后台管理或 skill 使用中的场景和痛点
+      placeholder: 当前在哪个自托管 API 场景下不方便，现有能力缺了什么
     validations:
       required: true
 
@@ -15,7 +21,7 @@ body:
     id: proposal
     attributes:
       label: 你期望的方案
-      placeholder: 希望新增什么能力，入口放在哪里，行为大致是什么
+      placeholder: 希望新增什么接口、后台面板、日志指标、Docker 更新或 skill 能力
     validations:
       required: true
 
