@@ -47,19 +47,25 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/image_studio_deploy_key
           chmod 600 ~/.ssh/image_studio_deploy_key
-          ssh-keyscan -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
 
       - name: Upload archive
         run: |
           set -euo pipefail
-          scp -P "$DEPLOY_PORT" -i ~/.ssh/image_studio_deploy_key \
+          scp -P "$DEPLOY_PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            -o ServerAliveInterval=10 \
+            -i ~/.ssh/image_studio_deploy_key \
             /tmp/image-studio-api-deploy.tar \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/image-studio-api-deploy.tar"
 
       - name: Deploy on server
         run: |
           set -euo pipefail
-          ssh -p "$DEPLOY_PORT" -i ~/.ssh/image_studio_deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+          ssh -p "$DEPLOY_PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            -o ServerAliveInterval=10 \
+            -i ~/.ssh/image_studio_deploy_key \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
             "DEPLOY_ROOT='$DEPLOY_ROOT' HOST_PORT='$HOST_PORT' GITHUB_SHA='$GITHUB_SHA' bash -s" <<'REMOTE'
           set -euo pipefail
 
