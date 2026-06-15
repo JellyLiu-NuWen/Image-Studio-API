@@ -37,6 +37,19 @@ test("renderAdminPage exposes the operations-console template controls", () => {
   assert.match(html, /data-interface-field="upstreamIds"/);
 });
 
+test("renderAdminPage shows interface and upstream configs as list detail editors", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /class="list-detail-shell"/);
+  assert.match(html, /id="interfaceList"/);
+  assert.match(html, /id="interfaceDetail"/);
+  assert.match(html, /data-select-interface/);
+  assert.match(html, /id="upstreamList"/);
+  assert.match(html, /id="upstreamDetail"/);
+  assert.match(html, /data-select-upstream/);
+  assert.match(html, /点击左侧列表项查看或编辑详情/);
+});
+
 test("renderAdminPage validates release link protocol before rendering href", () => {
   const html = renderAdminPage();
 

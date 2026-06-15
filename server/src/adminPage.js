@@ -490,36 +490,98 @@ export function renderAdminPage() {
       display: grid;
       gap: 16px;
     }
-    .config-list {
+    .list-detail-shell {
       display: grid;
-      gap: 12px;
+      grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
     }
-    .config-item {
-      display: grid;
-      gap: 12px;
-      padding: 14px;
+    .config-list-panel,
+    .config-detail-panel {
+      min-width: 0;
       border: 1px solid var(--border);
       border-radius: 12px;
       background: var(--surface-alt);
     }
-    .config-item-header {
+    .config-list-header,
+    .config-detail-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      flex-wrap: wrap;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
     }
-    .config-item-header strong {
+    .config-list-header strong,
+    .config-detail-header h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    .config-list-header span,
+    .config-detail-header span {
+      display: block;
+      margin-top: 3px;
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .config-list {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+    }
+    .config-summary-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .config-summary-button {
+      width: 100%;
+      min-height: 0;
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      text-align: left;
+      box-shadow: none;
+    }
+    .config-summary-button:hover {
+      border-color: var(--border-strong);
+      background: #fafdff;
+    }
+    .config-summary-button.active {
+      border-color: rgba(23, 107, 95, 0.35);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 3px rgba(23, 107, 95, 0.08);
+    }
+    .config-summary-button strong {
       font-size: 15px;
       line-height: 1.35;
     }
-    .config-item-header span {
+    .config-summary-button small,
+    .config-summary-meta {
       color: var(--text-soft);
       font-size: 12px;
       line-height: 1.4;
     }
-    .config-item form {
-      box-shadow: none;
+    .config-summary-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-weight: 700;
+    }
+    .config-detail-body > section { padding: 14px; }
+    .config-empty {
+      padding: 18px;
+      color: var(--text-muted);
+      line-height: 1.55;
     }
     .checkbox-row {
       display: flex;
@@ -576,6 +638,7 @@ export function renderAdminPage() {
     @media (max-width: 1040px) {
       .login-shell { grid-template-columns: 1fr; }
       .app-shell { grid-template-columns: 1fr; }
+      .list-detail-shell { grid-template-columns: 1fr; }
       .sidebar {
         position: static;
         height: auto;
@@ -720,10 +783,23 @@ export function renderAdminPage() {
           <div class="card-header"><h2>接口配置</h2><span>每个调用方可以有独立 Key、默认参数和绑定上游</span></div>
           <div class="card-body">
             <form id="clientConfigForm" class="config-editor">
-              <div id="interfaceList" class="config-list"></div>
+              <div class="list-detail-shell">
+                <section class="config-list-panel">
+                  <div class="config-list-header">
+                    <div>
+                      <strong>接口列表</strong>
+                      <span>点击左侧列表项查看或编辑详情</span>
+                    </div>
+                    <button type="button" class="secondary" id="addInterfaceBtn">新增接口</button>
+                  </div>
+                  <div id="interfaceList" class="config-list"></div>
+                </section>
+                <section class="config-detail-panel">
+                  <div id="interfaceDetail" class="config-detail-body"></div>
+                </section>
+              </div>
               <div class="actions">
                 <button type="button" class="secondary" id="loadConfigBtn">加载配置</button>
-                <button type="button" class="secondary" id="addInterfaceBtn">新增接口</button>
                 <button type="submit" class="primary">保存接口配置</button>
               </div>
             </form>
@@ -736,10 +812,23 @@ export function renderAdminPage() {
           <div class="card-header"><h2>上游中转站</h2><span>接口会按绑定顺序优先使用前面的上游，失败后自动切换</span></div>
           <div class="card-body">
             <form id="upstreamConfigForm" class="config-editor">
-              <div id="upstreamList" class="config-list"></div>
+              <div class="list-detail-shell">
+                <section class="config-list-panel">
+                  <div class="config-list-header">
+                    <div>
+                      <strong>上游列表</strong>
+                      <span>点击左侧列表项查看或编辑详情</span>
+                    </div>
+                    <button type="button" class="secondary" id="addUpstreamBtn">新增上游</button>
+                  </div>
+                  <div id="upstreamList" class="config-list"></div>
+                </section>
+                <section class="config-detail-panel">
+                  <div id="upstreamDetail" class="config-detail-body"></div>
+                </section>
+              </div>
               <div class="actions">
                 <button type="button" class="secondary" id="loadUpstreamBtn">加载配置</button>
-                <button type="button" class="secondary" id="addUpstreamBtn">新增上游</button>
                 <button type="button" class="secondary" id="testUpstreamBtn">测试上游连接</button>
                 <button type="submit" class="primary">保存上游配置</button>
               </div>
@@ -816,6 +905,8 @@ export function renderAdminPage() {
     const statusEl = document.getElementById("status");
     const loginStatusEl = document.getElementById("loginStatus");
     let currentConfig = { interfaces: [], upstreams: [] };
+    let selectedInterfaceIndex = 0;
+    let selectedUpstreamIndex = 0;
 
     function setStatus(message, kind = "") {
       statusEl.textContent = message;
@@ -956,11 +1047,83 @@ export function renderAdminPage() {
         .join("");
     }
 
+    function clampSelectedConfig() {
+      selectedInterfaceIndex = Math.min(Math.max(selectedInterfaceIndex, 0), Math.max(currentConfig.interfaces.length - 1, 0));
+      selectedUpstreamIndex = Math.min(Math.max(selectedUpstreamIndex, 0), Math.max(currentConfig.upstreams.length - 1, 0));
+    }
+
+    function statusText(enabled) {
+      return enabled ? "启用" : "停用";
+    }
+
+    function syncInterfaceDetail() {
+      const section = document.querySelector("[data-interface-detail-index]");
+      if (!section) return;
+      const index = Number(section.dataset.interfaceDetailIndex);
+      if (!Number.isInteger(index) || !currentConfig.interfaces[index]) return;
+      const value = (field) => section.querySelector('[data-interface-field="' + field + '"]');
+      currentConfig.interfaces[index] = {
+        ...currentConfig.interfaces[index],
+        id: value("id").value,
+        name: value("name").value,
+        enabled: value("enabled").checked,
+        apiToken: value("apiToken").value,
+        upstreamIds: Array.from(value("upstreamIds").selectedOptions).map((option) => option.value),
+        defaultImageModel: value("defaultImageModel").value,
+        defaultTextModel: value("defaultTextModel").value,
+        defaultSize: value("defaultSize").value,
+        defaultQuality: value("defaultQuality").value,
+        defaultOutputFormat: value("defaultOutputFormat").value,
+        requestTimeoutSeconds: value("requestTimeoutSeconds").value,
+        maxConcurrentRequests: value("maxConcurrentRequests").value,
+        rateLimitPerMinute: value("rateLimitPerMinute").value
+      };
+    }
+
+    function syncUpstreamDetail() {
+      const section = document.querySelector("[data-upstream-detail-index]");
+      if (!section) return;
+      const index = Number(section.dataset.upstreamDetailIndex);
+      if (!Number.isInteger(index) || !currentConfig.upstreams[index]) return;
+      const value = (field) => section.querySelector('[data-upstream-field="' + field + '"]');
+      currentConfig.upstreams[index] = {
+        ...currentConfig.upstreams[index],
+        id: value("id").value,
+        name: value("name").value,
+        enabled: value("enabled").checked,
+        baseURL: value("baseURL").value,
+        apiKey: value("apiKey").value
+      };
+    }
+
+    function syncConfigDetails() {
+      syncInterfaceDetail();
+      syncUpstreamDetail();
+    }
+
     function renderInterfaceList() {
       const html = currentConfig.interfaces.map((item, index) => [
-        '<section class="config-item" data-interface-index="' + index + '">',
-        '<div class="config-item-header"><div><strong>' + escapeHTML(item.name) + '</strong><br><span>' + escapeHTML(item.id) + ' · ' + (item.apiTokenSet ? "Key 已保存" : "未保存 Key") + '</span></div>',
-        '<button type="button" class="danger-button" data-remove-interface="' + index + '">删除</button></div>',
+        '<div class="config-summary-row">',
+        '<button type="button" class="config-summary-button ' + (index === selectedInterfaceIndex ? "active" : "") + '" data-select-interface="' + index + '">',
+        '<strong>' + escapeHTML(item.name) + '</strong>',
+        '<small>' + escapeHTML(item.id) + '</small>',
+        '<span class="config-summary-meta"><span>' + statusText(item.enabled) + '</span><span>' + (item.apiTokenSet || item.apiToken ? "Key 已保存" : "未保存 Key") + '</span><span>上游 ' + escapeHTML(item.upstreamIds.length) + ' 个</span></span>',
+        '</button>',
+        '<button type="button" class="danger-button" data-remove-interface="' + index + '">删除</button>',
+        '</div>'
+      ].join("")).join("");
+      document.getElementById("interfaceList").innerHTML = html || '<div class="config-empty">暂无接口配置。</div>';
+    }
+
+    function renderInterfaceDetail() {
+      const item = currentConfig.interfaces[selectedInterfaceIndex];
+      if (!item) {
+        document.getElementById("interfaceDetail").innerHTML = '<div class="config-empty">点击左侧列表项查看或编辑详情。</div>';
+        return;
+      }
+      document.getElementById("interfaceDetail").innerHTML = [
+        '<div class="config-detail-header"><div><h3>' + escapeHTML(item.name) + '</h3><span>接口详情 · ' + escapeHTML(item.id) + '</span></div></div>',
+        '<section data-interface-detail-index="' + selectedInterfaceIndex + '">',
         '<div class="grid-2">',
         '<label>接口 ID<input data-interface-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>接口名称<input data-interface-field="name" value="' + escapeHTML(item.name) + '"></label>',
@@ -977,15 +1140,32 @@ export function renderAdminPage() {
         '<label class="full">绑定上游中转站（按选择顺序优先尝试）<select data-interface-field="upstreamIds" multiple>' + upstreamOptions(item.upstreamIds) + '</select></label>',
         '</div>',
         '</section>'
-      ].join("")).join("");
-      document.getElementById("interfaceList").innerHTML = html || '<div class="log-row empty">暂无接口配置。</div>';
+      ].join("");
     }
 
     function renderUpstreamList() {
       const html = currentConfig.upstreams.map((item, index) => [
-        '<section class="config-item" data-upstream-index="' + index + '">',
-        '<div class="config-item-header"><div><strong>' + escapeHTML(item.name) + '</strong><br><span>' + escapeHTML(item.id) + ' · ' + (item.apiKeySet ? "Key 已保存" : "未保存 Key") + '</span></div>',
-        '<button type="button" class="danger-button" data-remove-upstream="' + index + '">删除</button></div>',
+        '<div class="config-summary-row">',
+        '<button type="button" class="config-summary-button ' + (index === selectedUpstreamIndex ? "active" : "") + '" data-select-upstream="' + index + '">',
+        '<strong>' + escapeHTML(item.name) + '</strong>',
+        '<small>' + escapeHTML(item.id) + '</small>',
+        '<span class="config-summary-meta"><span>' + statusText(item.enabled) + '</span><span>' + (item.apiKeySet || item.apiKey ? "Key 已保存" : "未保存 Key") + '</span></span>',
+        '</button>',
+        '<button type="button" class="danger-button" data-remove-upstream="' + index + '">删除</button>',
+        '</div>'
+      ].join("")).join("");
+      document.getElementById("upstreamList").innerHTML = html || '<div class="config-empty">暂无上游配置。</div>';
+    }
+
+    function renderUpstreamDetail() {
+      const item = currentConfig.upstreams[selectedUpstreamIndex];
+      if (!item) {
+        document.getElementById("upstreamDetail").innerHTML = '<div class="config-empty">点击左侧列表项查看或编辑详情。</div>';
+        return;
+      }
+      document.getElementById("upstreamDetail").innerHTML = [
+        '<div class="config-detail-header"><div><h3>' + escapeHTML(item.name) + '</h3><span>上游详情 · ' + escapeHTML(item.id) + '</span></div></div>',
+        '<section data-upstream-detail-index="' + selectedUpstreamIndex + '">',
         '<div class="grid-2">',
         '<label>上游 ID<input data-upstream-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>上游名称<input data-upstream-field="name" value="' + escapeHTML(item.name) + '"></label>',
@@ -994,14 +1174,20 @@ export function renderAdminPage() {
         '<label class="checkbox-row"><input data-upstream-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个上游</label>',
         '</div>',
         '</section>'
-      ].join("")).join("");
-      document.getElementById("upstreamList").innerHTML = html || '<div class="log-row empty">暂无上游配置。</div>';
+      ].join("");
+    }
+
+    function renderConfigEditors() {
+      clampSelectedConfig();
+      renderUpstreamList();
+      renderUpstreamDetail();
+      renderInterfaceList();
+      renderInterfaceDetail();
     }
 
     function fillConfig(config) {
       currentConfig = ensureConfigShape(config);
-      renderUpstreamList();
-      renderInterfaceList();
+      renderConfigEditors();
       document.getElementById("accountUsername").value = currentConfig.adminUsername || "admin";
     }
 
@@ -1014,37 +1200,13 @@ export function renderAdminPage() {
     }
 
     function readInterfaceForms() {
-      return Array.from(document.querySelectorAll("[data-interface-index]")).map((section) => {
-        const value = (field) => section.querySelector('[data-interface-field="' + field + '"]');
-        return {
-          id: value("id").value,
-          name: value("name").value,
-          enabled: value("enabled").checked,
-          apiToken: value("apiToken").value,
-          upstreamIds: Array.from(value("upstreamIds").selectedOptions).map((option) => option.value),
-          defaultImageModel: value("defaultImageModel").value,
-          defaultTextModel: value("defaultTextModel").value,
-          defaultSize: value("defaultSize").value,
-          defaultQuality: value("defaultQuality").value,
-          defaultOutputFormat: value("defaultOutputFormat").value,
-          requestTimeoutSeconds: value("requestTimeoutSeconds").value,
-          maxConcurrentRequests: value("maxConcurrentRequests").value,
-          rateLimitPerMinute: value("rateLimitPerMinute").value
-        };
-      });
+      syncInterfaceDetail();
+      return currentConfig.interfaces;
     }
 
     function readUpstreamForms() {
-      return Array.from(document.querySelectorAll("[data-upstream-index]")).map((section) => {
-        const value = (field) => section.querySelector('[data-upstream-field="' + field + '"]');
-        return {
-          id: value("id").value,
-          name: value("name").value,
-          enabled: value("enabled").checked,
-          baseURL: value("baseURL").value,
-          apiKey: value("apiKey").value
-        };
-      });
+      syncUpstreamDetail();
+      return currentConfig.upstreams;
     }
 
     async function saveConfig(patch) {
@@ -1251,6 +1413,7 @@ export function renderAdminPage() {
     document.getElementById("loadConfigBtn").addEventListener("click", loadConfig);
     document.getElementById("loadUpstreamBtn").addEventListener("click", loadConfig);
     document.getElementById("addInterfaceBtn").addEventListener("click", () => {
+      syncInterfaceDetail();
       const index = currentConfig.interfaces.length;
       currentConfig.interfaces.push({
         id: fallbackId("interface", index),
@@ -1267,9 +1430,11 @@ export function renderAdminPage() {
         maxConcurrentRequests: 1,
         rateLimitPerMinute: 10
       });
-      renderInterfaceList();
+      selectedInterfaceIndex = index;
+      renderConfigEditors();
     });
     document.getElementById("addUpstreamBtn").addEventListener("click", () => {
+      syncConfigDetails();
       const index = currentConfig.upstreams.length;
       currentConfig.upstreams.push({
         id: fallbackId("upstream", index),
@@ -1278,33 +1443,54 @@ export function renderAdminPage() {
         baseURL: "",
         apiKeySet: false
       });
-      renderUpstreamList();
-      renderInterfaceList();
+      selectedUpstreamIndex = index;
+      renderConfigEditors();
     });
     document.getElementById("interfaceList").addEventListener("click", (event) => {
-      const index = event.target?.dataset?.removeInterface;
-      if (index === undefined) return;
-      if (currentConfig.interfaces.length <= 1) {
-        setStatus("至少保留一个接口配置。", "danger");
+      const removeButton = event.target.closest("[data-remove-interface]");
+      if (removeButton) {
+        if (currentConfig.interfaces.length <= 1) {
+          setStatus("至少保留一个接口配置。", "danger");
+          return;
+        }
+        syncInterfaceDetail();
+        const index = Number(removeButton.dataset.removeInterface);
+        currentConfig.interfaces.splice(index, 1);
+        selectedInterfaceIndex = Math.min(index, currentConfig.interfaces.length - 1);
+        renderConfigEditors();
         return;
       }
-      currentConfig.interfaces.splice(Number(index), 1);
+      const selectButton = event.target.closest("[data-select-interface]");
+      if (!selectButton) return;
+      syncInterfaceDetail();
+      selectedInterfaceIndex = Number(selectButton.dataset.selectInterface);
       renderInterfaceList();
+      renderInterfaceDetail();
     });
     document.getElementById("upstreamList").addEventListener("click", (event) => {
-      const index = event.target?.dataset?.removeUpstream;
-      if (index === undefined) return;
-      if (currentConfig.upstreams.length <= 1) {
-        setStatus("至少保留一个上游中转站。", "danger");
+      const removeButton = event.target.closest("[data-remove-upstream]");
+      if (removeButton) {
+        if (currentConfig.upstreams.length <= 1) {
+          setStatus("至少保留一个上游中转站。", "danger");
+          return;
+        }
+        syncConfigDetails();
+        const index = Number(removeButton.dataset.removeUpstream);
+        const removed = currentConfig.upstreams.splice(index, 1)[0];
+        currentConfig.interfaces = currentConfig.interfaces.map((item) => ({
+          ...item,
+          upstreamIds: item.upstreamIds.filter((id) => id !== removed.id)
+        }));
+        selectedUpstreamIndex = Math.min(index, currentConfig.upstreams.length - 1);
+        renderConfigEditors();
         return;
       }
-      const removed = currentConfig.upstreams.splice(Number(index), 1)[0];
-      currentConfig.interfaces = currentConfig.interfaces.map((item) => ({
-        ...item,
-        upstreamIds: item.upstreamIds.filter((id) => id !== removed.id)
-      }));
+      const selectButton = event.target.closest("[data-select-upstream]");
+      if (!selectButton) return;
+      syncUpstreamDetail();
+      selectedUpstreamIndex = Number(selectButton.dataset.selectUpstream);
       renderUpstreamList();
-      renderInterfaceList();
+      renderUpstreamDetail();
     });
     document.getElementById("testUpstreamBtn").addEventListener("click", async () => {
       setStatus("正在测试上游连接...");
@@ -1325,6 +1511,7 @@ export function renderAdminPage() {
 
     document.getElementById("clientConfigForm").addEventListener("submit", async (event) => {
       event.preventDefault();
+      syncConfigDetails();
       await saveConfig({
         interfaces: readInterfaceForms(),
         upstreams: readUpstreamForms()
@@ -1333,6 +1520,7 @@ export function renderAdminPage() {
 
     document.getElementById("upstreamConfigForm").addEventListener("submit", async (event) => {
       event.preventDefault();
+      syncConfigDetails();
       await saveConfig({
         interfaces: readInterfaceForms(),
         upstreams: readUpstreamForms()
