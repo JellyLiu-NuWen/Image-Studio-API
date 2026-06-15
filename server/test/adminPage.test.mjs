@@ -50,6 +50,20 @@ test("renderAdminPage shows interface and upstream configs as full width table e
   assert.match(html, /点击表格行查看或编辑详情/);
 });
 
+test("renderAdminPage uses a table-first drawer editor for configs", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /id="configDrawerBackdrop"/);
+  assert.match(html, /class="config-drawer-backdrop hidden"/);
+  assert.match(html, /class="config-drawer"/);
+  assert.match(html, /id="configDrawerTitle"/);
+  assert.match(html, /id="configDrawerBody"/);
+  assert.match(html, /data-close-config-drawer/);
+  assert.match(html, /config-table-card/);
+  assert.match(html, /编辑抽屉/);
+  assert.match(html, /表格主视图 · 点击行或编辑按钮打开编辑抽屉/);
+});
+
 test("renderAdminPage validates release link protocol before rendering href", () => {
   const html = renderAdminPage();
 

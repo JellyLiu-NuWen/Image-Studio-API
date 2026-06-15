@@ -489,11 +489,11 @@ export function renderAdminPage() {
     .config-editor {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 12px;
     }
     .table-editor-shell {
       display: grid;
-      gap: 14px;
+      gap: 12px;
     }
     .table-editor-toolbar {
       display: flex;
@@ -502,37 +502,40 @@ export function renderAdminPage() {
       gap: 12px;
       flex-wrap: wrap;
     }
-    .table-editor-toolbar strong,
-    .config-detail-header h3 {
+    .table-editor-toolbar strong {
       margin: 0;
       font-size: 15px;
       line-height: 1.35;
       letter-spacing: 0;
     }
-    .table-editor-toolbar span,
-    .config-detail-header span {
+    .table-editor-toolbar span {
       display: block;
       margin-top: 3px;
       color: var(--text-soft);
       font-size: 12px;
       line-height: 1.45;
     }
+    .config-table-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+    }
     .config-table-wrap {
       overflow-x: auto;
-      border: 1px solid var(--border);
-      border-radius: 12px;
       background: #fff;
     }
     .config-table {
       width: 100%;
-      min-width: 920px;
+      min-width: 1060px;
       border-collapse: collapse;
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.35;
     }
     .config-table th,
     .config-table td {
-      padding: 12px 14px;
+      padding: 13px 16px;
       border-bottom: 1px solid var(--border);
       text-align: left;
       vertical-align: middle;
@@ -545,20 +548,34 @@ export function renderAdminPage() {
       font-weight: 800;
       white-space: nowrap;
     }
+    .config-table th:last-child,
+    .config-table td:last-child {
+      position: sticky;
+      right: 0;
+      z-index: 1;
+      background: #fff;
+      box-shadow: -10px 0 16px rgba(15, 23, 42, 0.06);
+    }
+    .config-table th:last-child {
+      z-index: 2;
+      background: var(--surface-alt);
+    }
     .config-table tr:last-child td { border-bottom: 0; }
     .config-table tbody tr {
       cursor: pointer;
       transition: background-color 160ms ease;
     }
-    .config-table tbody tr:hover { background: #fafdff; }
+    .config-table tbody tr:hover { background: #f8fbfd; }
+    .config-table tbody tr:hover td:last-child { background: #f8fbfd; }
     .config-table tbody tr.active {
       background: var(--accent-soft);
       box-shadow: inset 3px 0 0 var(--accent);
     }
+    .config-table tbody tr.active td:last-child { background: var(--accent-soft); }
     .config-name-cell {
       display: grid;
       gap: 4px;
-      min-width: 180px;
+      min-width: 150px;
     }
     .config-name-cell strong {
       font-size: 14px;
@@ -568,6 +585,21 @@ export function renderAdminPage() {
       color: var(--text-soft);
       font-size: 12px;
       line-height: 1.35;
+    }
+    .config-url-cell,
+    .config-model-cell {
+      display: inline-block;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .config-key-cell {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--danger);
+      font-size: 12px;
+      white-space: nowrap;
     }
     .config-chip {
       display: inline-flex;
@@ -595,33 +627,114 @@ export function renderAdminPage() {
     .config-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: nowrap;
     }
     .config-actions button {
-      min-height: 32px;
-      padding: 0 10px;
+      min-height: 30px;
+      padding: 0 9px;
+      border-radius: 7px;
       font-size: 12px;
+      font-weight: 700;
     }
     .config-detail-panel {
-      min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--surface-alt);
+      display: none;
     }
-    .config-detail-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-    .config-detail-body > section { padding: 14px; }
     .config-empty {
       padding: 18px;
       color: var(--text-muted);
       line-height: 1.55;
+    }
+    .config-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      justify-content: flex-end;
+      background: rgba(15, 23, 42, 0.28);
+      backdrop-filter: blur(1px);
+    }
+    .config-drawer {
+      width: min(580px, 100vw);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border);
+      background: #fff;
+      box-shadow: -18px 0 44px rgba(15, 23, 42, 0.14);
+    }
+    .config-drawer-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+    .config-drawer-header h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+    .config-drawer-header span {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .drawer-close {
+      width: 34px;
+      min-width: 34px;
+      min-height: 34px;
+      padding: 0;
+      border-radius: 8px;
+      background: var(--surface-soft);
+      border-color: var(--border);
+      color: var(--text-muted);
+      font-size: 18px;
+      line-height: 1;
+    }
+    .config-drawer-body {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px;
+      background: var(--surface-alt);
+    }
+    .config-drawer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      background: #fff;
+    }
+    .config-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .config-form-grid label {
+      min-width: 0;
+      font-size: 13px;
+    }
+    .config-form-grid .full {
+      grid-column: 1 / -1;
+    }
+    .config-form-grid input,
+    .config-form-grid select {
+      min-height: 40px;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .config-help-line {
+      margin: 0 0 14px;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.5;
     }
     .checkbox-row {
       display: flex;
@@ -698,6 +811,7 @@ export function renderAdminPage() {
       .topbar-actions { justify-content: flex-start; }
       .grid-4,
       .grid-2,
+      .config-form-grid,
       form,
       .nav-list { grid-template-columns: 1fr; }
     }
@@ -826,11 +940,13 @@ export function renderAdminPage() {
                 <div class="table-editor-toolbar">
                   <div>
                     <strong>接口列表</strong>
-                    <span>点击表格行查看或编辑详情</span>
+                    <span>表格主视图 · 点击行或编辑按钮打开编辑抽屉</span>
                   </div>
                   <button type="button" class="secondary" id="addInterfaceBtn">新增接口</button>
                 </div>
-                <div id="interfaceList" class="config-table-wrap"></div>
+                <div class="config-table-card">
+                  <div id="interfaceList" class="config-table-wrap"></div>
+                </div>
                 <div id="interfaceDetail" class="config-detail-panel"></div>
               </div>
               <div class="actions">
@@ -851,11 +967,13 @@ export function renderAdminPage() {
                 <div class="table-editor-toolbar">
                   <div>
                     <strong>上游列表</strong>
-                    <span>点击表格行查看或编辑详情</span>
+                    <span>表格主视图 · 点击行或编辑按钮打开编辑抽屉</span>
                   </div>
                   <button type="button" class="secondary" id="addUpstreamBtn">新增上游</button>
                 </div>
-                <div id="upstreamList" class="config-table-wrap"></div>
+                <div class="config-table-card">
+                  <div id="upstreamList" class="config-table-wrap"></div>
+                </div>
                 <div id="upstreamDetail" class="config-detail-panel"></div>
               </div>
               <div class="actions">
@@ -924,6 +1042,25 @@ export function renderAdminPage() {
     </main>
   </section>
 
+  <div id="configDrawerBackdrop" class="config-drawer-backdrop hidden">
+    <aside class="config-drawer" aria-label="编辑抽屉" role="dialog" aria-modal="true">
+      <div class="config-drawer-header">
+        <div>
+          <h2 id="configDrawerTitle">编辑配置</h2>
+          <span id="configDrawerSubtitle">从列表选择一项后编辑详情。</span>
+        </div>
+        <button type="button" class="drawer-close" aria-label="关闭编辑抽屉" data-close-config-drawer>×</button>
+      </div>
+      <div id="configDrawerBody" class="config-drawer-body">
+        <div class="config-empty">点击表格行查看或编辑详情。</div>
+      </div>
+      <div class="config-drawer-actions">
+        <button type="button" class="secondary" data-close-config-drawer>取消</button>
+        <button type="button" class="primary" id="saveDrawerBtn">保存配置</button>
+      </div>
+    </aside>
+  </div>
+
   <script>
     const views = {
       dashboardView: ["仪表盘", "查看服务状态、调用量、响应速度和生图任务概览。"],
@@ -935,9 +1072,15 @@ export function renderAdminPage() {
     };
     const statusEl = document.getElementById("status");
     const loginStatusEl = document.getElementById("loginStatus");
+    const configDrawerBackdrop = document.getElementById("configDrawerBackdrop");
+    const configDrawerTitle = document.getElementById("configDrawerTitle");
+    const configDrawerSubtitle = document.getElementById("configDrawerSubtitle");
+    const configDrawerBody = document.getElementById("configDrawerBody");
+    const saveDrawerBtn = document.getElementById("saveDrawerBtn");
     let currentConfig = { interfaces: [], upstreams: [] };
     let selectedInterfaceIndex = 0;
     let selectedUpstreamIndex = 0;
+    let configDrawerMode = null;
 
     function setStatus(message, kind = "") {
       statusEl.textContent = message;
@@ -977,17 +1120,20 @@ export function renderAdminPage() {
     function showApp(account) {
       document.getElementById("loginPage").classList.add("hidden");
       document.getElementById("appShell").classList.remove("hidden");
+      closeConfigDrawer();
       const username = account?.username || "admin";
       document.getElementById("currentAccount").textContent = "当前账号：" + username;
       document.getElementById("accountUsername").value = username;
     }
 
     function showLogin() {
+      closeConfigDrawer();
       document.getElementById("appShell").classList.add("hidden");
       document.getElementById("loginPage").classList.remove("hidden");
     }
 
     function switchView(viewId) {
+      closeConfigDrawer();
       for (const element of document.querySelectorAll(".view")) {
         element.classList.toggle("active", element.id === viewId);
       }
@@ -1095,6 +1241,55 @@ export function renderAdminPage() {
       return '<span class="config-chip ' + kind + '">' + escapeHTML(text) + '</span>';
     }
 
+    function maskedKey(isSet) {
+      return isSet ? '<span class="config-key-cell">sk-••••...saved</span>' : chip("未保存 Key", "warn");
+    }
+
+    function modelCell(value) {
+      return '<span class="config-model-cell" title="' + escapeHTML(value || "-") + '">' + escapeHTML(value || "-") + '</span>';
+    }
+
+    function urlCell(value) {
+      return '<span class="config-url-cell" title="' + escapeHTML(value || "未配置") + '">' + escapeHTML(value || "未配置") + '</span>';
+    }
+
+    function getActiveConfigForm() {
+      return configDrawerMode === "upstream" ? document.getElementById("upstreamConfigForm") : document.getElementById("clientConfigForm");
+    }
+
+    function closeConfigDrawer() {
+      configDrawerMode = null;
+      if (configDrawerBackdrop) {
+        configDrawerBackdrop.classList.add("hidden");
+      }
+      if (configDrawerTitle) {
+        configDrawerTitle.textContent = "编辑配置";
+      }
+      if (configDrawerSubtitle) {
+        configDrawerSubtitle.textContent = "从列表选择一项后编辑详情。";
+      }
+      if (configDrawerBody) {
+        configDrawerBody.innerHTML = '<div class="config-empty">点击表格行查看或编辑详情。</div>';
+      }
+    }
+
+    function openConfigDrawer(mode) {
+      configDrawerMode = mode;
+      if (configDrawerBackdrop) {
+        configDrawerBackdrop.classList.remove("hidden");
+      }
+      renderConfigDrawer();
+    }
+
+    function renderConfigDrawer() {
+      if (!configDrawerBody || !configDrawerTitle || !configDrawerSubtitle) return;
+      if (configDrawerMode === "interface") {
+        renderInterfaceDetail();
+      } else if (configDrawerMode === "upstream") {
+        renderUpstreamDetail();
+      }
+    }
+
     function syncInterfaceDetail() {
       const section = document.querySelector("[data-interface-detail-index]");
       if (!section) return;
@@ -1148,10 +1343,10 @@ export function renderAdminPage() {
       const rows = currentConfig.interfaces.map((item, index) => [
         '<tr class="' + (index === selectedInterfaceIndex ? "active" : "") + '" data-open-interface-detail="' + index + '">',
         '<td><div class="config-name-cell"><strong>' + escapeHTML(item.name) + '</strong><span>' + escapeHTML(item.id) + '</span></div></td>',
-        '<td>' + chip(keyText(item.apiTokenSet || item.apiToken), item.apiTokenSet || item.apiToken ? "ok" : "warn") + '</td>',
-        '<td>' + escapeHTML(item.defaultImageModel) + '</td>',
+        '<td>' + maskedKey(item.apiTokenSet || item.apiToken) + '</td>',
+        '<td>' + modelCell(item.defaultImageModel) + '</td>',
         '<td>' + escapeHTML(item.defaultSize) + ' / ' + escapeHTML(item.defaultQuality) + '</td>',
-        '<td>' + escapeHTML(String(item.upstreamIds.length)) + ' 个上游</td>',
+        '<td>' + chip(escapeHTML(String(item.upstreamIds.length)) + " 个上游", item.upstreamIds.length ? "ok" : "warn") + '</td>',
         '<td>' + escapeHTML(item.rateLimitPerMinute) + '/分钟 · 并发 ' + escapeHTML(item.maxConcurrentRequests) + '</td>',
         '<td>' + chip(statusText(item.enabled), item.enabled ? "ok" : "warn") + '</td>',
         '<td><div class="config-actions"><button type="button" class="secondary" data-open-interface-detail="' + index + '">编辑</button><button type="button" class="danger-button" data-remove-interface="' + index + '">删除</button></div></td>',
@@ -1168,13 +1363,17 @@ export function renderAdminPage() {
     function renderInterfaceDetail() {
       const item = currentConfig.interfaces[selectedInterfaceIndex];
       if (!item) {
-        document.getElementById("interfaceDetail").innerHTML = '<div class="config-empty">点击表格行查看或编辑详情。</div>';
+        if (configDrawerTitle) configDrawerTitle.textContent = "接口配置";
+        if (configDrawerSubtitle) configDrawerSubtitle.textContent = "点击表格行查看或编辑详情。";
+        if (configDrawerBody) configDrawerBody.innerHTML = '<div class="config-empty">点击表格行查看或编辑详情。</div>';
         return;
       }
-      document.getElementById("interfaceDetail").innerHTML = [
-        '<div class="config-detail-header"><div><h3>' + escapeHTML(item.name) + '</h3><span>接口详情 · ' + escapeHTML(item.id) + '</span></div></div>',
+      if (configDrawerTitle) configDrawerTitle.textContent = "编辑接口 · " + item.name;
+      if (configDrawerSubtitle) configDrawerSubtitle.textContent = "接口详情 · " + item.id;
+      if (configDrawerBody) configDrawerBody.innerHTML = [
+        '<p class="config-help-line">接口配置决定 Codex、Skill 或其他工具请求时的默认模型、限流和上游绑定。</p>',
         '<section data-interface-detail-index="' + selectedInterfaceIndex + '">',
-        '<div class="grid-2">',
+        '<div class="config-form-grid">',
         '<label>接口 ID<input data-interface-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>接口名称<input data-interface-field="name" value="' + escapeHTML(item.name) + '"></label>',
         '<label class="full">服务 API Key<input data-interface-field="apiToken" autocomplete="off" type="password" placeholder="' + (item.apiTokenSet ? "当前 Key 已保存，留空不修改" : "请输入服务 API Key") + '"></label>',
@@ -1201,8 +1400,8 @@ export function renderAdminPage() {
       const rows = currentConfig.upstreams.map((item, index) => [
         '<tr class="' + (index === selectedUpstreamIndex ? "active" : "") + '" data-open-upstream-detail="' + index + '">',
         '<td><div class="config-name-cell"><strong>' + escapeHTML(item.name) + '</strong><span>' + escapeHTML(item.id) + '</span></div></td>',
-        '<td>' + escapeHTML(item.baseURL || "未配置") + '</td>',
-        '<td>' + chip(keyText(item.apiKeySet || item.apiKey), item.apiKeySet || item.apiKey ? "ok" : "warn") + '</td>',
+        '<td>' + urlCell(item.baseURL) + '</td>',
+        '<td>' + maskedKey(item.apiKeySet || item.apiKey) + '</td>',
         '<td>' + chip(statusText(item.enabled), item.enabled ? "ok" : "warn") + '</td>',
         '<td><div class="config-actions"><button type="button" class="secondary" data-open-upstream-detail="' + index + '">编辑</button><button type="button" class="danger-button" data-remove-upstream="' + index + '">删除</button></div></td>',
         '</tr>'
@@ -1218,13 +1417,17 @@ export function renderAdminPage() {
     function renderUpstreamDetail() {
       const item = currentConfig.upstreams[selectedUpstreamIndex];
       if (!item) {
-        document.getElementById("upstreamDetail").innerHTML = '<div class="config-empty">点击表格行查看或编辑详情。</div>';
+        if (configDrawerTitle) configDrawerTitle.textContent = "上游中转站";
+        if (configDrawerSubtitle) configDrawerSubtitle.textContent = "点击表格行查看或编辑详情。";
+        if (configDrawerBody) configDrawerBody.innerHTML = '<div class="config-empty">点击表格行查看或编辑详情。</div>';
         return;
       }
-      document.getElementById("upstreamDetail").innerHTML = [
-        '<div class="config-detail-header"><div><h3>' + escapeHTML(item.name) + '</h3><span>上游详情 · ' + escapeHTML(item.id) + '</span></div></div>',
+      if (configDrawerTitle) configDrawerTitle.textContent = "编辑上游 · " + item.name;
+      if (configDrawerSubtitle) configDrawerSubtitle.textContent = "上游详情 · " + item.id;
+      if (configDrawerBody) configDrawerBody.innerHTML = [
+        '<p class="config-help-line">上游中转站会按接口绑定顺序优先尝试，失败后自动切换到下一个可用上游。</p>',
         '<section data-upstream-detail-index="' + selectedUpstreamIndex + '">',
-        '<div class="grid-2">',
+        '<div class="config-form-grid">',
         '<label>上游 ID<input data-upstream-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>上游名称<input data-upstream-field="name" value="' + escapeHTML(item.name) + '"></label>',
         '<label class="full">Base URL<input data-upstream-field="baseURL" value="' + escapeHTML(item.baseURL) + '" placeholder="https://example.com/v1"></label>',
@@ -1238,9 +1441,10 @@ export function renderAdminPage() {
     function renderConfigEditors() {
       clampSelectedConfig();
       renderUpstreamList();
-      renderUpstreamDetail();
       renderInterfaceList();
-      renderInterfaceDetail();
+      if (configDrawerMode) {
+        renderConfigDrawer();
+      }
     }
 
     function fillConfig(config) {
@@ -1490,6 +1694,7 @@ export function renderAdminPage() {
       });
       selectedInterfaceIndex = index;
       renderConfigEditors();
+      openConfigDrawer("interface");
     });
     document.getElementById("addUpstreamBtn").addEventListener("click", () => {
       syncConfigDetails();
@@ -1503,6 +1708,7 @@ export function renderAdminPage() {
       });
       selectedUpstreamIndex = index;
       renderConfigEditors();
+      openConfigDrawer("upstream");
     });
     document.getElementById("interfaceList").addEventListener("click", (event) => {
       const removeButton = event.target.closest("[data-remove-interface]");
@@ -1517,6 +1723,9 @@ export function renderAdminPage() {
         currentConfig.interfaces.splice(index, 1);
         selectedInterfaceIndex = Math.min(index, currentConfig.interfaces.length - 1);
         renderConfigEditors();
+        if (configDrawerMode === "interface") {
+          openConfigDrawer("interface");
+        }
         return;
       }
       const openTarget = event.target.closest("[data-open-interface-detail]");
@@ -1524,7 +1733,7 @@ export function renderAdminPage() {
       syncInterfaceDetail();
       selectedInterfaceIndex = Number(openTarget.dataset.openInterfaceDetail);
       renderInterfaceList();
-      renderInterfaceDetail();
+      openConfigDrawer("interface");
     });
     document.getElementById("upstreamList").addEventListener("click", (event) => {
       const removeButton = event.target.closest("[data-remove-upstream]");
@@ -1543,6 +1752,9 @@ export function renderAdminPage() {
         }));
         selectedUpstreamIndex = Math.min(index, currentConfig.upstreams.length - 1);
         renderConfigEditors();
+        if (configDrawerMode === "upstream") {
+          openConfigDrawer("upstream");
+        }
         return;
       }
       const openTarget = event.target.closest("[data-open-upstream-detail]");
@@ -1550,7 +1762,23 @@ export function renderAdminPage() {
       syncUpstreamDetail();
       selectedUpstreamIndex = Number(openTarget.dataset.openUpstreamDetail);
       renderUpstreamList();
-      renderUpstreamDetail();
+      openConfigDrawer("upstream");
+    });
+    configDrawerBackdrop?.addEventListener("click", (event) => {
+      if (event.target === configDrawerBackdrop || event.target.closest("[data-close-config-drawer]")) {
+        syncConfigDetails();
+        closeConfigDrawer();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && configDrawerMode) {
+        syncConfigDetails();
+        closeConfigDrawer();
+      }
+    });
+    saveDrawerBtn?.addEventListener("click", () => {
+      const activeForm = getActiveConfigForm();
+      activeForm?.requestSubmit?.();
     });
     document.getElementById("testUpstreamBtn").addEventListener("click", async () => {
       setStatus("正在测试上游连接...");
