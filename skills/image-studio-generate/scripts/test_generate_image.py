@@ -82,6 +82,53 @@ class GenerateImageScriptTest(TestCase):
             server.shutdown()
             server.server_close()
 
+    def test_reads_endpoint_and_token_from_local_config_file(self):
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                config_path = Path(temp_dir) / "image-studio-generate.env"
+                config_path.write_text(
+                    "\n".join(
+                        [
+                            f"IMAGE_STUDIO_ENDPOINT=http://127.0.0.1:{server.server_port}",
+                            "IMAGE_STUDIO_API_TOKEN=config-token",
+                        ]
+                    ),
+                    encoding="utf-8",
+                )
+                env = {
+                    **os.environ,
+                    "IMAGE_STUDIO_CONFIG": str(config_path),
+                }
+                env.pop("IMAGE_STUDIO_ENDPOINT", None)
+                env.pop("IMAGE_STUDIO_API_TOKEN", None)
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--prompt",
+                        "a blue cube",
+                        "--output-dir",
+                        temp_dir,
+                    ],
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                data = json.loads(result.stdout)
+                self.assertTrue(data["ok"])
+                self.assertEqual(Handler.seen["path"], "/v1/images/generations")
+                self.assertEqual(Handler.seen["authorization"], "Bearer config-token")
+                self.assertEqual(Handler.seen["body"]["prompt"], "a blue cube")
+        finally:
+            server.shutdown()
+            server.server_close()
+
 
 if __name__ == "__main__":
     main()

@@ -11,10 +11,21 @@ Use the bundled script to call a private Image Studio self-hosted API and save g
 
 ## Configuration
 
-Require these environment variables before generating:
+Require these values before generating:
 
 - `IMAGE_STUDIO_ENDPOINT`: Base URL of the private service, for example `http://43.134.31.179:8787`.
-- `IMAGE_STUDIO_API_TOKEN`: Client token configured as `IMAGE_API_TOKEN` on the server.
+- `IMAGE_STUDIO_API_TOKEN`: client token configured in the admin dashboard as the Skill/API calling key.
+
+Prefer a local private config file when the host environment does not persist variables reliably. The script reads configuration in this order: process environment variables, `IMAGE_STUDIO_CONFIG` file path, `~/.codex/image-studio-generate.env`, `~/.config/image-studio-generate.env`, then Windows user environment variables.
+
+Local config file example:
+
+```env
+IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
+IMAGE_STUDIO_API_TOKEN=your-skill-calling-key
+```
+
+Do not commit the local config file or any real token to GitHub.
 
 Optional environment variables:
 
@@ -33,7 +44,7 @@ Never ask the user for, print, or store the upstream model API key. Only the sel
    - `quality`: use the service default.
    - `n`: use `1` unless the user explicitly asks for multiple options.
 3. Run `scripts/generate_image.py` with the prompt and any explicit parameters.
-4. Read the JSON output. Report saved file paths or returned image URLs. If the script returns an error, summarize the server error without exposing tokens.
+4. Read the JSON output. When local image files are returned, display them directly in Codex with Markdown image syntax (`![description](absolute/path.png)`) and include the saved file paths only as secondary detail. If only URLs are returned, display or link those URLs. If the script returns an error, summarize the server error without exposing tokens.
 
 ## Commands
 
@@ -62,7 +73,7 @@ The script prints JSON with:
 
 ## Failure Handling
 
-- `401`: The client token is missing or wrong. Tell the user to check `IMAGE_STUDIO_API_TOKEN` and the server `IMAGE_API_TOKEN`.
+- `401`: The client token is missing or wrong. Tell the user to check `IMAGE_STUDIO_API_TOKEN` and the admin dashboard's Skill/API calling key.
 - `400` or `500` mentioning upstream config: Tell the user to open `/admin` and check `UPSTREAM_BASE_URL` and `UPSTREAM_API_KEY`.
 - `429`: The service rate limit or concurrency limit was reached. Tell the user to wait or adjust admin settings.
 - Network errors: Check that the server is running and reachable at `IMAGE_STUDIO_ENDPOINT`.

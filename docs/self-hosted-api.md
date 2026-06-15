@@ -50,11 +50,34 @@ Skill 位于:
 skills/image-studio-generate
 ```
 
-配置:
+配置推荐放在本机私有文件里，不要提交真实 Key:
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force "$HOME\.codex" | Out-Null
+@"
+IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
+IMAGE_STUDIO_API_TOKEN=YOUR_SKILL_CALLING_KEY
+"@ | Set-Content -Encoding UTF8 "$HOME\.codex\image-studio-generate.env"
+```
+
+Linux / macOS:
+
+```bash
+mkdir -p ~/.codex
+cat > ~/.codex/image-studio-generate.env <<'EOF'
+IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
+IMAGE_STUDIO_API_TOKEN=YOUR_SKILL_CALLING_KEY
+EOF
+chmod 600 ~/.codex/image-studio-generate.env
+```
+
+也可以使用环境变量:
 
 ```env
 IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
-IMAGE_STUDIO_API_TOKEN=YOUR_IMAGE_API_TOKEN
+IMAGE_STUDIO_API_TOKEN=YOUR_SKILL_CALLING_KEY
 ```
 
 调用脚本:

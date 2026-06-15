@@ -11,8 +11,55 @@ import urllib.request
 from pathlib import Path
 
 
+def read_config_file():
+    candidates = []
+    configured = os.environ.get("IMAGE_STUDIO_CONFIG", "").strip()
+    if configured:
+        candidates.append(Path(configured))
+    home = Path.home()
+    candidates.extend(
+        [
+            home / ".codex" / "image-studio-generate.env",
+            home / ".config" / "image-studio-generate.env",
+        ]
+    )
+
+    values = {}
+    for path in candidates:
+        if not path.is_file():
+            continue
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip().strip("\"'")
+        break
+    return values
+
+
+CONFIG = read_config_file()
+
+
 def env(name, default=""):
-    return os.environ.get(name, default).strip()
+    return os.environ.get(name, CONFIG.get(name, default)).strip()
+
+
+def windows_user_env(name):
+    if os.name != "nt":
+        return ""
+    try:
+        import winreg
+
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as key:
+            value, _value_type = winreg.QueryValueEx(key, name)
+            return str(value).strip()
+    except Exception:
+        return ""
+
+
+def config_value(name, default=""):
+    return env(name, windows_user_env(name) or default)
 
 
 def fail(message, status=None, raw=None):
@@ -96,8 +143,8 @@ def post_json(url, token, payload, timeout):
 def main(argv):
     parser = argparse.ArgumentParser(description="Generate images through a private Image Studio self-hosted API.")
     parser.add_argument("--prompt", required=True)
-    parser.add_argument("--endpoint", default=env("IMAGE_STUDIO_ENDPOINT"))
-    parser.add_argument("--token", default=env("IMAGE_STUDIO_API_TOKEN"))
+    parser.add_argument("--endpoint", default=config_value("IMAGE_STUDIO_ENDPOINT"))
+    parser.add_argument("--token", default=config_value("IMAGE_STUDIO_API_TOKEN"))
     parser.add_argument("--model", default="")
     parser.add_argument("--size", default="")
     parser.add_argument("--quality", default="")

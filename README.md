@@ -112,9 +112,34 @@ skills/image-studio-generate
 
 Codex 侧配置:
 
+推荐创建本机私有配置文件，不要把真实 Key 写进仓库:
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force "$HOME\.codex" | Out-Null
+@"
+IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
+IMAGE_STUDIO_API_TOKEN=your-skill-calling-key
+"@ | Set-Content -Encoding UTF8 "$HOME\.codex\image-studio-generate.env"
+```
+
+Linux / macOS:
+
+```bash
+mkdir -p ~/.codex
+cat > ~/.codex/image-studio-generate.env <<'EOF'
+IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
+IMAGE_STUDIO_API_TOKEN=your-skill-calling-key
+EOF
+chmod 600 ~/.codex/image-studio-generate.env
+```
+
+也可以直接用环境变量:
+
 ```env
 IMAGE_STUDIO_ENDPOINT=http://SERVER_IP:8787
-IMAGE_STUDIO_API_TOKEN=your-client-token
+IMAGE_STUDIO_API_TOKEN=your-skill-calling-key
 ```
 
 更多自托管说明见 [server/README.md](./server/README.md) 和 [docs/self-hosted-api.md](./docs/self-hosted-api.md)。
