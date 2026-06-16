@@ -2030,16 +2030,20 @@ export function renderAdminPage() {
       const latest = update?.latestVersion ?? "";
       const status = update?.status ?? "unknown";
       const releaseURL = update?.releaseURL ?? "";
+      const source = update?.source === "commit" ? "commit" : "release";
+      const versionLabel = source === "commit" ? "仓库 main 版本" : "仓库 Release 版本";
+      const linkLabel = source === "commit" ? "GitHub Commit" : "GitHub Release";
       const safeReleaseURL = safeHTTPSURL(releaseURL);
       const rows = [
         "<strong>版本状态：" + escapeHTML(status) + "</strong>",
         "<span>当前版本：" + escapeHTML(current || "未知") + "</span>",
-        "<span>仓库版本：" + escapeHTML(latest || "未知") + "</span>"
+        "<span>" + versionLabel + "：" + escapeHTML(latest || "未知") + "</span>",
+        "<span>检查来源：" + escapeHTML(linkLabel) + "</span>"
       ];
       if (safeReleaseURL) {
-        rows.push('<span>Release：<a href="' + escapeHTML(safeReleaseURL) + '" rel="noreferrer" target="_blank">' + escapeHTML(safeReleaseURL) + '</a></span>');
+        rows.push('<span>' + linkLabel + '：<a href="' + escapeHTML(safeReleaseURL) + '" rel="noreferrer" target="_blank">' + escapeHTML(safeReleaseURL) + '</a></span>');
       } else if (releaseURL) {
-        rows.push("<span>Release：" + escapeHTML(releaseURL) + "</span>");
+        rows.push("<span>" + linkLabel + "：" + escapeHTML(releaseURL) + "</span>");
       }
       const html = rows.join("");
       document.getElementById("updateStatus").innerHTML = html;

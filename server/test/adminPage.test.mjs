@@ -139,3 +139,12 @@ test("renderAdminPage validates release link protocol before rendering href", ()
   assert.match(html, /protocol === "https:"/);
   assert.match(html, /safeReleaseURL/);
 });
+
+test("renderAdminPage labels update source for release or main commit checks", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /update\?\.source/);
+  assert.match(html, /仓库 main 版本/);
+  assert.match(html, /GitHub Commit/);
+  assert.match(html, /GitHub Release/);
+});

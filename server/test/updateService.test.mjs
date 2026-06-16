@@ -47,6 +47,7 @@ test("checkLatest calls the GitHub latest release API and returns release status
     latestVersion: "v1.2.6",
     status: "newer",
     releaseURL: "https://github.com/owner/repo/releases/tag/v1.2.6",
+    source: "release",
   });
 });
 
@@ -64,6 +65,7 @@ test("checkLatest reports unconfigured when no repository is set", async () => {
     latestVersion: "",
     status: "unconfigured",
     releaseURL: "",
+    source: "release",
   });
 });
 
@@ -81,6 +83,7 @@ test("checkLatest reports unconfigured for malformed repository values", async (
     latestVersion: "",
     status: "unconfigured",
     releaseURL: "",
+    source: "release",
   });
 });
 
@@ -95,6 +98,7 @@ test("checkLatest returns error for failed or throwing GitHub requests", async (
     latestVersion: "",
     status: "error",
     releaseURL: "",
+    source: "release",
   });
 
   const throwingService = createUpdateService({
@@ -109,5 +113,39 @@ test("checkLatest returns error for failed or throwing GitHub requests", async (
     latestVersion: "",
     status: "error",
     releaseURL: "",
+    source: "release",
   });
+});
+
+test("checkLatest falls back to the main commit when no release exists", async () => {
+  const requested = [];
+  const service = createUpdateService({
+    currentVersion: "cc308c93",
+    repository: "owner/repo",
+    fetchImpl: async (url) => {
+      requested.push(String(url));
+      if (String(url).endsWith("/releases/latest")) {
+        return new Response(JSON.stringify({ message: "Not Found" }), { status: 404 });
+      }
+      return new Response(JSON.stringify({
+        sha: "cc308c933c496071e93a8a302f1a03c23dc4a4ff",
+        html_url: "https://github.com/owner/repo/commit/cc308c933c496071e93a8a302f1a03c23dc4a4ff",
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  assert.deepEqual(await service.checkLatest(), {
+    currentVersion: "cc308c93",
+    latestVersion: "cc308c93",
+    status: "same",
+    releaseURL: "https://github.com/owner/repo/commit/cc308c933c496071e93a8a302f1a03c23dc4a4ff",
+    source: "commit",
+  });
+  assert.deepEqual(requested, [
+    "https://api.github.com/repos/owner/repo/releases/latest",
+    "https://api.github.com/repos/owner/repo/commits/main",
+  ]);
 });

@@ -10,6 +10,7 @@ function emptyResult(currentVersion, status) {
     latestVersion: "",
     status,
     releaseURL: "",
+    source: "release",
   };
 }
 
@@ -49,22 +50,48 @@ export function createUpdateService({
       }
 
       try {
-        const response = await fetchImpl(
+        const releaseResponse = await fetchImpl(
           `https://api.github.com/repos/${normalizedRepository}/releases/latest`,
           { headers: { accept: "application/vnd.github+json" } },
         );
-        if (!response?.ok) {
+        if (releaseResponse?.ok) {
+          const release = await releaseResponse.json().catch(() => ({}));
+          const latestVersion = String(release?.tag_name || "").trim();
+          const releaseURL = String(release?.html_url || "").trim();
+          return {
+            currentVersion: normalizedCurrentVersion,
+            latestVersion,
+            status: compareReleaseVersions(normalizedCurrentVersion, latestVersion),
+            releaseURL,
+            source: "release",
+          };
+        }
+
+        if (releaseResponse?.status !== 404) {
           return emptyResult(normalizedCurrentVersion, "error");
         }
 
-        const release = await response.json().catch(() => ({}));
-        const latestVersion = String(release?.tag_name || "").trim();
-        const releaseURL = String(release?.html_url || "").trim();
+        const commitResponse = await fetchImpl(
+          `https://api.github.com/repos/${normalizedRepository}/commits/main`,
+          { headers: { accept: "application/vnd.github+json" } },
+        );
+        if (!commitResponse?.ok) {
+          return emptyResult(normalizedCurrentVersion, "error");
+        }
+
+        const commit = await commitResponse.json().catch(() => ({}));
+        const latestVersion = String(commit?.sha || "").trim().slice(0, 8);
+        const releaseURL = String(commit?.html_url || "").trim();
+        const currentParts = String(normalizedCurrentVersion || "").trim();
+        const status = currentParts && latestVersion
+          ? (currentParts === latestVersion ? "same" : "newer")
+          : "unknown";
         return {
           currentVersion: normalizedCurrentVersion,
           latestVersion,
-          status: compareReleaseVersions(normalizedCurrentVersion, latestVersion),
+          status,
           releaseURL,
+          source: "commit",
         };
       } catch {
         return emptyResult(normalizedCurrentVersion, "error");
