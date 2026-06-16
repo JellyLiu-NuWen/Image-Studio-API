@@ -24,6 +24,21 @@ export function renderAdminPage() {
       --danger: #b42318;
       --warning: #956216;
       --shadow: 0 16px 42px rgba(17, 24, 39, 0.08);
+      --console-bg: #f8fafc;
+      --console-surface: #ffffff;
+      --console-surface-soft: #f6f7f9;
+      --console-surface-muted: #f1f5f9;
+      --console-border: #e5e7eb;
+      --console-border-strong: #d1d5db;
+      --console-text: #0f172a;
+      --console-muted: #64748b;
+      --console-soft: #94a3b8;
+      --console-primary: #111827;
+      --console-primary-hover: #020617;
+      --console-blue: #2563eb;
+      --console-green: #16a34a;
+      --console-red: #dc2626;
+      --console-amber: #d97706;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
@@ -980,6 +995,336 @@ export function renderAdminPage() {
       font-size: 13px;
       line-height: 1.45;
     }
+    .app-shell[data-view]:not([data-view="dashboardView"]) {
+      background: var(--console-bg);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar {
+      gap: 14px;
+      padding: 16px 12px;
+      border-right-color: var(--console-border);
+      background: var(--console-surface);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-brand {
+      padding: 2px 8px 10px;
+      border-bottom: 1px solid var(--console-border);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--console-primary);
+      box-shadow: none;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-brand strong {
+      color: var(--console-text);
+      font-size: 15px;
+      font-weight: 750;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-brand span,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-footer {
+      color: var(--console-muted);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-list {
+      gap: 3px;
+      padding-top: 2px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-button {
+      min-height: 36px;
+      justify-content: flex-start;
+      border-radius: 8px;
+      color: var(--console-muted);
+      font-size: 14px;
+      font-weight: 650;
+      transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-button:hover {
+      background: var(--console-surface-soft);
+      color: var(--console-text);
+      text-decoration: none;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-button.active {
+      border-color: transparent;
+      background: var(--console-surface-muted);
+      color: var(--console-text);
+      box-shadow: inset 3px 0 0 var(--console-primary);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .main {
+      padding: 18px 20px 24px;
+      background: var(--console-bg);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .topbar {
+      min-height: 50px;
+      margin: -18px -20px 18px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--console-border);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .topbar h1 {
+      font-size: 20px;
+      font-weight: 760;
+      color: var(--console-text);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .topbar p {
+      margin-top: 3px;
+      color: var(--console-muted);
+      font-size: 13px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .pill {
+      min-height: 28px;
+      border-color: var(--console-border);
+      background: var(--console-surface);
+      color: var(--console-muted);
+      box-shadow: none;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .pill.ok {
+      border-color: rgba(22, 163, 74, 0.2);
+      background: #f0fdf4;
+      color: var(--console-green);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) {
+      gap: 14px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) > .card,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) .grid-2 > .card {
+      overflow: hidden;
+      border-color: var(--console-border);
+      border-radius: 12px;
+      background: var(--console-surface);
+      box-shadow: none;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) .card-header {
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--console-border);
+      background: var(--console-surface);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) .card-header h2,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) .card-header h3 {
+      font-size: 16px;
+      font-weight: 760;
+      color: var(--console-text);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) .card-header span {
+      color: var(--console-muted);
+      font-size: 12px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) .card-body {
+      padding: 16px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) input,
+    .app-shell[data-view]:not([data-view="dashboardView"]) select {
+      min-height: 38px;
+      border-color: var(--console-border-strong);
+      border-radius: 8px;
+      background: var(--console-surface);
+      color: var(--console-text);
+      font-size: 13px;
+      box-shadow: none;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) input:focus,
+    .app-shell[data-view]:not([data-view="dashboardView"]) select:focus {
+      border-color: rgba(37, 99, 235, 0.55);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) label {
+      color: var(--console-text);
+      font-size: 13px;
+      font-weight: 650;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) button {
+      min-height: 36px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: none;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) button:focus-visible {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .primary {
+      border-color: var(--console-primary);
+      background: var(--console-primary);
+      color: #fff;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .primary:hover {
+      border-color: var(--console-primary-hover);
+      background: var(--console-primary-hover);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .secondary {
+      border-color: var(--console-border);
+      background: var(--console-surface);
+      color: var(--console-text);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .secondary:hover {
+      border-color: var(--console-border-strong);
+      background: var(--console-surface-soft);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .danger-button {
+      border-color: #fecaca;
+      background: #fff7f7;
+      color: var(--console-red);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .table-editor-toolbar {
+      padding-bottom: 2px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .table-editor-toolbar strong {
+      color: var(--console-text);
+      font-size: 14px;
+      font-weight: 760;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .table-editor-toolbar span {
+      color: var(--console-muted);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table-card,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .table-wrap {
+      border-color: var(--console-border);
+      border-radius: 10px;
+      background: var(--console-surface);
+      box-shadow: none;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table,
+    .app-shell[data-view]:not([data-view="dashboardView"]) table {
+      color: var(--console-text);
+      font-size: 13px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table th,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table td,
+    .app-shell[data-view]:not([data-view="dashboardView"]) th,
+    .app-shell[data-view]:not([data-view="dashboardView"]) td {
+      border-bottom-color: var(--console-border);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table th,
+    .app-shell[data-view]:not([data-view="dashboardView"]) th {
+      height: 40px;
+      background: #fafafa;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table td,
+    .app-shell[data-view]:not([data-view="dashboardView"]) td {
+      background: var(--console-surface);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table tbody tr:hover,
+    .app-shell[data-view]:not([data-view="dashboardView"]) tr:hover td {
+      background: #f8fafc;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table tbody tr.active {
+      background: #eff6ff;
+      box-shadow: inset 3px 0 0 var(--console-blue);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table tbody tr.active td,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table tbody tr.active td:last-child {
+      background: #eff6ff;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table th:last-child,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-table td:last-child {
+      box-shadow: -8px 0 14px rgba(15, 23, 42, 0.04);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-name-cell strong {
+      color: var(--console-text);
+      font-size: 13px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-name-cell span,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .field-help,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-help-line,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .secret-note,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .muted {
+      color: var(--console-muted);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-chip,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .status-tag,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .detail-meta span,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .chain-node {
+      min-height: 24px;
+      border-color: var(--console-border);
+      border-radius: 999px;
+      background: #f8fafc;
+      color: var(--console-text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-chip.ok,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .status-tag {
+      border-color: rgba(22, 163, 74, 0.2);
+      background: #f0fdf4;
+      color: var(--console-green);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-chip.warn {
+      border-color: rgba(217, 119, 6, 0.24);
+      background: #fffbeb;
+      color: var(--console-amber);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .status-tag.failed {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: var(--console-red);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-actions button,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .detail-toggle {
+      min-height: 30px;
+      padding: 0 10px;
+      border-radius: 7px;
+      font-size: 12px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .log-toolbar {
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+      margin-bottom: 10px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .log-summary,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .detail-row,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .detail-box,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .update-status,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .call-chain {
+      border-color: var(--console-border);
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .log-summary strong,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .detail-box strong,
+    .app-shell[data-view]:not([data-view="dashboardView"]) .update-status strong {
+      color: var(--console-text);
+      font-size: 13px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .update-status {
+      gap: 8px;
+      padding: 16px;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) .config-drawer-backdrop {
+      background: rgba(15, 23, 42, 0.32);
+      backdrop-filter: blur(2px);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) ~ .config-drawer-backdrop .config-drawer,
+    .app-shell[data-view]:not([data-view="dashboardView"]) + .config-drawer-backdrop .config-drawer {
+      width: min(620px, 100vw);
+      border-left-color: var(--console-border);
+      background: var(--console-surface);
+      box-shadow: -22px 0 54px rgba(15, 23, 42, 0.16);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) ~ .config-drawer-backdrop .config-drawer-header,
+    .app-shell[data-view]:not([data-view="dashboardView"]) + .config-drawer-backdrop .config-drawer-header,
+    .app-shell[data-view]:not([data-view="dashboardView"]) ~ .config-drawer-backdrop .config-drawer-actions,
+    .app-shell[data-view]:not([data-view="dashboardView"]) + .config-drawer-backdrop .config-drawer-actions {
+      border-color: var(--console-border);
+      background: var(--console-surface);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) ~ .config-drawer-backdrop .config-drawer-body,
+    .app-shell[data-view]:not([data-view="dashboardView"]) + .config-drawer-backdrop .config-drawer-body {
+      background: var(--console-bg);
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) ~ .config-drawer-backdrop .config-drawer-header h2,
+    .app-shell[data-view]:not([data-view="dashboardView"]) + .config-drawer-backdrop .config-drawer-header h2 {
+      color: var(--console-text);
+      font-size: 17px;
+      font-weight: 760;
+    }
+    .app-shell[data-view]:not([data-view="dashboardView"]) ~ .config-drawer-backdrop .drawer-close,
+    .app-shell[data-view]:not([data-view="dashboardView"]) + .config-drawer-backdrop .drawer-close {
+      border-color: var(--console-border);
+      background: var(--console-surface-soft);
+      color: var(--console-muted);
+    }
     @media (max-width: 1040px) {
       .login-shell { grid-template-columns: 1fr; }
       .app-shell { grid-template-columns: 1fr; }
@@ -1070,7 +1415,7 @@ export function renderAdminPage() {
     </div>
   </section>
 
-  <section id="appShell" class="app-shell hidden">
+  <section id="appShell" class="app-shell hidden" data-view="dashboardView">
     <aside class="sidebar">
       <div class="sidebar-brand">
         <div class="brand-mark">IS</div>
@@ -1377,6 +1722,7 @@ export function renderAdminPage() {
 
     function switchView(viewId) {
       closeConfigDrawer();
+      document.getElementById("appShell").dataset.view = viewId;
       for (const element of document.querySelectorAll(".view")) {
         element.classList.toggle("active", element.id === viewId);
       }

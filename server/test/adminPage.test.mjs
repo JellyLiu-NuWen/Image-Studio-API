@@ -148,3 +148,12 @@ test("renderAdminPage labels update source for release or main commit checks", (
   assert.match(html, /GitHub Commit/);
   assert.match(html, /GitHub Release/);
 });
+
+test("renderAdminPage scopes the new api inspired console style away from dashboard and login", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /id="appShell" class="app-shell hidden" data-view="dashboardView"/);
+  assert.match(html, /\.app-shell\[data-view\]:not\(\[data-view="dashboardView"\]\)/);
+  assert.match(html, /--console-primary: #111827/);
+  assert.match(html, /document\.getElementById\("appShell"\)\.dataset\.view = viewId/);
+});
