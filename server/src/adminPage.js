@@ -995,40 +995,40 @@ export function renderAdminPage() {
       font-size: 13px;
       line-height: 1.45;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) {
+    .app-shell[data-view] {
       background: var(--console-bg);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar {
+    .app-shell[data-view] .sidebar {
       gap: 14px;
       padding: 16px 12px;
       border-right-color: var(--console-border);
       background: var(--console-surface);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-brand {
+    .app-shell[data-view] .sidebar-brand {
       padding: 2px 8px 10px;
       border-bottom: 1px solid var(--console-border);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .brand-mark {
+    .app-shell[data-view] .brand-mark {
       width: 34px;
       height: 34px;
       border-radius: 8px;
       background: var(--console-primary);
       box-shadow: none;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-brand strong {
+    .app-shell[data-view] .sidebar-brand strong {
       color: var(--console-text);
       font-size: 15px;
       font-weight: 750;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-brand span,
-    .app-shell[data-view]:not([data-view="dashboardView"]) .sidebar-footer {
+    .app-shell[data-view] .sidebar-brand span,
+    .app-shell[data-view] .sidebar-footer {
       color: var(--console-muted);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-list {
+    .app-shell[data-view] .nav-list {
       gap: 3px;
       padding-top: 2px;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-button {
+    .app-shell[data-view] .nav-button {
       min-height: 36px;
       justify-content: flex-start;
       border-radius: 8px;
@@ -1037,22 +1037,22 @@ export function renderAdminPage() {
       font-weight: 650;
       transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-button:hover {
+    .app-shell[data-view] .nav-button:hover {
       background: var(--console-surface-soft);
       color: var(--console-text);
       text-decoration: none;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .nav-button.active {
+    .app-shell[data-view] .nav-button.active {
       border-color: transparent;
       background: var(--console-surface-muted);
       color: var(--console-text);
       box-shadow: inset 3px 0 0 var(--console-primary);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .main {
+    .app-shell[data-view] .main {
       padding: 18px 20px 24px;
       background: var(--console-bg);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .topbar {
+    .app-shell[data-view] .topbar {
       min-height: 50px;
       margin: -18px -20px 18px;
       padding: 12px 20px;
@@ -1060,28 +1060,119 @@ export function renderAdminPage() {
       background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(10px);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .topbar h1 {
+    .app-shell[data-view] .topbar h1 {
       font-size: 20px;
       font-weight: 760;
       color: var(--console-text);
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .topbar p {
+    .app-shell[data-view] .topbar p {
       margin-top: 3px;
       color: var(--console-muted);
       font-size: 13px;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .pill {
+    .app-shell[data-view] .pill {
       min-height: 28px;
       border-color: var(--console-border);
       background: var(--console-surface);
       color: var(--console-muted);
       box-shadow: none;
     }
-    .app-shell[data-view]:not([data-view="dashboardView"]) .pill.ok {
+    .app-shell[data-view] .pill.ok {
       border-color: rgba(22, 163, 74, 0.2);
       background: #f0fdf4;
       color: var(--console-green);
     }
+    .app-shell[data-view="dashboardView"] #dashboardView {
+      gap: 14px;
+    }
+    .app-shell[data-view="dashboardView"] #dashboardView > .grid-4 {
+      gap: 14px;
+    }
+    .app-shell[data-view="dashboardView"] .dashboard-grid {
+      gap: 18px;
+    }
+    .app-shell[data-view="dashboardView"] .dashboard-stack {
+      gap: 18px;
+    }
+    .app-shell[data-view="dashboardView"] .metric {
+      border-color: var(--console-border);
+      border-radius: 12px;
+      background: var(--console-surface);
+      box-shadow: none;
+    }
+    .app-shell[data-view="dashboardView"] .metric.compact {
+      min-height: 108px;
+      padding: 14px 16px;
+      background: var(--console-surface);
+    }
+    .app-shell[data-view="dashboardView"] .metric span {
+      color: var(--console-muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .app-shell[data-view="dashboardView"] .metric strong {
+      color: var(--console-text);
+      font-size: 26px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+    .app-shell[data-view="dashboardView"] .metric.compact strong {
+      font-size: 24px;
+    }
+    .app-shell[data-view="dashboardView"] .metric small {
+      color: var(--console-muted);
+      font-size: 12px;
+    }
+    .app-shell[data-view="dashboardView"] .card {
+      overflow: hidden;
+      border-color: var(--console-border);
+      border-radius: 12px;
+      background: var(--console-surface);
+      box-shadow: none;
+    }
+    .app-shell[data-view="dashboardView"] .card-header {
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--console-border);
+      background: var(--console-surface);
+    }
+    .app-shell[data-view="dashboardView"] .card-header h2,
+    .app-shell[data-view="dashboardView"] .card-header h3 {
+      color: var(--console-text);
+      font-size: 16px;
+      font-weight: 760;
+    }
+    .app-shell[data-view="dashboardView"] .card-header span {
+      color: var(--console-muted);
+      font-size: 12px;
+    }
+    .app-shell[data-view="dashboardView"] .card-body {
+      padding: 16px;
+    }
+    .app-shell[data-view="dashboardView"] .health-row,
+    .app-shell[data-view="dashboardView"] .compact-row {
+      border-color: var(--console-border);
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+    .app-shell[data-view="dashboardView"] .health-row strong,
+    .app-shell[data-view="dashboardView"] .compact-row strong {
+      color: var(--console-text);
+      font-size: 13px;
+    }
+    .app-shell[data-view="dashboardView"] .health-row span,
+    .app-shell[data-view="dashboardView"] .compact-row span,
+    .app-shell[data-view="dashboardView"] .muted {
+      color: var(--console-muted);
+    }
+    .app-shell[data-view="dashboardView"] .progress-track {
+      background: #e5e7eb;
+    }
+    .app-shell[data-view="dashboardView"] .progress-fill {
+      background: var(--console-primary);
+    }
+    .app-shell[data-view="dashboardView"] .progress-fill.warn { background: var(--console-amber); }
+    .app-shell[data-view="dashboardView"] .progress-fill.danger { background: var(--console-red); }
     .app-shell[data-view]:not([data-view="dashboardView"]) .view:not(#dashboardView) {
       gap: 14px;
     }
