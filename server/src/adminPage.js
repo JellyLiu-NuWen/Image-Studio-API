@@ -195,6 +195,18 @@ export function renderAdminPage() {
       align-content: start;
       gap: 6px;
     }
+    .nav-group {
+      display: grid;
+      gap: 4px;
+      padding-top: 8px;
+    }
+    .nav-group-title {
+      padding: 6px 12px 2px;
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
     .nav-button {
       width: 100%;
       min-height: 40px;
@@ -814,6 +826,44 @@ export function renderAdminPage() {
       border-radius: 7px;
       font-size: 12px;
       font-weight: 700;
+    }
+    .panel-toolbar,
+    .filter-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .filter-grid input,
+    .filter-grid select {
+      min-width: 150px;
+      flex: 1 1 150px;
+    }
+    .data-list {
+      display: grid;
+      gap: 10px;
+    }
+    .data-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-alt);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .data-row strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--text);
+    }
+    .data-row span {
+      color: var(--text-muted);
+      overflow-wrap: anywhere;
     }
     .config-detail-panel {
       display: none;
@@ -1514,12 +1564,31 @@ export function renderAdminPage() {
         <span>自托管生图中转管理系统</span>
       </div>
       <nav class="nav-list" aria-label="后台导航">
-        <button class="nav-button active" type="button" data-view="dashboardView">仪表盘</button>
-        <button class="nav-button" type="button" data-view="clientConfigView">接口配置</button>
-        <button class="nav-button" type="button" data-view="upstreamConfigView">上游中转站</button>
-        <button class="nav-button" type="button" data-view="logsView">调用日志</button>
-        <button class="nav-button" type="button" data-view="updatesView">版本更新</button>
-        <button class="nav-button" type="button" data-view="accountView">账号与安全</button>
+        <div class="nav-group">
+          <div class="nav-group-title">监控</div>
+          <button class="nav-button active" type="button" data-view="dashboardView">仪表盘</button>
+          <button class="nav-button" type="button" data-view="logsView">调用日志</button>
+          <button class="nav-button" type="button" data-view="usageView">用量与成本</button>
+          <button class="nav-button" type="button" data-view="alertsView">告警中心</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">配置</div>
+          <button class="nav-button" type="button" data-view="clientConfigView">接口管理</button>
+          <button class="nav-button" type="button" data-view="upstreamConfigView">上游管理</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">质量</div>
+          <button class="nav-button" type="button" data-view="modelCatalogView">模型目录</button>
+          <button class="nav-button" type="button" data-view="qualityStudioView">生图质量</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">安全</div>
+          <button class="nav-button" type="button" data-view="accountView">账号与安全</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">系统</div>
+          <button class="nav-button" type="button" data-view="updatesView">版本更新</button>
+        </div>
       </nav>
       <div class="sidebar-footer">
         <span id="currentAccount">当前账号：admin</span>
@@ -1612,6 +1681,7 @@ export function renderAdminPage() {
           <div class="card-header"><h2>上游中转站</h2><span>接口会按绑定顺序优先使用前面的上游，失败后自动切换</span></div>
           <div class="card-body">
             <form id="upstreamConfigForm" class="config-editor">
+              <div id="upstreamHealthPanel" class="data-list"><div class="muted">健康状态待检测。</div></div>
               <div class="table-editor-shell">
                 <div class="table-editor-toolbar">
                   <div>
@@ -1646,6 +1716,22 @@ export function renderAdminPage() {
       </section>
 
       <section id="logsView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>高级筛选</h2><span>按接口、上游、状态、模型和时间范围定位请求</span></div>
+          <div class="card-body">
+            <div class="filter-grid">
+              <select id="logInterfaceFilter"><option value="">全部接口</option></select>
+              <select id="logUpstreamFilter"><option value="">全部上游</option></select>
+              <select id="logStatusFilter"><option value="all">全部状态</option><option value="success">成功</option><option value="failed">失败</option></select>
+              <input id="logModelFilter" placeholder="模型">
+              <input id="logRequestFilter" placeholder="请求 ID">
+              <input id="logFromFilter" type="datetime-local" aria-label="开始时间">
+              <input id="logToFilter" type="datetime-local" aria-label="结束时间">
+              <button type="button" class="secondary" id="exportLogsJsonlBtn">导出 JSONL</button>
+              <button type="button" class="secondary" id="exportLogsCsvBtn">导出 CSV</button>
+            </div>
+          </div>
+        </section>
         <div class="grid-2">
           <section class="card">
             <div class="card-header"><h2>生图日志</h2><span>最近图片生成请求</span></div>
@@ -1675,6 +1761,55 @@ export function renderAdminPage() {
           <div class="card-header"><h2>版本更新</h2><span>检查 GitHub Release 是否有新版本</span></div>
           <div class="card-body">
             <div id="updateStatusMirror" class="update-status"><strong>尚未检查版本</strong><span>点击刷新数据检查当前版本。</span></div>
+            <div class="panel-toolbar">
+              <button type="button" class="secondary" id="backupNowBtn">一键备份</button>
+              <button type="button" class="secondary" id="restoreConfigBtn">恢复配置</button>
+            </div>
+            <div id="backupPanel" class="data-list"><div class="muted">暂无备份记录。</div></div>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-header"><h2>配置版本</h2><span>保存前快照与回滚入口</span></div>
+          <div class="card-body"><div id="configVersionList" class="data-list"><div class="muted">暂无配置版本。</div></div></div>
+        </section>
+      </section>
+
+      <section id="modelCatalogView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>模型目录</h2><span>维护模型能力、尺寸、质量和上游绑定</span></div>
+          <div class="card-body">
+            <div id="modelCatalogList" class="data-list"><div class="muted">暂无模型目录。</div></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="qualityStudioView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>生图质量</h2><span>Prompt 模板、质量预设与优秀/问题案例</span></div>
+          <div class="card-body">
+            <div class="panel-toolbar">
+              <span class="pill">Prompt 自动增强默认关闭</span>
+              <span class="pill">内置写实摄影、电商产品图、海报 KV、App 图标、角色设定、社媒配图、UI 截图风格、透明背景素材、中文海报排版、高质量最终稿、快速草图</span>
+            </div>
+            <div id="qualityPresetList" class="data-list"><div class="muted">暂无质量预设。</div></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="usageView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>用量与成本</h2><span>按接口、上游和模型统计调用量、成功率和耗时</span></div>
+          <div class="card-body">
+            <div id="usagePanel" class="data-list"><div class="muted">暂无用量数据。</div></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="alertsView" class="view">
+        <section class="card">
+          <div class="card-header"><h2>告警中心</h2><span>上游失败、成功率下降、P95 过高和配置风险提醒</span></div>
+          <div class="card-body">
+            <div id="alertsPanel" class="data-list"><div class="muted">暂无告警配置。</div></div>
           </div>
         </section>
       </section>
@@ -1697,6 +1832,16 @@ export function renderAdminPage() {
                 <button type="submit" class="primary">保存账号密码</button>
               </div>
             </form>
+            <div class="grid-2">
+              <section>
+                <h3>当前会话</h3>
+                <div id="sessionList" class="data-list"><div class="muted">暂无会话数据。</div></div>
+              </section>
+              <section>
+                <h3>登录历史</h3>
+                <div id="loginHistoryList" class="data-list"><div class="muted">暂无登录历史。</div></div>
+              </section>
+            </div>
           </div>
         </section>
       </section>
@@ -1725,11 +1870,15 @@ export function renderAdminPage() {
   <script>
     const views = {
       dashboardView: ["仪表盘", "查看服务状态、调用量、响应速度和生图任务概览。"],
-      clientConfigView: ["接口配置", "管理给 Codex、Skill、OpenClaw 或其他 AI 工具调用的服务 Key 和默认参数。"],
-      upstreamConfigView: ["上游中转站", "配置你的服务器转发到上游中转站时使用的 URL 和 Key。"],
+      clientConfigView: ["接口管理", "管理给 Codex、Skill、OpenClaw 或其他 AI 工具调用的服务 Key 和默认参数。"],
+      upstreamConfigView: ["上游管理", "配置你的服务器转发到上游中转站时使用的 URL、Key、优先级和健康检查。"],
       logsView: ["调用日志", "查看生图日志、API 调用日志和响应耗时。"],
+      usageView: ["用量与成本", "按接口、上游和模型统计调用量、成功率、失败率和耗时。"],
+      alertsView: ["告警中心", "管理 Webhook 告警和运行风险提醒。"],
+      modelCatalogView: ["模型目录", "维护模型能力、质量、尺寸、格式和上游绑定。"],
+      qualityStudioView: ["生图质量", "管理 Prompt 模板、质量预设、问题案例和优秀案例。"],
       updatesView: ["版本更新", "检查当前版本与 GitHub Release 的对齐情况。"],
-      accountView: ["账号与安全", "修改后台登录账号和密码。"]
+      accountView: ["账号与安全", "修改后台登录账号和密码，查看会话与登录历史。"]
     };
     const statusEl = document.getElementById("status");
     const loginStatusEl = document.getElementById("loginStatus");
@@ -1738,7 +1887,7 @@ export function renderAdminPage() {
     const configDrawerSubtitle = document.getElementById("configDrawerSubtitle");
     const configDrawerBody = document.getElementById("configDrawerBody");
     const saveDrawerBtn = document.getElementById("saveDrawerBtn");
-    let currentConfig = { interfaces: [], upstreams: [] };
+    let currentConfig = { interfaces: [], upstreams: [], models: [], qualityPresets: [], alerts: {}, security: {} };
     let selectedInterfaceIndex = 0;
     let selectedUpstreamIndex = 0;
     let configDrawerMode = null;
@@ -1822,7 +1971,7 @@ export function renderAdminPage() {
       }
       document.getElementById("pageTitle").textContent = views[viewId]?.[0] || "管理后台";
       document.getElementById("pageDescription").textContent = views[viewId]?.[1] || "";
-      if (viewId === "logsView" || viewId === "dashboardView" || viewId === "updatesView") {
+      if (["logsView", "dashboardView", "updatesView", "usageView", "alertsView", "accountView", "upstreamConfigView"].includes(viewId)) {
         loadDashboard();
       }
     }
@@ -1839,7 +1988,10 @@ export function renderAdminPage() {
           name: "默认上游",
           enabled: true,
           baseURL: config?.upstreamBaseURL || "",
-          apiKeySet: !!config?.upstreamApiKeySet
+          apiKeySet: !!config?.upstreamApiKeySet,
+          priority: 100,
+          weight: 1,
+          healthCheckEnabled: true
         }];
       const interfaces = Array.isArray(config?.interfaces) && config.interfaces.length
         ? config.interfaces
@@ -1852,12 +2004,16 @@ export function renderAdminPage() {
           defaultImageModel: config?.defaultImageModel || "gpt-image-2",
           defaultTextModel: config?.defaultTextModel || "gpt-5.5",
           defaultSize: config?.defaultSize || "1024x1024",
-          defaultQuality: config?.defaultQuality || "auto",
+          defaultQuality: config?.defaultQuality || "high",
           defaultOutputFormat: config?.defaultOutputFormat || "png",
+          qualityPresetId: "high-quality-final",
           requestTimeoutSeconds: config?.requestTimeoutSeconds || 120,
           maxConcurrentRequests: config?.maxConcurrentRequests || 1,
-          rateLimitPerMinute: config?.rateLimitPerMinute || 10
+          rateLimitPerMinute: config?.rateLimitPerMinute || 10,
+          lastUsedAt: ""
         }];
+      const models = Array.isArray(config?.models) ? config.models : [];
+      const qualityPresets = Array.isArray(config?.qualityPresets) ? config.qualityPresets : [];
       return {
         ...config,
         upstreams: upstreams.map((item, index) => ({
@@ -1865,7 +2021,10 @@ export function renderAdminPage() {
           name: item.name || "上游 " + (index + 1),
           enabled: item.enabled !== false,
           baseURL: item.baseURL || "",
-          apiKeySet: !!item.apiKeySet
+          apiKeySet: !!item.apiKeySet,
+          priority: item.priority || 100,
+          weight: item.weight || 1,
+          healthCheckEnabled: item.healthCheckEnabled !== false
         })),
         interfaces: interfaces.map((item, index) => ({
           id: item.id || fallbackId("interface", index),
@@ -1876,12 +2035,18 @@ export function renderAdminPage() {
           defaultImageModel: item.defaultImageModel || "gpt-image-2",
           defaultTextModel: item.defaultTextModel || "gpt-5.5",
           defaultSize: item.defaultSize || "1024x1024",
-          defaultQuality: item.defaultQuality || "auto",
+          defaultQuality: item.defaultQuality || "high",
           defaultOutputFormat: item.defaultOutputFormat || "png",
+          qualityPresetId: item.qualityPresetId || "high-quality-final",
           requestTimeoutSeconds: item.requestTimeoutSeconds || 120,
           maxConcurrentRequests: item.maxConcurrentRequests || 1,
-          rateLimitPerMinute: item.rateLimitPerMinute || 10
-        }))
+          rateLimitPerMinute: item.rateLimitPerMinute || 10,
+          lastUsedAt: item.lastUsedAt || ""
+        })),
+        models,
+        qualityPresets,
+        alerts: config?.alerts || {},
+        security: config?.security || {}
       };
     }
 
@@ -1931,6 +2096,105 @@ export function renderAdminPage() {
 
     function urlCell(value) {
       return '<span class="config-url-cell" title="' + escapeHTML(value || "未配置") + '">' + escapeHTML(value || "未配置") + '</span>';
+    }
+
+    function compactDataRow(title, detail, action = "") {
+      return [
+        '<div class="data-row">',
+        '<div><strong>' + escapeHTML(title) + '</strong><span>' + escapeHTML(detail) + '</span></div>',
+        '<div class="config-actions">' + action + '</div>',
+        '</div>'
+      ].join("");
+    }
+
+    function presetOptions(selected) {
+      const options = currentConfig.qualityPresets.length
+        ? currentConfig.qualityPresets
+        : [{ id: "high-quality-final", name: "高质量最终稿" }];
+      return options.map((preset) => '<option value="' + escapeHTML(preset.id) + '"' + (preset.id === selected ? " selected" : "") + '>' + escapeHTML(preset.name + " · " + preset.id) + '</option>').join("");
+    }
+
+    function renderModelCatalog() {
+      const target = document.getElementById("modelCatalogList");
+      if (!target) return;
+      target.innerHTML = currentConfig.models.length
+        ? currentConfig.models.map((model) => compactDataRow(
+          model.name || model.id,
+          [
+            "模型 ID: " + (model.id || "-"),
+            "能力: " + (Array.isArray(model.capabilities) ? model.capabilities.join("/") : "-"),
+            "尺寸: " + (Array.isArray(model.sizes) ? model.sizes.join(", ") : "-"),
+            "质量: " + (Array.isArray(model.qualities) ? model.qualities.join(", ") : "-"),
+            "用途: " + (model.recommendedUse || "-")
+          ].join(" · "),
+          chip(model.enabled === false ? "停用" : "启用", model.enabled === false ? "warn" : "ok")
+        )).join("")
+        : '<div class="muted">暂无模型目录。</div>';
+    }
+
+    function renderQualityStudio() {
+      const target = document.getElementById("qualityPresetList");
+      if (!target) return;
+      target.innerHTML = currentConfig.qualityPresets.length
+        ? currentConfig.qualityPresets.map((preset) => compactDataRow(
+          preset.name || preset.id,
+          [
+            "质量: " + (preset.quality || "-"),
+            "尺寸: " + (preset.size || "-"),
+            "格式: " + (preset.outputFormat || "-"),
+            "自动增强: " + (preset.promptEnhance ? "开启" : "关闭"),
+            "用途: " + (preset.useCase || "-")
+          ].join(" · "),
+          chip(preset.id || "preset", "ok")
+        )).join("")
+        : '<div class="muted">暂无质量预设。</div>';
+    }
+
+    function renderAlertsPanel(alerts = currentConfig.alerts || {}) {
+      const target = document.getElementById("alertsPanel");
+      if (!target) return;
+      target.innerHTML = [
+        compactDataRow("Webhook 告警", alerts.webhookEnabled ? "已开启 · URL " + (alerts.webhookURLSet ? "已保存" : alerts.webhookURL || "未配置") : "未开启"),
+        compactDataRow("上游失败阈值", String(alerts.upstreamFailureThreshold || 3) + " 次连续失败触发告警"),
+        compactDataRow("成功率阈值", "低于 " + String(alerts.successRateThreshold || 90) + "% 触发告警"),
+        compactDataRow("P95 延迟阈值", String(alerts.p95LatencyMsThreshold || 30000) + " ms")
+      ].join("");
+    }
+
+    function renderUsagePanel(usage = null) {
+      const target = document.getElementById("usagePanel");
+      if (!target) return;
+      if (!usage) {
+        target.innerHTML = '<div class="muted">暂无用量数据。</div>';
+        return;
+      }
+      const rows = [
+        compactDataRow("总用量", "总数 " + usage.total.total + " · 成功 " + usage.total.success + " · 失败 " + usage.total.failed + " · 总耗时 " + usage.total.durationMs + " ms")
+      ];
+      for (const [id, bucket] of Object.entries(usage.byInterface || {})) {
+        rows.push(compactDataRow("接口 " + id, "总数 " + bucket.total + " · 成功 " + bucket.success + " · 失败 " + bucket.failed + " · 总耗时 " + bucket.durationMs + " ms"));
+      }
+      for (const [id, bucket] of Object.entries(usage.byUpstream || {})) {
+        rows.push(compactDataRow("上游 " + id, "总数 " + bucket.total + " · 成功 " + bucket.success + " · 失败 " + bucket.failed + " · 总耗时 " + bucket.durationMs + " ms"));
+      }
+      target.innerHTML = rows.join("");
+    }
+
+    function renderUpstreamHealth(upstreams = []) {
+      const target = document.getElementById("upstreamHealthPanel");
+      if (!target) return;
+      target.innerHTML = upstreams.length
+        ? upstreams.map((item) => compactDataRow(
+          item.name || item.id,
+          [
+            "健康状态: " + (item.enabled ? "启用" : "停用"),
+            "成功率: " + (item.metrics?.successRate ?? 0) + "%",
+            "P95: " + (item.metrics?.p95DurationMs ?? 0) + " ms",
+            "最近失败: " + (item.metrics?.lastFailure ? formatTime(item.metrics.lastFailure) : "-")
+          ].join(" · "),
+          '<button type="button" class="secondary" data-test-upstream-id="' + escapeHTML(item.id) + '">测试</button>'
+        )).join("")
+        : '<div class="muted">健康状态待检测。</div>';
     }
 
     function secretKeyField({ kind, id, isSet, label, fieldAttribute, secretRole = "", placeholder, help }) {
@@ -1997,6 +2261,7 @@ export function renderAdminPage() {
         defaultTextModel: value("defaultTextModel").value,
         defaultSize: value("defaultSize").value,
         defaultQuality: value("defaultQuality").value,
+        qualityPresetId: value("qualityPresetId").value,
         defaultOutputFormat: value("defaultOutputFormat").value,
         requestTimeoutSeconds: value("requestTimeoutSeconds").value,
         maxConcurrentRequests: value("maxConcurrentRequests").value,
@@ -2016,7 +2281,10 @@ export function renderAdminPage() {
         name: value("name").value,
         enabled: value("enabled").checked,
         baseURL: value("baseURL").value,
-        apiKey: value("apiKey").value
+        apiKey: value("apiKey").value,
+        priority: value("priority").value,
+        weight: value("weight").value,
+        healthCheckEnabled: value("healthCheckEnabled").checked
       };
     }
 
@@ -2038,13 +2306,14 @@ export function renderAdminPage() {
         '<td>' + escapeHTML(item.defaultSize) + ' / ' + escapeHTML(item.defaultQuality) + '</td>',
         '<td>' + chip(escapeHTML(String(item.upstreamIds.length)) + " 个上游", item.upstreamIds.length ? "ok" : "warn") + '</td>',
         '<td>' + escapeHTML(item.rateLimitPerMinute) + '/分钟 · 并发 ' + escapeHTML(item.maxConcurrentRequests) + '</td>',
+        '<td>' + escapeHTML(item.lastUsedAt ? formatTime(item.lastUsedAt) : "从未使用") + '</td>',
         '<td>' + chip(statusText(item.enabled), item.enabled ? "ok" : "warn") + '</td>',
-        '<td><div class="config-actions"><button type="button" class="secondary" data-open-interface-detail="' + index + '">编辑</button><button type="button" class="danger-button" data-remove-interface="' + index + '">删除</button></div></td>',
+        '<td><div class="config-actions"><button type="button" class="secondary" data-open-interface-detail="' + index + '">编辑</button><button type="button" class="secondary" data-test-interface="' + index + '">测试</button><button type="button" class="secondary" data-copy-skill-snippet="' + index + '">复制 Skill/Codex 配置</button><button type="button" class="secondary" data-rotate-interface-key="' + index + '">轮换 Key</button><button type="button" class="secondary" data-clone-interface="' + index + '">克隆</button><button type="button" class="danger-button" data-remove-interface="' + index + '">删除</button></div></td>',
         '</tr>'
       ].join("")).join("");
       document.getElementById("interfaceList").innerHTML = [
         '<table class="config-table">',
-        '<thead><tr><th>名称</th><th>API Key</th><th>模型</th><th>尺寸/质量</th><th>绑定上游</th><th>限流</th><th>状态</th><th>操作</th></tr></thead>',
+        '<thead><tr><th>名称</th><th>API Key</th><th>模型</th><th>尺寸/质量</th><th>绑定上游</th><th>限流</th><th>最后使用</th><th>状态</th><th>操作</th></tr></thead>',
         '<tbody>' + rows + '</tbody>',
         '</table>'
       ].join("");
@@ -2081,6 +2350,7 @@ export function renderAdminPage() {
         '<label>默认文本模型<input data-interface-field="defaultTextModel" value="' + escapeHTML(item.defaultTextModel) + '"></label>',
         '<label>默认尺寸<input data-interface-field="defaultSize" value="' + escapeHTML(item.defaultSize) + '"></label>',
         '<label>默认质量<select data-interface-field="defaultQuality">' + qualityOptions(item.defaultQuality) + '</select></label>',
+        '<label>质量预设<select data-interface-field="qualityPresetId">' + presetOptions(item.qualityPresetId) + '</select></label>',
         '<label>默认输出格式<select data-interface-field="defaultOutputFormat">' + formatOptions(item.defaultOutputFormat) + '</select></label>',
         '<label>请求超时秒数<input data-interface-field="requestTimeoutSeconds" type="number" min="10" max="900" step="1" value="' + escapeHTML(item.requestTimeoutSeconds) + '"></label>',
         '<label>最大并发请求<input data-interface-field="maxConcurrentRequests" type="number" min="1" max="10" step="1" value="' + escapeHTML(item.maxConcurrentRequests) + '"></label>',
@@ -2101,13 +2371,15 @@ export function renderAdminPage() {
         '<td><div class="config-name-cell"><strong>' + escapeHTML(item.name) + '</strong><span>' + escapeHTML(item.id) + '</span></div></td>',
         '<td>' + urlCell(item.baseURL) + '</td>',
         '<td>' + maskedKey(item.apiKeySet || item.apiKey) + '</td>',
+        '<td>' + chip("健康状态待检测", item.enabled ? "ok" : "warn") + ' · P95 -</td>',
+        '<td>' + escapeHTML(item.priority || 100) + ' / 权重 ' + escapeHTML(item.weight || 1) + '</td>',
         '<td>' + chip(statusText(item.enabled), item.enabled ? "ok" : "warn") + '</td>',
-        '<td><div class="config-actions"><button type="button" class="secondary" data-open-upstream-detail="' + index + '">编辑</button><button type="button" class="danger-button" data-remove-upstream="' + index + '">删除</button></div></td>',
+        '<td><div class="config-actions"><button type="button" class="secondary" data-open-upstream-detail="' + index + '">编辑</button><button type="button" class="secondary" data-test-upstream="' + index + '">测试</button><button type="button" class="danger-button" data-remove-upstream="' + index + '">删除</button></div></td>',
         '</tr>'
       ].join("")).join("");
       document.getElementById("upstreamList").innerHTML = [
         '<table class="config-table">',
-        '<thead><tr><th>名称</th><th>Base URL</th><th>API Key</th><th>状态</th><th>操作</th></tr></thead>',
+        '<thead><tr><th>名称</th><th>Base URL</th><th>API Key</th><th>健康状态</th><th>优先级/P95</th><th>状态</th><th>操作</th></tr></thead>',
         '<tbody>' + rows + '</tbody>',
         '</table>'
       ].join("");
@@ -2130,6 +2402,8 @@ export function renderAdminPage() {
         '<label>上游 ID<input data-upstream-field="id" value="' + escapeHTML(item.id) + '"></label>',
         '<label>上游名称<input data-upstream-field="name" value="' + escapeHTML(item.name) + '"></label>',
         '<label class="full">Base URL<input data-upstream-field="baseURL" value="' + escapeHTML(item.baseURL) + '" placeholder="https://example.com/v1"></label>',
+        '<label>优先级<input data-upstream-field="priority" type="number" min="1" max="1000" step="1" value="' + escapeHTML(item.priority || 100) + '"></label>',
+        '<label>权重<input data-upstream-field="weight" type="number" min="1" max="100" step="1" value="' + escapeHTML(item.weight || 1) + '"></label>',
         secretKeyField({
           kind: "upstream",
           id: item.id,
@@ -2140,6 +2414,7 @@ export function renderAdminPage() {
           help: "这是服务器访问上游中转站时使用的 Key，不需要配置到 skills。留空不修改；点击右侧按钮可在这个输入框里显示已保存 Key。"
         }),
         '<label class="checkbox-row"><input data-upstream-field="enabled" type="checkbox"' + (item.enabled ? " checked" : "") + '>启用这个上游</label>',
+        '<label class="checkbox-row"><input data-upstream-field="healthCheckEnabled" type="checkbox"' + (item.healthCheckEnabled !== false ? " checked" : "") + '>启用健康检查</label>',
         '</div>',
         '</section>'
       ].join("");
@@ -2149,8 +2424,59 @@ export function renderAdminPage() {
       clampSelectedConfig();
       renderUpstreamList();
       renderInterfaceList();
+      renderModelCatalog();
+      renderQualityStudio();
+      renderAlertsPanel();
+      renderLogFilterOptions();
       if (configDrawerMode) {
         renderConfigDrawer();
+      }
+    }
+
+    function renderLogFilterOptions() {
+      const interfaceFilter = document.getElementById("logInterfaceFilter");
+      const upstreamFilter = document.getElementById("logUpstreamFilter");
+      if (interfaceFilter) {
+        const current = interfaceFilter.value;
+        interfaceFilter.innerHTML = '<option value="">全部接口</option>' + currentConfig.interfaces.map((item) => '<option value="' + escapeHTML(item.id) + '">' + escapeHTML(item.name + " · " + item.id) + '</option>').join("");
+        interfaceFilter.value = current;
+      }
+      if (upstreamFilter) {
+        const current = upstreamFilter.value;
+        upstreamFilter.innerHTML = '<option value="">全部上游</option>' + currentConfig.upstreams.map((item) => '<option value="' + escapeHTML(item.id) + '">' + escapeHTML(item.name + " · " + item.id) + '</option>').join("");
+        upstreamFilter.value = current;
+      }
+    }
+
+    function renderVersionList(versions = []) {
+      const target = document.getElementById("configVersionList");
+      if (!target) return;
+      target.innerHTML = versions.length
+        ? versions.map((version) => compactDataRow(
+          version.summary || version.id,
+          formatTime(version.createdAt) + " · " + (version.username || "admin"),
+          '<button type="button" class="secondary" data-restore-config-version="' + escapeHTML(version.id) + '">恢复配置</button>'
+        )).join("")
+        : '<div class="muted">暂无配置版本。</div>';
+    }
+
+    function renderSessions(sessions = [], auditRecords = []) {
+      const sessionTarget = document.getElementById("sessionList");
+      const loginTarget = document.getElementById("loginHistoryList");
+      if (sessionTarget) {
+        sessionTarget.innerHTML = sessions.length
+          ? sessions.map((session) => compactDataRow(
+            session.current ? "当前会话" : "后台会话",
+            (session.username || "admin") + " · " + formatTime(session.createdAt),
+            session.current ? chip("当前", "ok") : '<button type="button" class="secondary" data-revoke-session="' + escapeHTML(session.id) + '">退出会话</button>'
+          )).join("")
+          : '<div class="muted">暂无会话数据。</div>';
+      }
+      if (loginTarget) {
+        const logins = auditRecords.filter((record) => record.action === "auth.login").slice(0, 8);
+        loginTarget.innerHTML = logins.length
+          ? logins.map((record) => compactDataRow("登录成功", (record.username || "admin") + " · " + formatTime(record.createdAt))).join("")
+          : '<div class="muted">暂无登录历史。</div>';
       }
     }
 
@@ -2207,6 +2533,7 @@ export function renderAdminPage() {
       }
       try {
         await saveConfigFromCurrentForms();
+        closeConfigDrawer();
       } catch (error) {
         setStatus(error.message || "保存失败。", "danger");
       } finally {
@@ -2354,10 +2681,34 @@ export function renderAdminPage() {
       return true;
     }
 
-    function filterRecords(records, search, statusFilter) {
+    function datetimeLocalToISO(value) {
+      if (!value) return "";
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString();
+    }
+
+    function getLogFilters() {
+      return {
+        interfaceId: document.getElementById("logInterfaceFilter")?.value || "",
+        upstreamId: document.getElementById("logUpstreamFilter")?.value || "",
+        model: document.getElementById("logModelFilter")?.value || "",
+        requestId: document.getElementById("logRequestFilter")?.value || "",
+        from: datetimeLocalToISO(document.getElementById("logFromFilter")?.value || ""),
+        to: datetimeLocalToISO(document.getElementById("logToFilter")?.value || "")
+      };
+    }
+
+    function filterRecords(records, search, statusFilter, filters = {}) {
       const query = String(search || "").trim().toLowerCase();
       return records.filter((record) => {
         if (!statusMatches(record, statusFilter)) return false;
+        if (filters.interfaceId && record?.interfaceId !== filters.interfaceId) return false;
+        if (filters.upstreamId && record?.upstreamId !== filters.upstreamId) return false;
+        if (filters.model && record?.model !== filters.model) return false;
+        if (filters.requestId && record?.id !== filters.requestId) return false;
+        const createdAt = record?.createdAt ? Date.parse(record.createdAt) : Number.NaN;
+        if (filters.from && Number.isFinite(createdAt) && createdAt < Date.parse(filters.from)) return false;
+        if (filters.to && Number.isFinite(createdAt) && createdAt > Date.parse(filters.to)) return false;
         if (!query) return true;
         return JSON.stringify(record).toLowerCase().includes(query);
       });
@@ -2381,7 +2732,9 @@ export function renderAdminPage() {
         ? [
           "接口: " + (record?.interfaceId || "-"),
           "上游: " + (record?.upstreamId || "-"),
-          "上游状态: " + (record?.upstreamStatus ?? "-")
+          "上游状态: " + (record?.upstreamStatus ?? "-"),
+          "重试: " + (record?.retryCount ?? 0),
+          "故障转移: " + (Array.isArray(record?.failoverChain) ? record.failoverChain.join(" -> ") : "-")
         ]
         : [
           "鉴权: " + (record?.authKind || "-"),
@@ -2392,6 +2745,7 @@ export function renderAdminPage() {
         '<strong>请求详情</strong>',
         '<div class="detail-meta">' + meta.map((item) => '<span>' + escapeHTML(item) + '</span>').join("") + '</div>',
         '<span>' + escapeHTML(summary) + '</span>',
+        '<div class="config-actions"><button type="button" class="secondary">复制脱敏 curl</button><button type="button" class="secondary">标记为质量差案例</button><button type="button" class="secondary">保存为优秀案例</button></div>',
         '</div>'
       ].join("");
     }
@@ -2401,7 +2755,8 @@ export function renderAdminPage() {
       const isGeneration = id === "generationLogs";
       const searchEl = document.getElementById(isGeneration ? "generationLogSearch" : "apiLogSearch");
       const summaryEl = document.getElementById(isGeneration ? "generationLogSummary" : "apiLogSummary");
-      const filtered = filterRecords(records, searchEl?.value || "", options.status || "all");
+      const globalStatus = document.getElementById("logStatusFilter")?.value || options.status || "all";
+      const filtered = filterRecords(records, searchEl?.value || "", globalStatus, getLogFilters());
       if (summaryEl) summaryEl.innerHTML = logSummaryHTML(filtered, isGeneration);
       if (!Array.isArray(records) || records.length === 0) {
         container.innerHTML = '<div class="log-row empty">暂无记录。</div>';
@@ -2453,6 +2808,43 @@ export function renderAdminPage() {
       renderLogTable(id, records);
     }
 
+    function adminBaseURL() {
+      return window.location.origin + "/v1";
+    }
+
+    async function copyText(value) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        return;
+      }
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+
+    function logExportURL(format) {
+      const params = new URLSearchParams({
+        type: "generations",
+        format
+      });
+      const mapping = {
+        interfaceId: document.getElementById("logInterfaceFilter")?.value,
+        upstreamId: document.getElementById("logUpstreamFilter")?.value,
+        status: document.getElementById("logStatusFilter")?.value,
+        model: document.getElementById("logModelFilter")?.value,
+        requestId: document.getElementById("logRequestFilter")?.value,
+        from: datetimeLocalToISO(document.getElementById("logFromFilter")?.value || ""),
+        to: datetimeLocalToISO(document.getElementById("logToFilter")?.value || "")
+      };
+      for (const [key, value] of Object.entries(mapping)) {
+        if (value && value !== "all") params.set(key, value);
+      }
+      return "/api/logs/export?" + params.toString();
+    }
+
     function safeHTTPSURL(releaseURL) {
       try {
         const parsed = new URL(releaseURL);
@@ -2489,11 +2881,17 @@ export function renderAdminPage() {
 
     async function loadDashboard() {
       try {
-        const [metricsData, generationData, apiData, updateData] = await Promise.all([
+        const [metricsData, generationData, apiData, updateData, usageData, versionsData, sessionsData, auditData, alertsData, upstreamHealthData] = await Promise.all([
           fetchAdminJSON("/metrics"),
           fetchAdminJSON("/logs?type=generations"),
           fetchAdminJSON("/logs?type=api"),
-          fetchAdminJSON("/update/check")
+          fetchAdminJSON("/update/check"),
+          fetchAdminJSON("/usage").catch(() => ({ usage: null })),
+          fetchAdminJSON("/config/versions").catch(() => ({ versions: [] })),
+          fetchAdminJSON("/sessions").catch(() => ({ sessions: [] })),
+          fetchAdminJSON("/audit-logs").catch(() => ({ records: [] })),
+          fetchAdminJSON("/alerts").catch(() => ({ alerts: currentConfig.alerts || {} })),
+          fetchAdminJSON("/upstreams/health").catch(() => ({ upstreams: [] }))
         ]);
         latestGenerationRecords = Array.isArray(generationData.records) ? generationData.records : [];
         latestApiRecords = Array.isArray(apiData.records) ? apiData.records : [];
@@ -2502,6 +2900,11 @@ export function renderAdminPage() {
         renderRows("generationLogs", latestGenerationRecords);
         renderRows("apiLogs", latestApiRecords);
         renderUpdate(updateData.update);
+        renderUsagePanel(usageData.usage);
+        renderVersionList(versionsData.versions || []);
+        renderSessions(sessionsData.sessions || [], auditData.records || []);
+        renderAlertsPanel(alertsData.alerts || currentConfig.alerts || {});
+        renderUpstreamHealth(upstreamHealthData.upstreams || []);
         setStatus("数据已刷新。", "ok");
       } catch (error) {
         setStatus(error.message || "刷新失败。", "danger");
@@ -2551,6 +2954,18 @@ export function renderAdminPage() {
     document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
     document.getElementById("generationLogSearch").addEventListener("input", () => renderLogTable("generationLogs", latestGenerationRecords));
     document.getElementById("apiLogSearch").addEventListener("input", () => renderLogTable("apiLogs", latestApiRecords));
+    for (const id of ["logInterfaceFilter", "logUpstreamFilter", "logStatusFilter", "logModelFilter", "logRequestFilter", "logFromFilter", "logToFilter"]) {
+      document.getElementById(id)?.addEventListener("input", () => {
+        renderLogTable("generationLogs", latestGenerationRecords);
+        renderLogTable("apiLogs", latestApiRecords);
+      });
+    }
+    document.getElementById("exportLogsJsonlBtn")?.addEventListener("click", () => {
+      window.location.href = logExportURL("jsonl");
+    });
+    document.getElementById("exportLogsCsvBtn")?.addEventListener("click", () => {
+      window.location.href = logExportURL("csv");
+    });
     document.getElementById("generationLogs").addEventListener("click", (event) => {
       const button = event.target.closest("[data-log-detail]");
       if (!button) return;
@@ -2575,11 +2990,13 @@ export function renderAdminPage() {
         defaultImageModel: "gpt-image-2",
         defaultTextModel: "gpt-5.5",
         defaultSize: "1024x1024",
-        defaultQuality: "auto",
+        defaultQuality: "high",
         defaultOutputFormat: "png",
+        qualityPresetId: "high-quality-final",
         requestTimeoutSeconds: 120,
         maxConcurrentRequests: 1,
-        rateLimitPerMinute: 10
+        rateLimitPerMinute: 10,
+        lastUsedAt: ""
       });
       selectedInterfaceIndex = index;
       renderConfigEditors();
@@ -2593,16 +3010,76 @@ export function renderAdminPage() {
         name: "上游 " + (index + 1),
         enabled: true,
         baseURL: "",
-        apiKeySet: false
+        apiKeySet: false,
+        priority: 100,
+        weight: 1,
+        healthCheckEnabled: true
       });
       selectedUpstreamIndex = index;
       renderConfigEditors();
       openConfigDrawer("upstream");
     });
     document.getElementById("interfaceList").addEventListener("click", (event) => {
+      const rotateButton = event.target.closest("[data-rotate-interface-key]");
+      if (rotateButton) {
+        event.stopPropagation();
+        const index = Number(rotateButton.dataset.rotateInterfaceKey);
+        const item = currentConfig.interfaces[index];
+        if (!item || !confirm("确定要重新生成这个接口的 API Key 吗？旧 Key 会失效。")) return;
+        fetchAdminJSON("/interfaces/" + encodeURIComponent(item.id) + "/rotate-key", { method: "POST", body: "{}" })
+          .then((data) => {
+            fillConfig(data.config);
+            setStatus("接口 Key 已轮换。", "ok");
+          })
+          .catch((error) => setStatus(error.message || "Key 轮换失败。", "danger"));
+        return;
+      }
+      const cloneButton = event.target.closest("[data-clone-interface]");
+      if (cloneButton) {
+        event.stopPropagation();
+        const index = Number(cloneButton.dataset.cloneInterface);
+        const item = currentConfig.interfaces[index];
+        if (!item) return;
+        const id = prompt("请输入克隆接口 ID", item.id + "-copy");
+        if (!id) return;
+        fetchAdminJSON("/interfaces/" + encodeURIComponent(item.id) + "/clone", {
+          method: "POST",
+          body: JSON.stringify({ id, name: item.name + " 副本" })
+        }).then((data) => {
+          fillConfig(data.config);
+          setStatus("接口已克隆。", "ok");
+        }).catch((error) => setStatus(error.message || "克隆接口失败。", "danger"));
+        return;
+      }
+      const testButton = event.target.closest("[data-test-interface]");
+      if (testButton) {
+        event.stopPropagation();
+        const item = currentConfig.interfaces[Number(testButton.dataset.testInterface)];
+        if (!item) return;
+        fetchAdminJSON("/interfaces/" + encodeURIComponent(item.id) + "/test", { method: "POST", body: "{}" })
+          .then(() => setStatus("接口配置可用。", "ok"))
+          .catch((error) => setStatus(error.message || "接口测试失败。", "danger"));
+        return;
+      }
+      const snippetButton = event.target.closest("[data-copy-skill-snippet]");
+      if (snippetButton) {
+        event.stopPropagation();
+        const item = currentConfig.interfaces[Number(snippetButton.dataset.copySkillSnippet)];
+        if (!item) return;
+        const snippet = [
+          "IMAGE_STUDIO_BASE_URL=" + adminBaseURL(),
+          "IMAGE_STUDIO_API_KEY=<点击显示已保存 Key 后填写>",
+          "IMAGE_STUDIO_MODEL=" + item.defaultImageModel,
+          "IMAGE_STUDIO_SIZE=" + item.defaultSize,
+          "IMAGE_STUDIO_QUALITY=" + item.defaultQuality
+        ].join("\\n");
+        copyText(snippet).then(() => setStatus("已复制 Skill/Codex 配置片段。", "ok"));
+        return;
+      }
       const removeButton = event.target.closest("[data-remove-interface]");
       if (removeButton) {
         event.stopPropagation();
+        if (!confirm("确定删除这个接口吗？")) return;
         if (currentConfig.interfaces.length <= 1) {
           setStatus("至少保留一个接口配置。", "danger");
           return;
@@ -2625,9 +3102,20 @@ export function renderAdminPage() {
       openConfigDrawer("interface");
     });
     document.getElementById("upstreamList").addEventListener("click", (event) => {
+      const testButton = event.target.closest("[data-test-upstream]");
+      if (testButton) {
+        event.stopPropagation();
+        const item = currentConfig.upstreams[Number(testButton.dataset.testUpstream)];
+        if (!item) return;
+        fetchAdminJSON("/upstreams/" + encodeURIComponent(item.id) + "/test", { method: "POST", body: "{}" })
+          .then((data) => setStatus(data.upstream?.message || "上游连接正常。", "ok"))
+          .catch((error) => setStatus(error.message || "上游测试失败。", "danger"));
+        return;
+      }
       const removeButton = event.target.closest("[data-remove-upstream]");
       if (removeButton) {
         event.stopPropagation();
+        if (!confirm("确定删除这个上游吗？")) return;
         if (currentConfig.upstreams.length <= 1) {
           setStatus("至少保留一个上游中转站。", "danger");
           return;
@@ -2652,6 +3140,13 @@ export function renderAdminPage() {
       selectedUpstreamIndex = Number(openTarget.dataset.openUpstreamDetail);
       renderUpstreamList();
       openConfigDrawer("upstream");
+    });
+    document.getElementById("upstreamHealthPanel")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-test-upstream-id]");
+      if (!button) return;
+      fetchAdminJSON("/upstreams/" + encodeURIComponent(button.dataset.testUpstreamId) + "/test", { method: "POST", body: "{}" })
+        .then((data) => setStatus(data.upstream?.message || "上游连接正常。", "ok"))
+        .catch((error) => setStatus(error.message || "上游测试失败。", "danger"));
     });
     configDrawerBackdrop?.addEventListener("click", (event) => {
       if (event.target === configDrawerBackdrop || event.target.closest("[data-close-config-drawer]")) {
@@ -2702,10 +3197,42 @@ export function renderAdminPage() {
           setStatus("请先填写并保存上游中转站 URL。", "danger");
           return;
         }
-        setStatus("上游配置已读取。当前优先测试：" + firstEnabled.name + " · " + firstEnabled.baseURL, "ok");
+        const data = await fetchAdminJSON("/upstreams/" + encodeURIComponent(firstEnabled.id) + "/test", { method: "POST", body: "{}" });
+        setStatus(data.upstream?.message || "上游连接正常。", "ok");
       } catch (error) {
         setStatus(error.message || "上游连接测试失败。", "danger");
       }
+    });
+    document.getElementById("backupNowBtn")?.addEventListener("click", async () => {
+      try {
+        const data = await fetchAdminJSON("/backup", { method: "POST", body: "{}" });
+        document.getElementById("backupPanel").innerHTML = compactDataRow("配置备份", formatTime(data.backup.createdAt) + " · 已生成可恢复快照");
+        setStatus("配置备份已生成。", "ok");
+      } catch (error) {
+        setStatus(error.message || "备份失败。", "danger");
+      }
+    });
+    document.getElementById("restoreConfigBtn")?.addEventListener("click", () => {
+      setStatus("请在配置版本列表中选择要恢复的快照。", "ok");
+    });
+    document.getElementById("configVersionList")?.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-restore-config-version]");
+      if (!button || !confirm("确定恢复这个配置版本吗？当前配置会被覆盖。")) return;
+      try {
+        const data = await fetchAdminJSON("/config/versions/" + encodeURIComponent(button.dataset.restoreConfigVersion) + "/restore", { method: "POST", body: "{}" });
+        fillConfig(data.config);
+        await loadDashboard();
+        setStatus("配置版本已恢复。", "ok");
+      } catch (error) {
+        setStatus(error.message || "恢复配置失败。", "danger");
+      }
+    });
+    document.getElementById("sessionList")?.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-revoke-session]");
+      if (!button) return;
+      await fetchAdminJSON("/sessions/revoke", { method: "POST", body: JSON.stringify({ id: button.dataset.revokeSession }) });
+      await loadDashboard();
+      setStatus("会话已退出。", "ok");
     });
     document.querySelectorAll(".nav-button").forEach((button) => {
       button.addEventListener("click", () => switchView(button.dataset.view));

@@ -107,6 +107,7 @@ test("renderAdminPage saves drawer configs directly and reports failures", () =>
 
   assert.match(html, /async function saveDrawerConfig/);
   assert.match(html, /saveDrawerBtn\?\.addEventListener\("click", saveDrawerConfig\)/);
+  assert.match(html, /await saveConfigFromCurrentForms\(\);\s+closeConfigDrawer\(\);/);
   assert.doesNotMatch(html, /requestSubmit/);
   assert.match(html, /保存失败/);
 });
@@ -158,4 +159,70 @@ test("renderAdminPage applies the console style to the dashboard shell", () => {
   assert.doesNotMatch(html, /\.app-shell\[data-view\]:not\(\[data-view="dashboardView"\]\) \.sidebar/);
   assert.match(html, /--console-primary: #111827/);
   assert.match(html, /document\.getElementById\("appShell"\)\.dataset\.view = viewId/);
+});
+
+test("renderAdminPage exposes the complete operations-console navigation", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /监控/);
+  assert.match(html, /配置/);
+  assert.match(html, /质量/);
+  assert.match(html, /安全/);
+  assert.match(html, /系统/);
+  assert.match(html, /接口管理/);
+  assert.match(html, /上游管理/);
+  assert.match(html, /模型目录/);
+  assert.match(html, /生图质量/);
+  assert.match(html, /用量与成本/);
+  assert.match(html, /告警中心/);
+});
+
+test("renderAdminPage exposes model catalog quality usage alert backup and session controls", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /id="modelCatalogView"/);
+  assert.match(html, /id="qualityStudioView"/);
+  assert.match(html, /id="usageView"/);
+  assert.match(html, /id="alertsView"/);
+  assert.match(html, /id="modelCatalogList"/);
+  assert.match(html, /id="qualityPresetList"/);
+  assert.match(html, /id="usagePanel"/);
+  assert.match(html, /id="alertsPanel"/);
+  assert.match(html, /id="sessionList"/);
+  assert.match(html, /id="loginHistoryList"/);
+  assert.match(html, /id="configVersionList"/);
+  assert.match(html, /id="backupPanel"/);
+  assert.match(html, /一键备份/);
+  assert.match(html, /恢复配置/);
+});
+
+test("renderAdminPage exposes interface operations for key rotation tests clone and skill snippets", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /data-rotate-interface-key/);
+  assert.match(html, /data-clone-interface/);
+  assert.match(html, /data-test-interface/);
+  assert.match(html, /data-copy-skill-snippet/);
+  assert.match(html, /最后使用/);
+  assert.match(html, /复制 Skill\/Codex 配置/);
+  assert.match(html, /qualityPresetId/);
+});
+
+test("renderAdminPage exposes upstream health advanced log filters and export controls", () => {
+  const html = renderAdminPage();
+
+  assert.match(html, /id="upstreamHealthPanel"/);
+  assert.match(html, /data-test-upstream/);
+  assert.match(html, /健康状态/);
+  assert.match(html, /P95/);
+  assert.match(html, /id="logInterfaceFilter"/);
+  assert.match(html, /id="logUpstreamFilter"/);
+  assert.match(html, /id="logStatusFilter"/);
+  assert.match(html, /id="logFromFilter"/);
+  assert.match(html, /id="logToFilter"/);
+  assert.match(html, /id="exportLogsJsonlBtn"/);
+  assert.match(html, /id="exportLogsCsvBtn"/);
+  assert.match(html, /复制脱敏 curl/);
+  assert.match(html, /标记为质量差案例/);
+  assert.match(html, /保存为优秀案例/);
 });

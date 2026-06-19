@@ -147,8 +147,11 @@ export async function forwardOpenAIPath({ request, config, fetchImpl }) {
   const shouldRetry = (raw, status) => isRetryableRaw(raw) || [429, 502, 503, 504, 524].includes(status);
   const retryableStatuses = new Set([429, 502, 503, 504, 524]);
   let lastResponse = null;
+  const failoverChain = [];
+  let retryCount = 0;
   for (const upstream of enabledUpstreams) {
     if (!upstream.baseURL || !upstream.apiKey) continue;
+    failoverChain.push(upstream.id);
     const response = await forwardRawWithRetry({
       fetchImpl,
       upstream,
@@ -162,10 +165,14 @@ export async function forwardOpenAIPath({ request, config, fetchImpl }) {
       timeoutSeconds: config.requestTimeoutSeconds,
     });
     response.headers.set("x-image-studio-interface-id", config.interfaceId || "");
+    response.headers.set("x-image-studio-model", parsedBody?.model || config.defaultImageModel || "");
+    response.headers.set("x-image-studio-failover-chain", failoverChain.join(","));
+    response.headers.set("x-image-studio-retry-count", String(retryCount));
     lastResponse = response;
     if (response.ok) {
       return response;
     }
+    retryCount += 1;
     if (!retryableStatuses.has(response.status)) {
       return response;
     }

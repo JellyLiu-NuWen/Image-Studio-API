@@ -8,12 +8,49 @@ const SECRET_FIELDS = new Set([
   "imageApiToken",
   "adminToken",
   "apiKey",
+  "apiToken",
+  "password",
+  "cookie",
+  "set-cookie",
 ]);
 
 function clampLimit(limit) {
   const numeric = Number(limit);
   if (!Number.isFinite(numeric)) return 50;
   return Math.max(1, Math.min(500, Math.floor(numeric)));
+}
+
+function isSuccessStatus(value) {
+  const text = String(value || "");
+  const numeric = Number(text);
+  return text === "success" || (Number.isFinite(numeric) && numeric >= 200 && numeric <= 399);
+}
+
+function isFailedStatus(value) {
+  const text = String(value || "");
+  const numeric = Number(text);
+  return text === "failed" || text === "error" || (Number.isFinite(numeric) && numeric >= 400);
+}
+
+function matchesFilters(record, filters = {}) {
+  if (!filters || typeof filters !== "object") return true;
+  if (filters.interfaceId && record?.interfaceId !== filters.interfaceId) return false;
+  if (filters.upstreamId && record?.upstreamId !== filters.upstreamId) return false;
+  if (filters.model && record?.model !== filters.model) return false;
+  if (filters.endpoint && record?.endpoint !== filters.endpoint && record?.path !== filters.endpoint) return false;
+  if (filters.requestId && record?.id !== filters.requestId) return false;
+  if (filters.status) {
+    if (filters.status === "success" && !isSuccessStatus(record?.status)) return false;
+    if (filters.status === "failed" && !isFailedStatus(record?.status)) return false;
+    if (!["success", "failed", "all"].includes(filters.status) && String(record?.status) !== String(filters.status)) return false;
+  }
+  const createdAt = record?.createdAt ? Date.parse(record.createdAt) : Number.NaN;
+  if (filters.from && Number.isFinite(createdAt) && createdAt < Date.parse(filters.from)) return false;
+  if (filters.to && Number.isFinite(createdAt) && createdAt > Date.parse(filters.to)) return false;
+  const durationMs = Number(record?.durationMs);
+  if (filters.minDurationMs !== undefined && Number.isFinite(durationMs) && durationMs < Number(filters.minDurationMs)) return false;
+  if (filters.maxDurationMs !== undefined && Number.isFinite(durationMs) && durationMs > Number(filters.maxDurationMs)) return false;
+  return true;
 }
 
 export function sanitizeLogRecord(value) {
@@ -65,9 +102,13 @@ export function createJsonlLogStore({ path, maxRecords = 1000 }) {
       writeQueue = writeOperation.catch(() => {});
       await writeOperation;
     },
-    async readRecent(limit = 50) {
+    async readRecent(limit = 50, filters = {}) {
       const records = await readAll();
-      return records.slice(-clampLimit(limit)).reverse();
+      return records.filter((record) => matchesFilters(record, filters)).slice(-clampLimit(limit)).reverse();
+    },
+    async readAll(filters = {}) {
+      const records = await readAll();
+      return records.filter((record) => matchesFilters(record, filters));
     },
   };
 }
@@ -78,8 +119,11 @@ export function createMemoryLogStore() {
     async append(record) {
       records.push(sanitizeLogRecord(record));
     },
-    async readRecent(limit = 50) {
-      return records.slice(-clampLimit(limit)).reverse();
+    async readRecent(limit = 50, filters = {}) {
+      return records.filter((record) => matchesFilters(record, filters)).slice(-clampLimit(limit)).reverse();
+    },
+    async readAll(filters = {}) {
+      return records.filter((record) => matchesFilters(record, filters));
     },
   };
 }

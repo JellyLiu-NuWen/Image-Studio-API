@@ -16,6 +16,10 @@ test("sanitizeLogRecord redacts secret-ish fields recursively", () => {
         { imageApiToken: "image-token" },
         { adminToken: "admin-token" },
         { apiKey: "api-key" },
+        { apiToken: "client-token" },
+        { password: "password" },
+        { cookie: "image_studio_session=session" },
+        { "set-cookie": "image_studio_session=session" },
       ],
     },
   });
@@ -30,6 +34,10 @@ test("sanitizeLogRecord redacts secret-ish fields recursively", () => {
         { imageApiToken: "[redacted]" },
         { adminToken: "[redacted]" },
         { apiKey: "[redacted]" },
+        { apiToken: "[redacted]" },
+        { password: "[redacted]" },
+        { cookie: "[redacted]" },
+        { "set-cookie": "[redacted]" },
       ],
     },
   });
@@ -80,6 +88,51 @@ test("createJsonlLogStore preserves concurrent appends", async () => {
       records.map((record) => record.id).sort((left, right) => Number(left) - Number(right)),
       Array.from({ length: 50 }, (_value, index) => String(index)),
     );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("createJsonlLogStore filters recent records by query fields", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "image-studio-logs-"));
+  try {
+    const store = createJsonlLogStore({
+      path: join(dir, "nested", "api-calls.jsonl"),
+      maxRecords: 100,
+    });
+    await store.append({
+      id: "one",
+      createdAt: "2026-06-19T01:00:00.000Z",
+      status: 200,
+      interfaceId: "codex",
+      upstreamId: "primary",
+      model: "gpt-image-2",
+      durationMs: 1200,
+    });
+    await store.append({
+      id: "two",
+      createdAt: "2026-06-19T02:00:00.000Z",
+      status: 500,
+      interfaceId: "skill",
+      upstreamId: "backup",
+      model: "gpt-image-2",
+      durationMs: 5200,
+    });
+
+    assert.deepEqual((await store.readRecent(50, {
+      interfaceId: "codex",
+      status: "success",
+      model: "gpt-image-2",
+      from: "2026-06-19T00:00:00.000Z",
+      to: "2026-06-19T01:30:00.000Z",
+      maxDurationMs: 2000,
+    })).map((record) => record.id), ["one"]);
+
+    assert.deepEqual((await store.readRecent(50, {
+      upstreamId: "backup",
+      status: "failed",
+      minDurationMs: 5000,
+    })).map((record) => record.id), ["two"]);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
