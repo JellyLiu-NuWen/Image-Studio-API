@@ -9,6 +9,7 @@ import time
 import uuid
 import urllib.error
 import urllib.request
+from http.client import IncompleteRead
 from pathlib import Path
 
 
@@ -297,7 +298,7 @@ def post_json(url, token, payload, timeout):
         },
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        raw = response.read().decode("utf-8")
+        raw = read_response_text(response)
         return response.status, raw
 
 
@@ -315,8 +316,23 @@ def post_multipart(url, token, fields, files, timeout):
         },
     )
     with urllib.request.urlopen(request, timeout=timeout) as response:
-        raw = response.read().decode("utf-8")
+        raw = read_response_text(response)
         return response.status, raw
+
+
+def read_response_text(response):
+    chunks = []
+    while True:
+        try:
+            chunk = response.read(8192)
+        except IncompleteRead as error:
+            if error.partial:
+                chunks.append(error.partial)
+            break
+        if not chunk:
+            break
+        chunks.append(chunk)
+    return b"".join(chunks).decode("utf-8", errors="replace")
 
 
 def main(argv):
@@ -390,6 +406,17 @@ def main(argv):
             data = json.loads(raw)
     except json.JSONDecodeError:
         return fail("Image API returned non-JSON response", status=status, raw=raw)
+    if not data.get("data"):
+        stream_meta = data.get("_stream") if isinstance(data.get("_stream"), dict) else {}
+        if args.stream and raw.strip().startswith(": image-studio keepalive"):
+            return fail(
+                "Image API stream ended after keepalive without a completed image. "
+                "The upstream image edit/generation backend likely timed out or closed the connection.",
+                status=status,
+                raw=raw,
+            )
+        if args.stream and not stream_meta.get("completed_count"):
+            return fail("Image API stream ended without a completed image.", status=status, raw=raw)
 
     prefix = f"image-studio-{int(time.time())}"
     output_dir = Path(args.output_dir)
