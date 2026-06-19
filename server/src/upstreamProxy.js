@@ -79,12 +79,24 @@ async function forwardRawWithRetry({
   const headers = copyPassthroughHeaders(request, upstream.apiKey);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const response = await fetchImpl(upstreamURL, {
-      method,
-      headers,
-      body: bodyBuffer,
-      signal: createTimeoutSignal(timeoutSeconds),
-    });
+    let response = null;
+    try {
+      response = await fetchImpl(upstreamURL, {
+        method,
+        headers,
+        body: bodyBuffer,
+        signal: createTimeoutSignal(timeoutSeconds),
+      });
+    } catch (error) {
+      lastStatus = 502;
+      lastContentType = "application/json; charset=utf-8";
+      lastRaw = error?.message || String(error || "Upstream request failed");
+      if (attempt < maxAttempts) {
+        await sleep(RETRY_BACKOFF_MS);
+        continue;
+      }
+      break;
+    }
     lastStatus = response.status;
     lastContentType = response.headers.get("content-type") || lastContentType;
     if (response.ok && lastContentType.toLowerCase().includes("text/event-stream")) {
@@ -119,7 +131,9 @@ async function forwardRawWithRetry({
 
   const failure = json({
     error: {
-      message: describeProblem(lastRaw),
+      message: lastStatus === 502 && lastRaw && !String(lastRaw).trim().startsWith("{")
+        ? `上游请求失败:${lastRaw}`
+        : describeProblem(lastRaw),
       upstreamStatus: lastStatus,
       raw: lastRaw.slice(0, 1500),
     },

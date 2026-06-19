@@ -279,6 +279,32 @@ test("image streaming responses are returned before the upstream stream closes",
   assert.match(await earlyResult.response.text(), /image_generation\.partial_image/);
 });
 
+test("image proxy returns structured json when upstream fetch fails", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      throw new Error("upstream socket closed");
+    },
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/edits", {
+    prompt: "network failure",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 502);
+  assert.equal(response.headers.get("x-image-studio-upstream-id"), "default");
+  const body = await response.json();
+  assert.match(body.error.message, /上游请求失败/);
+  assert.match(body.error.raw, /upstream socket closed/);
+});
+
 test("admin config updates non-secret values and keeps blank secrets unchanged", async () => {
   const store = memoryStore({
     imageApiToken: "old-client-token",
