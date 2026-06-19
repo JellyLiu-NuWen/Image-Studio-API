@@ -133,12 +133,19 @@ def build_payload(args):
     return payload
 
 
+def resolve_model(args, is_edit=False):
+    model = args.model or env("IMAGE_STUDIO_DEFAULT_MODEL")
+    if is_edit and not args.model and model == "gpt-image-2":
+        return "gpt-image-1"
+    return model
+
+
 def build_form_fields(args):
     fields = {
         "prompt": args.prompt,
         "n": str(args.n),
     }
-    model = args.model or env("IMAGE_STUDIO_DEFAULT_MODEL")
+    model = resolve_model(args, is_edit=True)
     size = args.size or env("IMAGE_STUDIO_DEFAULT_SIZE")
     quality = args.quality or env("IMAGE_STUDIO_DEFAULT_QUALITY", DEFAULT_QUALITY)
     output_format = args.output_format
@@ -254,13 +261,6 @@ def multipart_escape(value):
 def build_multipart_body(fields, files):
     boundary = f"image-studio-{uuid.uuid4().hex}"
     chunks = []
-    for name, value in fields.items():
-        chunks.extend([
-            f"--{boundary}\r\n".encode("utf-8"),
-            f'Content-Disposition: form-data; name="{multipart_escape(name)}"\r\n\r\n'.encode("utf-8"),
-            str(value).encode("utf-8"),
-            b"\r\n",
-        ])
     for name, path in files:
         chunks.extend([
             f"--{boundary}\r\n".encode("utf-8"),
@@ -270,6 +270,13 @@ def build_multipart_body(fields, files):
             ).encode("utf-8"),
             f"Content-Type: {guess_content_type(path)}\r\n\r\n".encode("utf-8"),
             path.read_bytes(),
+            b"\r\n",
+        ])
+    for name, value in fields.items():
+        chunks.extend([
+            f"--{boundary}\r\n".encode("utf-8"),
+            f'Content-Disposition: form-data; name="{multipart_escape(name)}"\r\n\r\n'.encode("utf-8"),
+            str(value).encode("utf-8"),
             b"\r\n",
         ])
     chunks.append(f"--{boundary}--\r\n".encode("utf-8"))
@@ -348,7 +355,7 @@ def main(argv):
     edit_files = []
     try:
         for image in args.image:
-            edit_files.append(("image[]", validate_file(image, "Input image")))
+            edit_files.append(("image", validate_file(image, "Input image")))
         if args.mask:
             edit_files.append(("mask", validate_file(args.mask, "Mask")))
     except FileNotFoundError as error:

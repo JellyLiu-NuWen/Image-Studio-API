@@ -287,11 +287,12 @@ class GenerateImageScriptTest(TestCase):
                 self.assertEqual(Handler.seen["authorization"], "Bearer client-token")
                 self.assertIn("multipart/form-data; boundary=", Handler.seen["content_type"])
                 body = Handler.seen["body_text"]
-                self.assertEqual(body.count('name="image[]"'), 2)
+                self.assertEqual(body.count('name="image"'), 2)
                 self.assertIn('filename="first.png"', body)
                 self.assertIn('filename="second.jpg"', body)
                 self.assertIn('name="mask"; filename="mask.png"', body)
                 self.assertIn('name="prompt"', body)
+                self.assertLess(body.find('name="image"'), body.find('name="prompt"'))
                 self.assertIn("combine these with a clean product style", body)
                 self.assertIn('name="model"', body)
                 self.assertIn("gpt-image-1.5", body)
@@ -300,6 +301,44 @@ class GenerateImageScriptTest(TestCase):
                 self.assertIn('name="quality"', body)
                 self.assertIn("high", body)
                 self.assertEqual(len(data["files"]), 1)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_edit_mode_defaults_gpt_image_2_to_gpt_image_1(self):
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                image = Path(temp_dir) / "input.png"
+                image.write_bytes(b"image")
+                env = {
+                    **os.environ,
+                    "IMAGE_STUDIO_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
+                    "IMAGE_STUDIO_API_TOKEN": "client-token",
+                    "IMAGE_STUDIO_DEFAULT_MODEL": "gpt-image-2",
+                }
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--prompt",
+                        "edit with supported model",
+                        "--image",
+                        str(image),
+                        "--output-dir",
+                        temp_dir,
+                    ],
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("gpt-image-1", Handler.seen["body_text"])
+                self.assertNotIn("gpt-image-2", Handler.seen["body_text"])
         finally:
             server.shutdown()
             server.server_close()
