@@ -241,6 +241,44 @@ test("image edits forward multipart bodies with the server-side upstream key", a
   assert.match(captured.body, /name="image\[\]"; filename="input.png"/);
 });
 
+test("image streaming responses are returned before the upstream stream closes", async () => {
+  let streamController = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => new Response(new ReadableStream({
+      start(controller) {
+        streamController = controller;
+        controller.enqueue(new TextEncoder().encode("data: {\"type\":\"image_generation.partial_image\"}\n\n"));
+      },
+    }), {
+      status: 200,
+      headers: { "content-type": "text/event-stream" },
+    }),
+  });
+
+  const responsePromise = app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "streaming image",
+    stream: true,
+  }, {
+    authorization: "Bearer client-token",
+  }));
+  const earlyResult = await Promise.race([
+    responsePromise.then((response) => ({ kind: "response", response })),
+    new Promise((resolve) => setTimeout(() => resolve({ kind: "timeout" }), 50)),
+  ]);
+  streamController?.close();
+
+  assert.equal(earlyResult.kind, "response");
+  assert.equal(earlyResult.response.status, 200);
+  assert.equal(earlyResult.response.headers.get("x-accel-buffering"), "no");
+  assert.match(await earlyResult.response.text(), /image_generation\.partial_image/);
+});
+
 test("admin config updates non-secret values and keeps blank secrets unchanged", async () => {
   const store = memoryStore({
     imageApiToken: "old-client-token",

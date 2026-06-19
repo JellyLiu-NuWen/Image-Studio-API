@@ -87,6 +87,18 @@ async function forwardRawWithRetry({
     });
     lastStatus = response.status;
     lastContentType = response.headers.get("content-type") || lastContentType;
+    if (response.ok && lastContentType.toLowerCase().includes("text/event-stream")) {
+      const forwarded = new Response(response.body, {
+        status: response.status,
+        headers: {
+          "content-type": lastContentType,
+          "cache-control": "no-cache",
+          "x-accel-buffering": "no",
+        },
+      });
+      forwarded.headers.set("x-image-studio-upstream-id", upstream.id);
+      return forwarded;
+    }
     lastRaw = await response.text();
     if (response.ok) {
       const forwarded = new Response(lastRaw, {

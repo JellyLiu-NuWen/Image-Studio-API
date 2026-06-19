@@ -13,6 +13,8 @@ from pathlib import Path
 
 
 DEFAULT_QUALITY = "high"
+DEFAULT_STREAM = True
+DEFAULT_PARTIAL_IMAGES = 1
 
 
 def read_config_file():
@@ -79,6 +81,8 @@ def fail(message, status=None, raw=None):
 def detect_extension(item):
     if item.get("mime_type"):
         return mimetypes.guess_extension(item["mime_type"]) or ".png"
+    if item.get("output_format"):
+        return "." + str(item["output_format"]).strip().lstrip(".")
     return ".png"
 
 
@@ -123,6 +127,9 @@ def build_payload(args):
         payload["output_format"] = output_format
     if args.response_format:
         payload["response_format"] = args.response_format
+    if args.stream:
+        payload["stream"] = True
+        payload["partial_images"] = args.partial_images
     return payload
 
 
@@ -145,6 +152,9 @@ def build_form_fields(args):
         fields["output_format"] = output_format
     if args.response_format:
         fields["response_format"] = args.response_format
+    if args.stream:
+        fields["stream"] = "true"
+        fields["partial_images"] = str(args.partial_images)
     return fields
 
 
@@ -168,6 +178,62 @@ def write_metadata(output_dir, prefix, mode, prompt, payload, response_metadata,
     }
     path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
     return str(path.resolve())
+
+
+def event_image_item(event):
+    if not isinstance(event, dict):
+        return None
+    item = event.get("item")
+    if isinstance(item, dict) and item.get("result"):
+        return {
+            "b64_json": item.get("result"),
+            "mime_type": item.get("mime_type") or event.get("mime_type"),
+            "output_format": item.get("output_format") or event.get("output_format"),
+        }
+    for key in ["b64_json", "result", "image_b64", "partial_image_b64"]:
+        if event.get(key):
+            return {
+                "b64_json": event.get(key),
+                "mime_type": event.get("mime_type"),
+                "output_format": event.get("output_format"),
+            }
+    data = event.get("data")
+    if isinstance(data, list):
+        for child in data:
+            item = event_image_item(child)
+            if item:
+                return item
+    return None
+
+
+def parse_sse_image_response(raw):
+    completed = []
+    partials = []
+    for line in str(raw or "").splitlines():
+        if not line.startswith("data:"):
+            continue
+        payload = line[5:].strip()
+        if not payload or payload == "[DONE]":
+            continue
+        try:
+            event = json.loads(payload)
+        except json.JSONDecodeError:
+            continue
+        event_type = str(event.get("type") or "")
+        item = event_image_item(event)
+        if not item:
+            continue
+        if "partial" in event_type:
+            partials.append(item)
+        else:
+            completed.append(item)
+    return {
+        "data": completed or partials,
+        "_stream": {
+            "partial_count": len(partials),
+            "completed_count": len(completed),
+        },
+    }
 
 
 def guess_content_type(path):
@@ -260,6 +326,8 @@ def main(argv):
     parser.add_argument("--quality", default="")
     parser.add_argument("--output-format", default="")
     parser.add_argument("--response-format", default="")
+    parser.add_argument("--no-stream", action="store_true", help="Disable Images API streaming.")
+    parser.add_argument("--partial-images", type=int, default=DEFAULT_PARTIAL_IMAGES)
     parser.add_argument("--n", type=int, default=1)
     parser.add_argument("--output-dir", default=env("IMAGE_STUDIO_OUTPUT_DIR", "./outputs/image-studio"))
     parser.add_argument("--timeout", type=int, default=180)
@@ -287,6 +355,8 @@ def main(argv):
         return fail(str(error))
 
     is_edit = bool(args.image)
+    args.stream = not args.no_stream
+    args.partial_images = max(0, min(3, int(args.partial_images)))
     url = f"{endpoint}/v1/images/edits" if is_edit else f"{endpoint}/v1/images/generations"
     payload = build_form_fields(args) if is_edit else build_payload(args)
 
@@ -307,7 +377,10 @@ def main(argv):
         return fail(str(error))
 
     try:
-        data = json.loads(raw)
+        if args.stream and "data:" in raw:
+            data = parse_sse_image_response(raw)
+        else:
+            data = json.loads(raw)
     except json.JSONDecodeError:
         return fail("Image API returned non-JSON response", status=status, raw=raw)
 
@@ -318,6 +391,8 @@ def main(argv):
     response_metadata = {
         "status": status,
         "data_count": len(data.get("data", [])) if isinstance(data.get("data"), list) else 0,
+        "stream": bool(args.stream),
+        "partial_count": int(data.get("_stream", {}).get("partial_count", 0)) if isinstance(data.get("_stream"), dict) else 0,
     }
     metadata_file = write_metadata(
         output_dir,

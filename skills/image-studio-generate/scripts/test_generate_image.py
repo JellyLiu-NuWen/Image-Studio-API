@@ -15,6 +15,7 @@ SCRIPT = Path(__file__).with_name("generate_image.py")
 
 class Handler(BaseHTTPRequestHandler):
     seen = {}
+    mode = "json"
 
     def do_POST(self):
         length = int(self.headers.get("content-length", "0"))
@@ -31,17 +32,26 @@ class Handler(BaseHTTPRequestHandler):
             "body": body,
             "body_text": body_text,
         }
-        payload = {
-            "data": [
-                {
-                    "b64_json": base64.b64encode(b"fake-png").decode("ascii"),
-                    "mime_type": "image/png",
-                }
+        if Handler.mode == "stream":
+            payloads = [
+                {"type": "image_generation.partial_image", "b64_json": base64.b64encode(b"partial").decode("ascii")},
+                {"type": "image_generation.completed", "b64_json": base64.b64encode(b"fake-png").decode("ascii"), "output_format": "png"},
             ]
-        }
-        raw = json.dumps(payload).encode("utf-8")
+            raw = "".join(f"data: {json.dumps(payload)}\n\n" for payload in payloads).encode("utf-8")
+            content_type = "text/event-stream"
+        else:
+            payload = {
+                "data": [
+                    {
+                        "b64_json": base64.b64encode(b"fake-png").decode("ascii"),
+                        "mime_type": "image/png",
+                    }
+                ]
+            }
+            raw = json.dumps(payload).encode("utf-8")
+            content_type = "application/json"
         self.send_response(200)
-        self.send_header("content-type", "application/json")
+        self.send_header("content-type", content_type)
         self.send_header("content-length", str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)
@@ -51,6 +61,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class GenerateImageScriptTest(TestCase):
+    def setUp(self):
+        Handler.mode = "json"
+
     def test_posts_prompt_and_saves_b64_image(self):
         server = HTTPServer(("127.0.0.1", 0), Handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -179,6 +192,46 @@ class GenerateImageScriptTest(TestCase):
                 self.assertEqual(metadata["payload"]["quality"], "high")
                 self.assertEqual(metadata["mode"], "generation")
                 self.assertNotIn("client-token", metadata_text)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_requests_streaming_and_saves_completed_stream_image(self):
+        Handler.mode = "stream"
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                env = {
+                    **os.environ,
+                    "IMAGE_STUDIO_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
+                    "IMAGE_STUDIO_API_TOKEN": "client-token",
+                }
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--prompt",
+                        "a streaming poster",
+                        "--output-dir",
+                        temp_dir,
+                    ],
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                data = json.loads(result.stdout)
+                self.assertTrue(data["ok"])
+                self.assertEqual(Handler.seen["body"]["stream"], True)
+                self.assertEqual(Handler.seen["body"]["partial_images"], 1)
+                self.assertEqual(Path(data["files"][0]).read_bytes(), b"fake-png")
+                metadata = json.loads(Path(data["metadata_file"]).read_text(encoding="utf-8"))
+                self.assertEqual(metadata["response"]["stream"], True)
+                self.assertEqual(metadata["response"]["partial_count"], 1)
         finally:
             server.shutdown()
             server.server_close()

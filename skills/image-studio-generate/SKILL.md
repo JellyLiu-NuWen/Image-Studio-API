@@ -38,6 +38,8 @@ Optional environment variables:
 
 Never ask the user for, print, or store the upstream model API key. Only the self-hosted server should know `UPSTREAM_API_KEY`.
 
+The script sends Images API requests with `stream=true` and `partial_images=1` by default. This keeps long image generation and edit jobs active through reverse proxies that otherwise time out after about 60 seconds of silence. Use `--no-stream` only when the upstream does not support image streaming.
+
 ## Workflow
 
 1. Detect the user's language and target output type: UI, infographic, poster, product, brand, photo realism, illustration, character, scene, document, academic figure, technical diagram, or image edit.
@@ -104,6 +106,14 @@ python skills/image-studio-generate/scripts/generate_image.py \
 ```
 
 When `--image` is present, the script uses `/v1/images/edits` and sends multipart/form-data. Without `--image`, it uses `/v1/images/generations` and sends JSON.
+
+Disable streaming for a compatibility-only upstream:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt "simple compatibility test" \
+  --no-stream
+```
 
 The script prints JSON with:
 

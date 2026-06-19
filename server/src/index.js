@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { dirname, join, resolve } from "node:path";
+import { Readable } from "node:stream";
 import { createSelfHostedApp } from "./app.js";
 import { createFileConfigStore, loadDotEnv } from "./config.js";
 import { createJsonlLogStore } from "./logStore.js";
@@ -72,6 +73,10 @@ async function writeWebResponse(nodeResponse, webResponse) {
   }
   if (!webResponse.body) {
     nodeResponse.end();
+    return;
+  }
+  if ((webResponse.headers.get("content-type") || "").toLowerCase().includes("text/event-stream")) {
+    Readable.fromWeb(webResponse.body).pipe(nodeResponse);
     return;
   }
   const body = Buffer.from(await webResponse.arrayBuffer());
