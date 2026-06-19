@@ -6,9 +6,13 @@ import mimetypes
 import os
 import sys
 import time
+import uuid
 import urllib.error
 import urllib.request
 from pathlib import Path
+
+
+DEFAULT_QUALITY = "high"
 
 
 def read_config_file():
@@ -107,7 +111,7 @@ def build_payload(args):
     }
     model = args.model or env("IMAGE_STUDIO_DEFAULT_MODEL")
     size = args.size or env("IMAGE_STUDIO_DEFAULT_SIZE")
-    quality = args.quality or env("IMAGE_STUDIO_DEFAULT_QUALITY")
+    quality = args.quality or env("IMAGE_STUDIO_DEFAULT_QUALITY", DEFAULT_QUALITY)
     output_format = args.output_format
     if model:
         payload["model"] = model
@@ -120,6 +124,90 @@ def build_payload(args):
     if args.response_format:
         payload["response_format"] = args.response_format
     return payload
+
+
+def build_form_fields(args):
+    fields = {
+        "prompt": args.prompt,
+        "n": str(args.n),
+    }
+    model = args.model or env("IMAGE_STUDIO_DEFAULT_MODEL")
+    size = args.size or env("IMAGE_STUDIO_DEFAULT_SIZE")
+    quality = args.quality or env("IMAGE_STUDIO_DEFAULT_QUALITY", DEFAULT_QUALITY)
+    output_format = args.output_format
+    if model:
+        fields["model"] = model
+    if size:
+        fields["size"] = size
+    if quality:
+        fields["quality"] = quality
+    if output_format:
+        fields["output_format"] = output_format
+    if args.response_format:
+        fields["response_format"] = args.response_format
+    return fields
+
+
+def resolve_prompt(args):
+    if args.prompt_file:
+        return Path(args.prompt_file).read_text(encoding="utf-8").strip()
+    return args.prompt.strip()
+
+
+def write_metadata(output_dir, prefix, mode, prompt, payload, response_metadata, files, urls):
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / f"{prefix}.json"
+    metadata = {
+        "created_at": int(time.time()),
+        "mode": mode,
+        "prompt": prompt,
+        "payload": payload,
+        "files": files,
+        "urls": urls,
+        "response": response_metadata,
+    }
+    path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    return str(path.resolve())
+
+
+def guess_content_type(path):
+    return mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+
+
+def validate_file(path_value, label):
+    path = Path(path_value)
+    if not path.is_file():
+        raise FileNotFoundError(f"{label} file not found: {path}")
+    return path
+
+
+def multipart_escape(value):
+    return str(value).replace("\\", "\\\\").replace('"', '\\"')
+
+
+def build_multipart_body(fields, files):
+    boundary = f"image-studio-{uuid.uuid4().hex}"
+    chunks = []
+    for name, value in fields.items():
+        chunks.extend([
+            f"--{boundary}\r\n".encode("utf-8"),
+            f'Content-Disposition: form-data; name="{multipart_escape(name)}"\r\n\r\n'.encode("utf-8"),
+            str(value).encode("utf-8"),
+            b"\r\n",
+        ])
+    for name, path in files:
+        chunks.extend([
+            f"--{boundary}\r\n".encode("utf-8"),
+            (
+                "Content-Disposition: form-data; "
+                f'name="{multipart_escape(name)}"; filename="{multipart_escape(path.name)}"\r\n'
+            ).encode("utf-8"),
+            f"Content-Type: {guess_content_type(path)}\r\n\r\n".encode("utf-8"),
+            path.read_bytes(),
+            b"\r\n",
+        ])
+    chunks.append(f"--{boundary}--\r\n".encode("utf-8"))
+    return b"".join(chunks), boundary
 
 
 def post_json(url, token, payload, timeout):
@@ -140,11 +228,33 @@ def post_json(url, token, payload, timeout):
         return response.status, raw
 
 
+def post_multipart(url, token, fields, files, timeout):
+    body, boundary = build_multipart_body(fields, files)
+    request = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers={
+            "authorization": f"Bearer {token}",
+            "content-type": f"multipart/form-data; boundary={boundary}",
+            "accept": "application/json",
+            "user-agent": "image-studio-generate-skill/0.1",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        raw = response.read().decode("utf-8")
+        return response.status, raw
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description="Generate images through a private Image Studio self-hosted API.")
-    parser.add_argument("--prompt", required=True)
+    prompt_group = parser.add_mutually_exclusive_group(required=True)
+    prompt_group.add_argument("--prompt")
+    prompt_group.add_argument("--prompt-file")
     parser.add_argument("--endpoint", default=config_value("IMAGE_STUDIO_ENDPOINT"))
     parser.add_argument("--token", default=config_value("IMAGE_STUDIO_API_TOKEN"))
+    parser.add_argument("--image", action="append", default=[], help="Input image for edit mode. Repeat for multiple images.")
+    parser.add_argument("--mask", default="", help="Optional mask image for edit mode.")
     parser.add_argument("--model", default="")
     parser.add_argument("--size", default="")
     parser.add_argument("--quality", default="")
@@ -159,13 +269,32 @@ def main(argv):
         return fail("Missing IMAGE_STUDIO_ENDPOINT or --endpoint")
     if not args.token:
         return fail("Missing IMAGE_STUDIO_API_TOKEN or --token")
+    try:
+        args.prompt = resolve_prompt(args)
+    except Exception as error:
+        return fail(str(error))
 
     endpoint = args.endpoint.rstrip("/")
-    url = f"{endpoint}/v1/images/generations"
-    payload = build_payload(args)
+    if args.mask and not args.image:
+        return fail("--mask requires at least one --image")
+    edit_files = []
+    try:
+        for image in args.image:
+            edit_files.append(("image[]", validate_file(image, "Input image")))
+        if args.mask:
+            edit_files.append(("mask", validate_file(args.mask, "Mask")))
+    except FileNotFoundError as error:
+        return fail(str(error))
+
+    is_edit = bool(args.image)
+    url = f"{endpoint}/v1/images/edits" if is_edit else f"{endpoint}/v1/images/generations"
+    payload = build_form_fields(args) if is_edit else build_payload(args)
 
     try:
-        status, raw = post_json(url, args.token, payload, args.timeout)
+        if is_edit:
+            status, raw = post_multipart(url, args.token, payload, edit_files, args.timeout)
+        else:
+            status, raw = post_json(url, args.token, payload, args.timeout)
     except urllib.error.HTTPError as error:
         raw = error.read().decode("utf-8", errors="replace")
         try:
@@ -183,16 +312,29 @@ def main(argv):
         return fail("Image API returned non-JSON response", status=status, raw=raw)
 
     prefix = f"image-studio-{int(time.time())}"
-    files = decode_images(data, Path(args.output_dir), prefix)
+    output_dir = Path(args.output_dir)
+    files = decode_images(data, output_dir, prefix)
     urls = collect_urls(data)
+    response_metadata = {
+        "status": status,
+        "data_count": len(data.get("data", [])) if isinstance(data.get("data"), list) else 0,
+    }
+    metadata_file = write_metadata(
+        output_dir,
+        prefix,
+        "edit" if is_edit else "generation",
+        args.prompt,
+        payload,
+        response_metadata,
+        files,
+        urls,
+    )
     result = {
         "ok": True,
         "files": files,
         "urls": urls,
-        "response": {
-            "status": status,
-            "data_count": len(data.get("data", [])) if isinstance(data.get("data"), list) else 0,
-        },
+        "metadata_file": metadata_file,
+        "response": response_metadata,
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0

@@ -1,13 +1,15 @@
 ---
 name: image-studio-generate
-description: Generate images through a private self-hosted Image Studio API. Use when the user asks Codex to create, draw, render, illustrate, make a cover/poster/icon/concept art/product image, or otherwise produce a new image using the user's own Image Studio self-hosted endpoint.
+description: Generate, edit, and improve high-quality images through a private self-hosted Image Studio API. Use when the user asks Codex to create, draw, render, illustrate, make a cover/poster/icon/concept art/product image, edit an existing image, rewrite an image prompt, or optimize poor image-generation results using the user's own Image Studio self-hosted endpoint.
 ---
 
 # Image Studio Generate
 
 ## Overview
 
-Use the bundled script to call a private Image Studio self-hosted API and save generated images locally. The skill expects the service from this repository's `server/` directory, but also works with OpenAI-compatible `/v1/images/generations` endpoints that accept Bearer authentication.
+Use the bundled script to call a private Image Studio self-hosted API and save generated images locally. The skill expects the service from this repository's `server/` directory, but also works with OpenAI-compatible `/v1/images/generations` and `/v1/images/edits` endpoints that accept Bearer authentication.
+
+Before generating or editing, convert the user's request into a production prompt. For anything more complex than a single obvious subject, read `references/prompt-quality.md` and use its structure.
 
 ## Configuration
 
@@ -32,19 +34,29 @@ Optional environment variables:
 - `IMAGE_STUDIO_OUTPUT_DIR`: Local directory for decoded image files. Default: `./outputs/image-studio`.
 - `IMAGE_STUDIO_DEFAULT_MODEL`: Override the server default model.
 - `IMAGE_STUDIO_DEFAULT_SIZE`: Override the server default size.
-- `IMAGE_STUDIO_DEFAULT_QUALITY`: Override the server default quality.
+- `IMAGE_STUDIO_DEFAULT_QUALITY`: Override the default request quality. The script defaults to `high`; set this to `auto`, `medium`, or a gateway-supported value if cost or compatibility matters more than quality.
 
 Never ask the user for, print, or store the upstream model API key. Only the self-hosted server should know `UPSTREAM_API_KEY`.
 
 ## Workflow
 
-1. Restate the image intent internally as a concise production prompt. Preserve user-specified subject, style, composition, text, aspect ratio, colors, and constraints.
-2. Choose practical defaults when the user is underspecified:
-   - `size`: use the service default unless the user asks for a clear aspect ratio.
-   - `quality`: use the service default.
+1. Detect the user's language and target output type: UI, infographic, poster, product, brand, photo realism, illustration, character, scene, document, academic figure, technical diagram, or image edit.
+2. Rewrite the request into a production prompt. Preserve user-specified subject, style, composition, text, aspect ratio, colors, and constraints. For complex images, use structured JSON-like prompt text with `type`, `goal`, `subject`, `scene`, `layout`, `style`, `text`, and `constraints`.
+3. Ask only when missing information would likely ruin the image: absent subject, missing exact text, conflicting style/use case, or required reference image.
+4. Choose quality-forward defaults when the user is underspecified:
+   - `size`: `1024x1024` for square assets, `1024x1536` for portrait posters, `1536x1024` for landscape banners when supported; otherwise use the service default.
+   - `quality`: `high` unless the user prioritizes speed, cost, or compatibility.
    - `n`: use `1` unless the user explicitly asks for multiple options.
-3. Run `scripts/generate_image.py` with the prompt and any explicit parameters.
-4. Read the JSON output. When local image files are returned, display them directly in Codex with Markdown image syntax (`![description](absolute/path.png)`) and include the saved file paths only as secondary detail. If only URLs are returned, display or link those URLs. If the script returns an error, summarize the server error without exposing tokens.
+5. Run `scripts/generate_image.py` with the final prompt and any explicit parameters. Use `--prompt-file` for long structured prompts. For image-to-image work, pass one or more `--image` arguments; pass `--mask` only with at least one `--image`.
+6. Read the JSON output. When local image files are returned, display them directly in Codex with Markdown image syntax (`![description](absolute/path.png)`) and include the saved file paths only as secondary detail. If only URLs are returned, display or link those URLs. Mention the `metadata_file` path when useful for iteration. If the script returns an error, summarize the server error without exposing tokens.
+
+## Quality Workflow
+
+- Do not send a vague one-liner when the user asks for a polished result. Expand it into subject, composition, lighting, material, palette, visible text, aspect ratio, and negative constraints.
+- For UI, infographic, product, academic, technical, and multi-panel images, prefer a structured JSON-like prompt. The JSON is prompt text, not a replacement for the API payload.
+- Keep visible text short and exact. State the language and "readable text" requirement when text matters.
+- For series or variants, keep one fixed identity/style block and vary only the requested dimensions.
+- If the output is poor, inspect the saved metadata and revise the prompt layer that failed instead of rerunning the same request.
 
 ## Commands
 
@@ -64,11 +76,41 @@ python skills/image-studio-generate/scripts/generate_image.py \
   --output-dir ./outputs/icons
 ```
 
+Generate from a long structured prompt file:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt-file ./outputs/image-studio/product-poster-prompt.txt \
+  --size 1024x1536 \
+  --quality high
+```
+
+Edit one image:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt "turn this product photo into a clean studio shot" \
+  --image ./input/product.png
+```
+
+Edit with multiple reference images and a mask:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt "combine the bag from the first image with the fabric texture from the second" \
+  --image ./input/bag.png \
+  --image ./input/fabric.png \
+  --mask ./input/mask.png
+```
+
+When `--image` is present, the script uses `/v1/images/edits` and sends multipart/form-data. Without `--image`, it uses `/v1/images/generations` and sends JSON.
+
 The script prints JSON with:
 
 - `ok`: boolean
 - `files`: saved local image paths when `b64_json` is returned
 - `urls`: remote image URLs when the upstream returns URLs
+- `metadata_file`: saved prompt, request payload, mode, returned files/URLs, and compact response metadata; it never stores the API token
 - `response`: compact raw response metadata
 
 ## Failure Handling

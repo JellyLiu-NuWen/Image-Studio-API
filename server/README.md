@@ -99,6 +99,8 @@ npm start
 
 ## 客户端调用示例
 
+文生图:
+
 ```bash
 curl http://SERVER_IP:8787/v1/images/generations \
   -H "Authorization: Bearer YOUR_IMAGE_API_TOKEN" \
@@ -107,6 +109,26 @@ curl http://SERVER_IP:8787/v1/images/generations \
     "prompt": "a ceramic tea cup on a walnut desk, soft morning light",
     "size": "1024x1024"
   }'
+```
+
+图生图 / 图片编辑:
+
+```bash
+curl http://SERVER_IP:8787/v1/images/edits \
+  -H "Authorization: Bearer YOUR_IMAGE_API_TOKEN" \
+  -F "prompt=turn this product photo into a clean studio shot" \
+  -F "image[]=@./input/product.png"
+```
+
+多图参考和 mask:
+
+```bash
+curl http://SERVER_IP:8787/v1/images/edits \
+  -H "Authorization: Bearer YOUR_IMAGE_API_TOKEN" \
+  -F "prompt=combine the bag from the first image with the fabric texture from the second" \
+  -F "image[]=@./input/bag.png" \
+  -F "image[]=@./input/fabric.png" \
+  -F "mask=@./input/mask.png"
 ```
 
 如果请求体没有提供 `model`、`size`、`quality` 或 `output_format`，服务会使用后台配置里的默认值。
@@ -154,6 +176,24 @@ IMAGE_STUDIO_API_TOKEN=YOUR_SKILL_CALLING_KEY
 ```bash
 python skills/image-studio-generate/scripts/generate_image.py \
   --prompt "minimal black and gold app icon for Image Studio"
+```
+
+图生图:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt "turn this product photo into a clean studio shot" \
+  --image ./input/product.png
+```
+
+多图参考和 mask:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt "combine the bag from the first image with the fabric texture from the second" \
+  --image ./input/bag.png \
+  --image ./input/fabric.png \
+  --mask ./input/mask.png
 ```
 
 如果上游返回 `b64_json`，脚本会保存图片到 `./outputs/image-studio/`。如果上游返回 URL，脚本会在 JSON 输出里列出 URL。

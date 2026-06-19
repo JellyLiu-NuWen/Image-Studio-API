@@ -7,7 +7,7 @@
 ```text
 Codex / OpenClaw / DeepSeek / MCP
   -> Image Studio skill 或自定义 tool
-  -> http://SERVER_IP:8787/v1/images/generations
+  -> http://SERVER_IP:8787/v1/images/generations 或 /v1/images/edits
   -> server/ 私有 API 服务
   -> OpenAI-compatible 图像上游
 ```
@@ -86,6 +86,26 @@ IMAGE_STUDIO_API_TOKEN=YOUR_SKILL_CALLING_KEY
 python skills/image-studio-generate/scripts/generate_image.py \
   --prompt "a cinematic robot painter in a small studio"
 ```
+
+图生图:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt "turn this product photo into a clean studio shot" \
+  --image ./input/product.png
+```
+
+多图参考和 mask:
+
+```bash
+python skills/image-studio-generate/scripts/generate_image.py \
+  --prompt "combine the bag from the first image with the fabric texture from the second" \
+  --image ./input/bag.png \
+  --image ./input/fabric.png \
+  --mask ./input/mask.png
+```
+
+只要传入 `--image`，脚本会自动改用 `/v1/images/edits` 并发送 multipart/form-data；不传 `--image` 时继续使用 `/v1/images/generations`。
 
 生成出的本地图片默认保存到:
 
