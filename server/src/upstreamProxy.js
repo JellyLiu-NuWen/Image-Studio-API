@@ -164,10 +164,24 @@ async function forwardRawAsSSE({
   const upstreamURL = `${upstreamBaseURL}${pathname}${search}`;
   const headers = copyPassthroughHeaders(request, upstream.apiKey);
   const encoder = new TextEncoder();
+  const heartbeatMs = streamHeartbeatMs();
 
   const body = new ReadableStream({
     async start(controller) {
-      controller.enqueue(encoder.encode(": image-studio keepalive\n\n"));
+      let closed = false;
+      let heartbeatTimer = null;
+      const enqueue = (chunk) => {
+        if (closed) return;
+        try {
+          controller.enqueue(chunk);
+        } catch {
+          closed = true;
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
+        }
+      };
+      const heartbeat = () => enqueue(encoder.encode(": image-studio keepalive\n\n"));
+      heartbeat();
+      heartbeatTimer = setInterval(heartbeat, heartbeatMs);
       try {
         const response = await fetchImpl(upstreamURL, {
           method,
@@ -182,23 +196,26 @@ async function forwardRawAsSSE({
             while (true) {
               const chunk = await reader.read();
               if (chunk.done) break;
-              controller.enqueue(chunk.value);
+              enqueue(chunk.value);
             }
           }
         } else {
           const raw = await response.text();
-          controller.enqueue(encoder.encode(`data: ${raw}\n\n`));
+          enqueue(encoder.encode(`data: ${raw}\n\n`));
         }
       } catch (error) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        enqueue(encoder.encode(`data: ${JSON.stringify({
           error: {
             message: `上游请求失败:${error?.message || String(error || "Unknown error")}`,
             upstreamStatus: 502,
           },
         })}\n\n`));
       } finally {
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-        controller.close();
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        if (!closed) {
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }
       }
     },
   });
@@ -227,6 +244,14 @@ function createTimeoutSignal(seconds) {
 
 async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function streamHeartbeatMs() {
+  const configured = Number(process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS);
+  if (Number.isFinite(configured) && configured >= 1) {
+    return Math.max(1, Math.min(60_000, Math.floor(configured)));
+  }
+  return 15_000;
 }
 
 export async function forwardOpenAIPath({ request, config, fetchImpl }) {

@@ -317,6 +317,49 @@ test("image stream proxy sends a heartbeat before upstream responds", async () =
   await reader.cancel();
 });
 
+test("image stream proxy keeps heartbeating while upstream is silent", async () => {
+  const previousHeartbeat = process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS;
+  process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = "10";
+  try {
+    const app = createSelfHostedApp({
+      store: memoryStore({
+        imageApiToken: "client-token",
+        upstreamBaseURL: "https://upstream.example/v1",
+        upstreamApiKey: "upstream-key",
+      }),
+      ...ADMIN_OPTIONS,
+      fetchImpl: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        return new Response(JSON.stringify({ data: [{ b64_json: "slow-json" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    });
+
+    const response = await app.handle(jsonRequest("/v1/images/generations", {
+      prompt: "stream through silent upstream",
+      stream: true,
+    }, {
+      authorization: "Bearer client-token",
+    }));
+    assert.equal(response.status, 200);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    const firstChunk = await reader.read();
+    const secondChunk = await reader.read();
+    assert.equal(decoder.decode(firstChunk.value), ": image-studio keepalive\n\n");
+    assert.equal(decoder.decode(secondChunk.value), ": image-studio keepalive\n\n");
+    await reader.cancel();
+  } finally {
+    if (previousHeartbeat === undefined) {
+      delete process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS;
+    } else {
+      process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = previousHeartbeat;
+    }
+  }
+});
+
 test("image proxy returns structured json when upstream fetch fails", async () => {
   const app = createSelfHostedApp({
     store: memoryStore({
