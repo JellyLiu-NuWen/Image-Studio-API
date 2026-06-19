@@ -53,6 +53,14 @@ async function readBodyBuffer(request, config, pathname) {
   return { bodyBuffer: raw, parsedBody };
 }
 
+function bodyRequestsStream(request, bodyBuffer, parsedBody) {
+  if (parsedBody?.stream === true) return true;
+  const contentType = (request.headers.get("content-type") || "").toLowerCase();
+  if (!contentType.includes("multipart/form-data") || !bodyBuffer) return false;
+  const text = new TextDecoder().decode(bodyBuffer);
+  return /name="stream"[\s\S]*?\r?\n\r?\ntrue\r?\n/i.test(text);
+}
+
 function resolveMaxAttempts(autoRetryCount) {
   if (autoRetryCount === undefined || autoRetryCount === null || autoRetryCount === "") return 1;
   if (Number(autoRetryCount) <= 0) return 1;
@@ -142,6 +150,71 @@ async function forwardRawWithRetry({
   return failure;
 }
 
+async function forwardRawAsSSE({
+  fetchImpl,
+  upstream,
+  pathname,
+  search,
+  method,
+  request,
+  bodyBuffer,
+  timeoutSeconds,
+}) {
+  const upstreamBaseURL = normalizeBaseURL(upstream.baseURL);
+  const upstreamURL = `${upstreamBaseURL}${pathname}${search}`;
+  const headers = copyPassthroughHeaders(request, upstream.apiKey);
+  const encoder = new TextEncoder();
+
+  const body = new ReadableStream({
+    async start(controller) {
+      controller.enqueue(encoder.encode(": image-studio keepalive\n\n"));
+      try {
+        const response = await fetchImpl(upstreamURL, {
+          method,
+          headers,
+          body: bodyBuffer,
+          signal: createTimeoutSignal(timeoutSeconds),
+        });
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.toLowerCase().includes("text/event-stream")) {
+          const reader = response.body?.getReader();
+          if (reader) {
+            while (true) {
+              const chunk = await reader.read();
+              if (chunk.done) break;
+              controller.enqueue(chunk.value);
+            }
+          }
+        } else {
+          const raw = await response.text();
+          controller.enqueue(encoder.encode(`data: ${raw}\n\n`));
+        }
+      } catch (error) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          error: {
+            message: `上游请求失败:${error?.message || String(error || "Unknown error")}`,
+            upstreamStatus: 502,
+          },
+        })}\n\n`));
+      } finally {
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      }
+    },
+  });
+
+  const response = new Response(body, {
+    status: 200,
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache",
+      "x-accel-buffering": "no",
+    },
+  });
+  response.headers.set("x-image-studio-upstream-id", upstream.id);
+  return response;
+}
+
 function createTimeoutSignal(seconds) {
   const timeoutMs = Math.max(1, Number(seconds) || 1) * 1000;
   if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
@@ -169,6 +242,7 @@ export async function forwardOpenAIPath({ request, config, fetchImpl }) {
   }
   const url = new URL(request.url);
   const { bodyBuffer, parsedBody } = await readBodyBuffer(request, config, url.pathname);
+  const wantsStream = bodyRequestsStream(request, bodyBuffer, parsedBody);
   const maxAttempts = resolveMaxAttempts(parsedBody?.autoRetryCount);
   const shouldRetry = (raw, status) => isRetryableRaw(raw) || [429, 502, 503, 504, 524].includes(status);
   const retryableStatuses = new Set([429, 502, 503, 504, 524]);
@@ -178,18 +252,29 @@ export async function forwardOpenAIPath({ request, config, fetchImpl }) {
   for (const upstream of enabledUpstreams) {
     if (!upstream.baseURL || !upstream.apiKey) continue;
     failoverChain.push(upstream.id);
-    const response = await forwardRawWithRetry({
-      fetchImpl,
-      upstream,
-      pathname: url.pathname,
-      search: url.search,
-      method: request.method,
-      request,
-      bodyBuffer,
-      maxAttempts,
-      shouldRetry,
-      timeoutSeconds: config.requestTimeoutSeconds,
-    });
+    const response = wantsStream
+      ? await forwardRawAsSSE({
+        fetchImpl,
+        upstream,
+        pathname: url.pathname,
+        search: url.search,
+        method: request.method,
+        request,
+        bodyBuffer,
+        timeoutSeconds: config.requestTimeoutSeconds,
+      })
+      : await forwardRawWithRetry({
+        fetchImpl,
+        upstream,
+        pathname: url.pathname,
+        search: url.search,
+        method: request.method,
+        request,
+        bodyBuffer,
+        maxAttempts,
+        shouldRetry,
+        timeoutSeconds: config.requestTimeoutSeconds,
+      });
     response.headers.set("x-image-studio-interface-id", config.interfaceId || "");
     response.headers.set("x-image-studio-model", parsedBody?.model || config.defaultImageModel || "");
     response.headers.set("x-image-studio-failover-chain", failoverChain.join(","));

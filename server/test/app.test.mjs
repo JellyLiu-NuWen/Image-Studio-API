@@ -279,6 +279,44 @@ test("image streaming responses are returned before the upstream stream closes",
   assert.match(await earlyResult.response.text(), /image_generation\.partial_image/);
 });
 
+test("image stream proxy sends a heartbeat before upstream responds", async () => {
+  let releaseFetch = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      await new Promise((resolve) => {
+        releaseFetch = resolve;
+      });
+      return new Response(JSON.stringify({ data: [{ b64_json: "streamed-json" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "stream through slow upstream",
+    stream: true,
+  }, {
+    authorization: "Bearer client-token",
+  }));
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "text/event-stream; charset=utf-8");
+  assert.equal(response.headers.get("x-accel-buffering"), "no");
+  const reader = response.body.getReader();
+  const firstChunk = await reader.read();
+  assert.equal(new TextDecoder().decode(firstChunk.value), ": image-studio keepalive\n\n");
+  releaseFetch();
+  const secondChunk = await reader.read();
+  assert.match(new TextDecoder().decode(secondChunk.value), /streamed-json/);
+  await reader.cancel();
+});
+
 test("image proxy returns structured json when upstream fetch fails", async () => {
   const app = createSelfHostedApp({
     store: memoryStore({
