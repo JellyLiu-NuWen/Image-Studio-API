@@ -3304,16 +3304,16 @@ window.addEventListener('beforeunload', (event) => {
       placement="bottom-end"
       trigger="manual"
       width="260"
-      popper-class="column-settings-popover"
+      popper-class="art-column-settings-popover"
     >
-      <div class="column-settings-panel">
-        <div class="column-settings-head">
+      <div class="art-column-settings-panel">
+        <div class="art-column-settings-head">
           <strong>列设置</strong>
           <el-button link type="primary" @click="resetTableColumns">恢复默认</el-button>
         </div>
-        <div class="column-option-list">
-          <div v-for="item in visibleTableColumnOptions" :key="item.key" class="column-option-row" :class="{ 'fixed-column': item.fixed }">
-            <span class="drag-icon">⋮⋮</span>
+        <div class="art-column-option-list">
+          <div v-for="item in visibleTableColumnOptions" :key="item.key" class="art-column-option-row" :class="{ 'fixed-column': item.fixed }">
+            <span class="art-column-drag-icon">⋮⋮</span>
             <el-checkbox
               :model-value="isTableColumnVisible(activeTableModule, item.key)"
               :disabled="item.fixed"
@@ -3325,7 +3325,7 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </div>
       <template #reference>
-        <span class="column-settings-anchor" aria-hidden="true"></span>
+        <span class="art-column-settings-anchor" aria-hidden="true"></span>
       </template>
     </el-popover>
 

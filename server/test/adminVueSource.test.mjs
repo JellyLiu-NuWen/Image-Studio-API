@@ -597,8 +597,20 @@ test("Vue management table headers expose ArtTable column visibility settings", 
   assert.match(source, /isTableColumnVisible/, "Tables should check per-column visibility");
   assert.match(source, /toggleTableColumn/, "Column settings should toggle column visibility");
   assert.match(source, /resetTableColumns/, "Column settings should restore default columns");
-  assert.match(source, /column-settings-popover/, "Template should render a column settings popover");
-  assert.match(source, /column-option-list/, "Template should render column option rows");
+  assert.match(source, /art-column-settings-popover/, "Template should render an Art column settings popover");
+  assert.match(source, /art-column-settings-panel/, "Template should render an Art column settings panel");
+  assert.match(source, /art-column-settings-head/, "Template should render an Art column settings header");
+  assert.match(source, /art-column-option-list/, "Template should render an Art column option list");
+  assert.match(source, /art-column-option-row/, "Template should render Art column option rows");
+  assert.match(source, /art-column-drag-icon/, "Template should render an Art drag affordance");
+  assert.match(source, /art-column-settings-anchor/, "Template should render an Art popover anchor");
+  assert.doesNotMatch(source, /(?<![A-Za-z0-9_-])column-settings-popover(?![A-Za-z0-9_-])/, "Template should not keep the generic column-settings-popover class");
+  assert.doesNotMatch(source, /(?<![A-Za-z0-9_-])column-settings-panel(?![A-Za-z0-9_-])/, "Template should not keep the generic column-settings-panel class");
+  assert.doesNotMatch(source, /(?<![A-Za-z0-9_-])column-settings-head(?![A-Za-z0-9_-])/, "Template should not keep the generic column-settings-head class");
+  assert.doesNotMatch(source, /(?<![A-Za-z0-9_-])column-option-list(?![A-Za-z0-9_-])/, "Template should not keep the generic column-option-list class");
+  assert.doesNotMatch(source, /(?<![A-Za-z0-9_-])column-option-row(?![A-Za-z0-9_-])/, "Template should not keep the generic column-option-row class");
+  assert.doesNotMatch(source, /(?<![A-Za-z0-9_-])drag-icon(?![A-Za-z0-9_-])/, "Template should not keep the generic drag-icon class");
+  assert.doesNotMatch(source, /(?<![A-Za-z0-9_-])column-settings-anchor(?![A-Za-z0-9_-])/, "Template should not keep the generic column-settings-anchor class");
   assert.match(source, /@update:model-value=".*toggleTableColumn/, "Column checkboxes should update visibility");
 
   assert.match(interfaceSection, /isTableColumnVisible\('interfaces', 'apiToken'\)/, "Interface API Key column should be hideable");
@@ -609,9 +621,20 @@ test("Vue management table headers expose ArtTable column visibility settings", 
   assert.match(modelSection, /isTableColumnVisible\('models', 'recommendedUse'\)/, "Model use-case column should be hideable");
   assert.match(qualitySection, /isTableColumnVisible\('quality', 'quality'\)/, "Quality preset quality column should be hideable");
   assert.match(qualitySection, /isTableColumnVisible\('quality', 'useCase'\)/, "Quality preset use-case column should be hideable");
-  assert.match(styleSource, /\.column-settings-popover/, "Styles should include column settings popover");
-  assert.match(styleSource, /\.column-option-list/, "Styles should include column option list");
-  assert.match(styleSource, /\.column-option-row/, "Styles should include column option rows");
+  assert.match(styleSource, /\.art-column-settings-popover/, "Styles should include Art column settings popover");
+  assert.match(styleSource, /\.art-column-settings-panel/, "Styles should include Art column settings panel");
+  assert.match(styleSource, /\.art-column-settings-head/, "Styles should include Art column settings header");
+  assert.match(styleSource, /\.art-column-option-list/, "Styles should include Art column option list");
+  assert.match(styleSource, /\.art-column-option-row/, "Styles should include Art column option rows");
+  assert.match(styleSource, /\.art-column-drag-icon/, "Styles should include Art drag affordance");
+  assert.match(styleSource, /\.art-column-settings-anchor/, "Styles should include Art column settings anchor");
+  assert.doesNotMatch(styleSource, /\.column-settings-popover(?![A-Za-z0-9_-])/, "Styles should remove the legacy column-settings-popover selector");
+  assert.doesNotMatch(styleSource, /\.column-settings-panel(?![A-Za-z0-9_-])/, "Styles should remove the legacy column-settings-panel selector");
+  assert.doesNotMatch(styleSource, /\.column-settings-head(?![A-Za-z0-9_-])/, "Styles should remove the legacy column-settings-head selector");
+  assert.doesNotMatch(styleSource, /\.column-option-list(?![A-Za-z0-9_-])/, "Styles should remove the legacy column-option-list selector");
+  assert.doesNotMatch(styleSource, /\.column-option-row(?![A-Za-z0-9_-])/, "Styles should remove the legacy column-option-row selector");
+  assert.doesNotMatch(styleSource, /\.drag-icon(?![A-Za-z0-9_-])/, "Styles should remove the legacy drag-icon selector");
+  assert.doesNotMatch(styleSource, /\.column-settings-anchor(?![A-Za-z0-9_-])/, "Styles should remove the legacy column-settings-anchor selector");
 });
 
 test("Vue management tables expose ArtTable style pagination", async () => {
