@@ -107,6 +107,10 @@ const workTabTarget = ref<ViewKey>('dashboard')
 const themeMode = ref<ThemeMode>('light')
 const layoutMode = ref<LayoutMode>('left')
 const menuStyleMode = ref<MenuStyleMode>('design')
+const menuOpen = ref(true)
+const mobileMenuVisible = ref(false)
+const viewportWidth = ref(typeof window === 'undefined' ? 1200 : window.innerWidth)
+const isMobileMenuMode = computed(() => viewportWidth.value <= 800)
 const globalSearchVisible = ref(false)
 const highlightedSearchIndex = ref(0)
 const globalSearchInputRef = ref<HTMLInputElement | null>(null)
@@ -762,11 +766,36 @@ function navigateTo(key: ViewKey) {
     pageTabs.value = compactPageTabs([...pageTabs.value, key])
   }
   workTabTarget.value = key
+  closeMobileMenu()
 }
 
 function selectHeaderSearch(key: ViewKey) {
   navigateTo(key)
   closeGlobalSearch()
+}
+
+function syncViewportWidth() {
+  viewportWidth.value = window.innerWidth
+  if (!isMobileMenuMode.value) {
+    mobileMenuVisible.value = false
+    if (!menuOpen.value) menuOpen.value = true
+  }
+}
+
+function toggleMenuVisibility() {
+  if (isMobileMenuMode.value) {
+    mobileMenuVisible.value = !mobileMenuVisible.value
+    menuOpen.value = mobileMenuVisible.value
+    return
+  }
+  menuOpen.value = !menuOpen.value
+  mobileMenuVisible.value = false
+}
+
+function closeMobileMenu() {
+  if (!isMobileMenuMode.value) return
+  mobileMenuVisible.value = false
+  menuOpen.value = false
 }
 
 function openGlobalSearch() {
@@ -1544,12 +1573,15 @@ function copySnippet(item: StudioInterface) {
 
 onMounted(() => {
   loadThemeMode()
+  syncViewportWidth()
   document.addEventListener('keydown', handleGlobalSearchKeydown)
+  window.addEventListener('resize', syncViewportWidth)
   bootstrap()
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleGlobalSearchKeydown)
+  window.removeEventListener('resize', syncViewportWidth)
 })
 
 window.addEventListener('beforeunload', (event) => {
@@ -1614,8 +1646,15 @@ window.addEventListener('beforeunload', (event) => {
     </el-card>
   </div>
 
-  <div v-else class="admin-shell" :data-theme="themeMode" :data-layout="layoutMode" :data-menu-style="menuStyleMode" v-loading="loading">
-    <aside class="admin-sidebar">
+  <div v-else class="admin-shell"
+    :class="{ 'mobile-menu-visible': mobileMenuVisible }"
+    :data-theme="themeMode"
+    :data-layout="layoutMode"
+    :data-menu-style="menuStyleMode"
+    :data-menu-open="menuOpen"
+    v-loading="loading"
+  >
+    <aside class="admin-sidebar layout-sidebar" :class="[menuOpen ? 'menu-left-open' : 'menu-left-close']">
       <div class="sidebar-brand">
         <div class="brand-logo">IS</div>
         <div>
@@ -1637,6 +1676,7 @@ window.addEventListener('beforeunload', (event) => {
         <span>{{ username }}</span>
       </div>
     </aside>
+    <div v-show="mobileMenuVisible" class="menu-model" @click="closeMobileMenu"></div>
 
     <main class="admin-main">
       <header class="admin-topbar">
@@ -1651,6 +1691,9 @@ window.addEventListener('beforeunload', (event) => {
           <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
         </div>
         <div class="topbar-actions header-tools">
+          <button type="button" class="header-tool header-menu-trigger" @click="toggleMenuVisibility" aria-label="切换菜单">
+            <Operation />
+          </button>
           <button type="button" class="global-search" @click="openGlobalSearch" aria-label="搜索模块">
             <el-icon><Search /></el-icon>
             <span>搜索模块</span>

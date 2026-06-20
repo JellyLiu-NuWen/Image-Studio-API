@@ -216,6 +216,38 @@ test("Vue topbar exposes Art Design Pro header tools", async () => {
   assert.match(styleSource, /\.user-entry/, "Styles should include user entry styling");
 });
 
+test("Vue header and sidebar expose Art Design Pro menu collapse and mobile shell", async () => {
+  const source = await readAppSource();
+  const shellSection = sourceBetween(
+    source,
+    "<div v-else class=\"admin-shell\"",
+    "<main class=\"admin-main\">",
+  );
+  const topbarSection = sourceBetween(
+    source,
+    "<header class=\"admin-topbar\">",
+    "</header>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /menuOpen/, "Admin should track sidebar menu open state like ArtSidebarMenu");
+  assert.match(source, /mobileMenuVisible/, "Admin should track a mobile menu overlay state");
+  assert.match(source, /isMobileMenuMode/, "Admin should derive mobile menu mode from viewport state");
+  assert.match(source, /toggleMenuVisibility/, "Admin should expose an ArtHeaderBar-style menu visibility action");
+  assert.match(source, /closeMobileMenu/, "Admin should close mobile menu overlays");
+  assert.match(shellSection, /layout-sidebar/, "Sidebar should use the ArtSidebarMenu layout shell class");
+  assert.match(shellSection, /menu-left-open/, "Sidebar should expose an open state class");
+  assert.match(shellSection, /menu-left-close/, "Sidebar should expose a collapsed state class");
+  assert.match(shellSection, /menu-model/, "Shell should render a mobile menu overlay model");
+  assert.match(topbarSection, /header-menu-trigger/, "Topbar should render the ArtHeaderBar menu trigger");
+  assert.match(topbarSection, /@click="toggleMenuVisibility"/, "Menu trigger should toggle sidebar visibility");
+  assert.match(styleSource, /\.layout-sidebar/, "Styles should include ArtSidebarMenu layout shell");
+  assert.match(styleSource, /\.menu-left-open/, "Styles should include sidebar open state");
+  assert.match(styleSource, /\.menu-left-close/, "Styles should include sidebar close state");
+  assert.match(styleSource, /\.menu-model/, "Styles should include mobile overlay model");
+  assert.match(styleSource, /\.header-menu-trigger/, "Styles should include header menu trigger");
+});
+
 test("Vue topbar notifications use an Art Design Pro notification panel", async () => {
   const source = await readAppSource();
   const topbarSection = sourceBetween(
