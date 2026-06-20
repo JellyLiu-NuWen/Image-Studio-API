@@ -1630,12 +1630,47 @@ button,
   gap: 8px 14px;
 }
 
-.table-header-main .card-title {
+.table-header-main .art-table-title {
   grid-column: 1;
 }
 
-.table-header-main .toolbar-meta {
+.table-header-main .art-table-meta {
   grid-column: 1;
+}
+
+.art-table-title {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.art-table-title h4 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--art-text);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.art-table-title h4 svg {
+  width: 18px;
+  height: 18px;
+  color: var(--art-primary);
+}
+
+.art-table-title span {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.art-table-meta {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .table-header-main .el-input {
@@ -4187,8 +4222,8 @@ button,
     grid-template-columns: 1fr;
   }
 
-  .table-header-main .card-title,
-  .table-header-main .toolbar-meta,
+  .table-header-main .art-table-title,
+  .table-header-main .art-table-meta,
   .table-header-main .el-input {
     grid-column: auto;
     grid-row: auto;

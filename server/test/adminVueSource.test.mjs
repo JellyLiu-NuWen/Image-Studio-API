@@ -473,6 +473,26 @@ test("Vue management tables use the ArtTableHeader card pattern", async () => {
   assert.match(styleSource, /\.table-tool-button/, "Styles should include compact table tool buttons");
 });
 
+test("Vue management table titles use ArtTableHeader title blocks", async () => {
+  const source = await readAppSource();
+  const sections = [
+    sourceBetween(source, "<section v-if=\"activeView === 'interfaces'\"", "<section v-if=\"activeView === 'upstreams'\""),
+    sourceBetween(source, "<section v-if=\"activeView === 'upstreams'\"", "<section v-if=\"activeView === 'models'\""),
+    sourceBetween(source, "<section v-if=\"activeView === 'models'\"", "<section v-if=\"activeView === 'quality'\""),
+    sourceBetween(source, "<section v-if=\"activeView === 'quality'\"", "<section v-if=\"activeView === 'logs'\""),
+  ];
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  for (const section of sections) {
+    assert.match(section, /art-table-title/, "Art table header should use a structured title block");
+    assert.match(section, /art-table-meta/, "Art table header should expose a metadata block");
+    assert.doesNotMatch(section, /<div class="card-title">/, "Art table header should not use the legacy card title");
+  }
+  assert.match(styleSource, /\.art-table-title/, "Styles should include Art table title styling");
+  assert.match(styleSource, /\.art-table-meta/, "Styles should include Art table meta styling");
+  assert.doesNotMatch(styleSource, /\.table-header-main \.card-title/, "Styles should no longer target legacy table card titles");
+});
+
 test("Vue management table search follows the ArtTableHeader search toggle", async () => {
   const source = await readAppSource();
   const interfaceSection = sourceBetween(
