@@ -29,7 +29,9 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminApi } from '@/api/client'
 import type {
+  ActiveAlert,
   AdminConfig,
+  AlertSummary,
   AlertsConfig,
   AuditRecord,
   ConfigVersion,
@@ -89,6 +91,8 @@ const versions = ref<ConfigVersion[]>([])
 const auditLogs = ref<AuditRecord[]>([])
 const sessions = ref<SessionRecord[]>([])
 const updateInfo = ref<Record<string, string>>({})
+const activeAlerts = ref<ActiveAlert[]>([])
+const alertSummary = ref<AlertSummary>({ total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 })
 const backupStatus = ref('')
 const backupFileInput = ref<HTMLInputElement | null>(null)
 const drawerVisible = ref(false)
@@ -165,6 +169,12 @@ function qualityCaseTag(recordId: string, label: 'poor' | 'excellent') {
 
 function upstreamHealthFor(id?: string) {
   return upstreamHealth.value.find((item) => item.id === id)
+}
+
+function alertTagType(severity: string) {
+  if (severity === 'critical') return 'danger'
+  if (severity === 'warning') return 'warning'
+  return 'info'
 }
 
 function filterLogs(records: LogRecord[]) {
@@ -281,7 +291,7 @@ async function bootstrap() {
 async function refreshAll() {
   loading.value = true
   try {
-    const [configData, metricData, generationData, apiData, usageData, versionData, auditData, sessionData, updateData, qualityCaseData, upstreamHealthData] = await Promise.all([
+    const [configData, metricData, generationData, apiData, usageData, versionData, auditData, sessionData, updateData, qualityCaseData, upstreamHealthData, activeAlertData] = await Promise.all([
       adminApi.config(),
       adminApi.metrics(),
       adminApi.logs('generations', logQuery()),
@@ -292,7 +302,8 @@ async function refreshAll() {
       adminApi.sessions().catch(() => ({ sessions: [] })),
       adminApi.updateCheck().catch(() => ({ update: {} })),
       adminApi.qualityCases().catch(() => ({ qualityCases: [] })),
-      adminApi.upstreamHealth().catch(() => ({ upstreams: [] }))
+      adminApi.upstreamHealth().catch(() => ({ upstreams: [] })),
+      adminApi.activeAlerts().catch(() => ({ alerts: [], summary: { total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 } }))
     ])
     setConfig(configData.config)
     metrics.value = metricData.metrics
@@ -305,6 +316,8 @@ async function refreshAll() {
     updateInfo.value = updateData.update
     qualityCases.value = qualityCaseData.qualityCases
     upstreamHealth.value = upstreamHealthData.upstreams
+    activeAlerts.value = activeAlertData.alerts
+    alertSummary.value = activeAlertData.summary
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '刷新失败')
   } finally {
@@ -450,7 +463,17 @@ async function saveAlerts() {
   const result = await adminApi.saveAlerts(config.value.alerts)
   config.value.alerts = result.alerts
   markSaved()
+  const active = await adminApi.activeAlerts().catch(() => ({ alerts: [], summary: alertSummary.value }))
+  activeAlerts.value = active.alerts
+  alertSummary.value = active.summary
   ElMessage.success('告警配置已保存')
+}
+
+async function acknowledgeAlert(id: string) {
+  const data = await adminApi.acknowledgeAlert(id)
+  activeAlerts.value = data.alerts
+  alertSummary.value = data.summary
+  ElMessage.success('告警已确认')
 }
 
 async function restoreVersion(id: string) {
@@ -953,6 +976,33 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'alerts'" class="view-stack">
+        <div class="metric-grid">
+          <el-card shadow="never" class="metric-card"><span>活跃告警</span><strong>{{ alertSummary.total }}</strong><small>已确认 {{ alertSummary.acknowledged }}</small></el-card>
+          <el-card shadow="never" class="metric-card"><span>严重</span><strong>{{ alertSummary.critical }}</strong><small>Key、配置和可用性风险</small></el-card>
+          <el-card shadow="never" class="metric-card"><span>警告</span><strong>{{ alertSummary.warning }}</strong><small>性能和成功率风险</small></el-card>
+          <el-card shadow="never" class="metric-card"><span>通知</span><strong>{{ config?.alerts.webhookEnabled ? '开启' : '关闭' }}</strong><small>{{ config?.alerts.webhookURLSet ? 'Webhook 已保存' : 'Webhook 未配置' }}</small></el-card>
+        </div>
+        <el-card shadow="never">
+          <template #header>
+            <div class="section-actions">
+              <div class="card-title"><Bell />当前告警</div>
+              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+            </div>
+          </template>
+          <el-table :data="activeAlerts" empty-text="暂无活跃告警">
+            <el-table-column prop="severity" label="级别" width="110">
+              <template #default="{ row }"><el-tag :type="alertTagType(row.severity)">{{ row.severity }}</el-tag></template>
+            </el-table-column>
+            <el-table-column prop="title" label="告警" min-width="180" />
+            <el-table-column prop="message" label="说明" min-width="360" show-overflow-tooltip />
+            <el-table-column prop="acknowledged" label="状态" width="110">
+              <template #default="{ row }"><el-tag :type="row.acknowledged ? 'info' : 'danger'">{{ row.acknowledged ? '已确认' : '待处理' }}</el-tag></template>
+            </el-table-column>
+            <el-table-column label="操作" width="120">
+              <template #default="{ row }"><el-button size="small" :disabled="row.acknowledged" @click="acknowledgeAlert(row.id)">确认</el-button></template>
+            </el-table-column>
+          </el-table>
+        </el-card>
         <el-card shadow="never">
           <template #header><div class="card-title"><Bell />告警中心</div></template>
           <el-form v-if="config" :model="alertsForm" label-width="150px" class="narrow-form">

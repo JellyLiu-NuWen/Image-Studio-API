@@ -107,6 +107,25 @@ export interface AlertsConfig {
   p95LatencyMsThreshold: number
 }
 
+export interface ActiveAlert {
+  id: string
+  severity: 'critical' | 'warning' | 'info'
+  title: string
+  message: string
+  details: Record<string, unknown>
+  createdAt: string
+  acknowledged: boolean
+  acknowledgedAt?: string
+}
+
+export interface AlertSummary {
+  total: number
+  critical: number
+  warning: number
+  info: number
+  acknowledged: number
+}
+
 export interface SecurityConfig {
   ipAllowlist: string[]
   totpEnabled: boolean

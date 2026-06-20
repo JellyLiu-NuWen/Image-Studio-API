@@ -1,6 +1,8 @@
 import type {
   AdminConfig,
   AdminSession,
+  ActiveAlert,
+  AlertSummary,
   AlertsConfig,
   AuditRecord,
   ConfigVersion,
@@ -109,6 +111,11 @@ export const adminApi = {
   saveAlerts: (alerts: AlertsConfig) => requestJSON<{ ok: boolean; alerts: AlertsConfig; config: AdminConfig }>('/alerts', {
     method: 'PUT',
     body: JSON.stringify({ alerts })
+  }),
+  activeAlerts: () => requestJSON<{ alerts: ActiveAlert[]; summary: AlertSummary }>('/alerts/active'),
+  acknowledgeAlert: (id: string) => requestJSON<{ ok: boolean; alert: ActiveAlert; alerts: ActiveAlert[]; summary: AlertSummary }>(`/alerts/${encodeURIComponent(id)}/ack`, {
+    method: 'POST',
+    body: '{}'
   }),
   backup: () => requestJSON<{ ok: boolean; backup: { createdAt: string; config: AdminConfig } }>('/backup', {
     method: 'POST',

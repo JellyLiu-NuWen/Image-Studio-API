@@ -173,6 +173,97 @@ function summarizeUsage(records) {
   return usage;
 }
 
+function createAlert(id, severity, title, message, details = {}) {
+  return {
+    id,
+    severity,
+    title,
+    message,
+    details,
+    createdAt: nowISO(() => Date.now()),
+    acknowledged: false,
+  };
+}
+
+function alertSummary(alerts) {
+  return alerts.reduce((summary, alert) => {
+    summary.total += 1;
+    summary[alert.severity] = (summary[alert.severity] || 0) + 1;
+    if (alert.acknowledged) summary.acknowledged += 1;
+    return summary;
+  }, { total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 });
+}
+
+function deriveActiveAlerts(config, metrics) {
+  const alerts = [];
+  const thresholds = config.alerts || {};
+  if (!config.interfaces.some((item) => item.enabled && item.apiToken)) {
+    alerts.push(createAlert(
+      "config.interface-key.missing",
+      "critical",
+      "没有可用接口 Key",
+      "所有启用接口都缺少 Skill 调用 Key，客户端无法调用生图接口。",
+    ));
+  }
+  for (const item of config.interfaces) {
+    if (item.enabled && !item.apiToken) {
+      alerts.push(createAlert(
+        `config.interface-key.${item.id}`,
+        "critical",
+        `${item.name} 缺少调用 Key`,
+        "这个接口已启用，但还没有配置 Skill/API 调用 Key。",
+        { interfaceId: item.id },
+      ));
+    }
+  }
+  for (const item of config.upstreams) {
+    if (item.enabled && !item.apiKey) {
+      alerts.push(createAlert(
+        `config.upstream-key.${item.id}`,
+        "critical",
+        `${item.name} 缺少上游 Key`,
+        "这个上游已启用，但还没有配置上游 API Key。",
+        { upstreamId: item.id },
+      ));
+    }
+  }
+  if (metrics.generations.total > 0 && metrics.generations.successRate < thresholds.successRateThreshold) {
+    alerts.push(createAlert(
+      "generation.success-rate",
+      "warning",
+      "生图成功率低于阈值",
+      `最近生图成功率 ${metrics.generations.successRate}%，低于 ${thresholds.successRateThreshold}%。`,
+      { successRate: metrics.generations.successRate, threshold: thresholds.successRateThreshold },
+    ));
+  }
+  if (metrics.generations.p95DurationMs > thresholds.p95LatencyMsThreshold) {
+    alerts.push(createAlert(
+      "generation.p95-latency",
+      "warning",
+      "生图 P95 耗时过高",
+      `最近生图 P95 ${metrics.generations.p95DurationMs}ms，高于 ${thresholds.p95LatencyMsThreshold}ms。`,
+      { p95DurationMs: metrics.generations.p95DurationMs, threshold: thresholds.p95LatencyMsThreshold },
+    ));
+  }
+  for (const [upstreamId, bucket] of Object.entries(metrics.upstreams || {})) {
+    if (bucket.failed >= thresholds.upstreamFailureThreshold) {
+      alerts.push(createAlert(
+        `upstream.failures.${upstreamId}`,
+        "warning",
+        `${upstreamId} 上游失败偏多`,
+        `最近记录中该上游失败 ${bucket.failed} 次，达到阈值 ${thresholds.upstreamFailureThreshold}。`,
+        { upstreamId, failed: bucket.failed, threshold: thresholds.upstreamFailureThreshold },
+      ));
+    }
+  }
+  const acknowledged = new Map(config.acknowledgedAlerts.map((item) => [item.id, item]));
+  return alerts.map((alert) => ({
+    ...alert,
+    acknowledged: acknowledged.has(alert.id),
+    acknowledgedAt: acknowledged.get(alert.id)?.acknowledgedAt || "",
+  }));
+}
+
 function publicSessions(sessions, currentToken) {
   return Array.from(sessions.entries()).map(([token, session]) => ({
     id: session.id || token.slice(0, 12),
@@ -492,6 +583,38 @@ async function handleAlerts({ request, store, auditRecords, username, now }) {
   return json({ ok: true, alerts: publicConfig(saved).alerts, config: publicConfig(saved) });
 }
 
+async function handleActiveAlerts({ request, store, generationLogStore, auditRecords, username, now, alertId }) {
+  const current = normalizeConfig(await store.load());
+  const generations = generationLogStore ? await generationLogStore.readRecent(500) : [];
+  const metrics = summarizeMetrics({ generations, now });
+  const alerts = deriveActiveAlerts(current, metrics);
+  if (!alertId) {
+    if (request.method !== "GET") return methodNotAllowed();
+    return json({ alerts, summary: alertSummary(alerts) });
+  }
+  if (request.method !== "POST") return methodNotAllowed();
+  const target = alerts.find((item) => item.id === alertId);
+  if (!target) return notFound();
+  const acknowledged = {
+    id: alertId,
+    acknowledgedAt: nowISO(now),
+    username: username || current.adminUsername || "admin",
+  };
+  const acknowledgedAlerts = [
+    acknowledged,
+    ...current.acknowledgedAlerts.filter((item) => item.id !== alertId),
+  ].slice(0, 500);
+  const saved = await store.save({ ...current, acknowledgedAlerts });
+  appendAudit(auditRecords, "alerts.acknowledge", { alertId }, username, now);
+  const nextAlerts = deriveActiveAlerts(saved, metrics);
+  return json({
+    ok: true,
+    alert: nextAlerts.find((item) => item.id === alertId),
+    alerts: nextAlerts,
+    summary: alertSummary(nextAlerts),
+  });
+}
+
 function configForClientInterface(config, clientInterface) {
   const upstreamById = new Map(config.upstreams.map((upstream) => [upstream.id, upstream]));
   const upstreams = clientInterface.upstreamIds
@@ -783,6 +906,26 @@ export function createSelfHostedApp({
           auditRecords,
           username: sessions.get(token)?.username,
           now,
+        });
+        return response;
+      }
+
+      if (url.pathname === "/api/alerts/active" || routeIdFromPath(url.pathname, "/api/alerts/", "/ack")) {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        const token = parseCookies(request).image_studio_session || "";
+        response = await handleActiveAlerts({
+          request,
+          store,
+          generationLogStore,
+          auditRecords,
+          username: sessions.get(token)?.username,
+          now,
+          alertId: routeIdFromPath(url.pathname, "/api/alerts/", "/ack"),
         });
         return response;
       }

@@ -28,6 +28,7 @@ export const DEFAULT_CONFIG = {
   models: [],
   qualityPresets: [],
   qualityCases: [],
+  acknowledgedAlerts: [],
   alerts: {},
   security: {},
 };
@@ -339,6 +340,14 @@ function normalizeQualityCase(raw = {}, index = 0, previous = {}) {
   };
 }
 
+function normalizeAcknowledgedAlert(raw = {}, index = 0, previous = {}) {
+  return {
+    id: normalizeId(raw.id || previous.id, `alert-${index + 1}`),
+    acknowledgedAt: String(raw.acknowledgedAt || previous.acknowledgedAt || "").trim(),
+    username: String(raw.username || previous.username || "admin").trim(),
+  };
+}
+
 function isMaskedSecretPlaceholder(value) {
   const text = String(value ?? "").trim().toLowerCase();
   if (!text) return false;
@@ -526,6 +535,11 @@ export function normalizeConfig(input = {}, previous = {}) {
     previous.qualityCases,
     normalizeQualityCase,
   );
+  const acknowledgedAlerts = normalizeCollection(
+    Array.isArray(input.acknowledgedAlerts) ? input.acknowledgedAlerts : (Array.isArray(previous.acknowledgedAlerts) ? previous.acknowledgedAlerts : []),
+    previous.acknowledgedAlerts,
+    normalizeAcknowledgedAlert,
+  );
   const primaryInterface = interfaces[0];
   const upstreamById = byId(upstreams);
   const primaryUpstream = upstreamById.get(primaryInterface.upstreamIds[0]) || upstreams[0];
@@ -548,6 +562,7 @@ export function normalizeConfig(input = {}, previous = {}) {
     models,
     qualityPresets,
     qualityCases,
+    acknowledgedAlerts,
     alerts: normalizeAlerts(merged.alerts),
     security: normalizeSecurity(merged.security),
   };
@@ -599,6 +614,7 @@ export function publicConfig(config) {
     models: normalized.models,
     qualityPresets: normalized.qualityPresets,
     qualityCases: normalized.qualityCases,
+    acknowledgedAlerts: normalized.acknowledgedAlerts,
     alerts: {
       ...normalized.alerts,
       webhookURLSet: !!normalized.alerts.webhookURL,
@@ -625,6 +641,9 @@ export function mergeConfigUpdate(current, patch) {
     qualityCases: Array.isArray(patch.qualityCases)
       ? normalizeCollection(patch.qualityCases, normalizedCurrent.qualityCases, normalizeQualityCase)
       : normalizedCurrent.qualityCases,
+    acknowledgedAlerts: Array.isArray(patch.acknowledgedAlerts)
+      ? normalizeCollection(patch.acknowledgedAlerts, normalizedCurrent.acknowledgedAlerts, normalizeAcknowledgedAlert)
+      : normalizedCurrent.acknowledgedAlerts,
     alerts: patch.alerts ? normalizeAlerts({
       ...normalizedCurrent.alerts,
       ...patch.alerts,

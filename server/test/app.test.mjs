@@ -1057,6 +1057,73 @@ test("admin can manage models quality presets alerts sessions usage and backup",
   assert.equal(backupBody.backup.config.interfaces[0].id, "codex");
 });
 
+test("admin can review and acknowledge active alerts", async () => {
+  const generationLogStore = createMemoryLogStore();
+  await generationLogStore.append({
+    id: "gen-fail",
+    createdAt: "2026-06-19T01:00:00.000Z",
+    status: "failed",
+    interfaceId: "codex",
+    upstreamId: "primary",
+    model: "gpt-image-2",
+    durationMs: 90000,
+  });
+  await generationLogStore.append({
+    id: "gen-slow",
+    createdAt: "2026-06-19T01:01:00.000Z",
+    status: "success",
+    interfaceId: "codex",
+    upstreamId: "primary",
+    model: "gpt-image-2",
+    durationMs: 85000,
+  });
+  const store = memoryStore({
+    interfaces: [{
+      id: "codex",
+      name: "Codex",
+      apiToken: "",
+      upstreamIds: ["primary"],
+    }],
+    upstreams: [{
+      id: "primary",
+      name: "Primary",
+      baseURL: "https://primary.example/v1",
+      apiKey: "",
+    }],
+    alerts: {
+      successRateThreshold: 90,
+      p95LatencyMsThreshold: 30000,
+    },
+  });
+  const app = createSelfHostedApp({
+    store,
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => {
+      throw new Error("active alerts must not call upstream");
+    },
+  });
+
+  const unauthorized = await app.handle(new Request("http://localhost/api/alerts/active"));
+  assert.equal(unauthorized.status, 401);
+
+  const headers = await loginHeaders(app);
+  const active = await app.handle(new Request("http://localhost/api/alerts/active", { headers }));
+  assert.equal(active.status, 200);
+  const activeBody = await active.json();
+  assert.equal(activeBody.alerts.some((alert) => alert.id === "config.interface-key.codex"), true);
+  assert.equal(activeBody.alerts.some((alert) => alert.id === "config.upstream-key.primary"), true);
+  assert.equal(activeBody.alerts.some((alert) => alert.id === "generation.success-rate"), true);
+  assert.equal(activeBody.alerts.some((alert) => alert.id === "generation.p95-latency"), true);
+  assert.equal(activeBody.summary.critical >= 1, true);
+
+  const ack = await app.handle(jsonRequest("/api/alerts/generation.p95-latency/ack", {}, headers));
+  assert.equal(ack.status, 200);
+  const ackBody = await ack.json();
+  assert.equal(ackBody.alert.acknowledged, true);
+  assert.equal(store.current().acknowledgedAlerts.some((item) => item.id === "generation.p95-latency"), true);
+});
+
 test("admin can mark generation logs as quality cases and audit the action", async () => {
   const generationLogStore = createMemoryLogStore();
   await generationLogStore.append({
