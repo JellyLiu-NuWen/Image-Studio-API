@@ -213,6 +213,34 @@ test("Vue management tables use an Art Design Pro style table workspace", async 
   assert.match(styleSource, /\.toolbar-meta/, "Styles should include compact table meta styling");
 });
 
+test("Vue tables expose Art Design Pro empty states", async () => {
+  const source = await readAppSource();
+  const managementSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const logSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'logs'\"",
+    "<section v-if=\"activeView === 'usage'\"",
+  );
+  const systemSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'system'\"",
+    "</main>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /emptyStateCopy/, "Admin should centralize empty-state copy");
+  assert.match(managementSection, /#empty/g, "Management tables should provide custom empty slots");
+  assert.match(logSection, /#empty/g, "Log tables should provide custom empty slots");
+  assert.match(systemSection, /#empty/g, "System tables should provide custom empty slots");
+  assert.match(source, /art-empty-state/g, "Tables should render the shared Art Design empty state");
+  assert.match(styleSource, /\.art-empty-state/, "Styles should include the shared empty-state shell");
+  assert.match(styleSource, /\.table-workspace :deep\(\.el-table__empty-block\)/, "Styles should give empty tables stable template-like height");
+});
+
 test("Vue config drawer uses an Art Design Pro form workspace", async () => {
   const source = await readAppSource();
   const drawerSection = sourceBetween(

@@ -787,6 +787,52 @@ button,
   gap: 14px;
 }
 
+.table-workspace :deep(.el-table__empty-block),
+.log-workspace :deep(.el-table__empty-block),
+.usage-breakdown-workspace :deep(.el-table__empty-block),
+.alert-queue-workspace :deep(.el-table__empty-block),
+.session-workspace :deep(.el-table__empty-block),
+.audit-workspace :deep(.el-table__empty-block),
+.backup-workspace :deep(.el-table__empty-block),
+.version-workspace :deep(.el-table__empty-block) {
+  min-height: 240px;
+}
+
+.art-empty-state {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 30px 20px;
+  color: var(--art-muted);
+  text-align: center;
+}
+
+.art-empty-state svg {
+  width: 44px;
+  height: 44px;
+  padding: 11px;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--art-primary);
+}
+
+.art-empty-state strong {
+  color: var(--art-text);
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.art-empty-state span {
+  max-width: 460px;
+  color: var(--art-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.65;
+}
+
 .table-toolbar {
   display: flex;
   align-items: center;

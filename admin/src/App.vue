@@ -175,6 +175,56 @@ const tableSize = computed(() => {
   if (tableDensity.value === 'default') return 'large'
   return 'default'
 })
+const emptyStateCopy = {
+  interfaces: {
+    title: '还没有可用接口',
+    description: '新增一个 Skill/API 调用入口，配置 Key、默认模型和上游绑定后即可开始使用。',
+  },
+  upstreams: {
+    title: '还没有上游中转站',
+    description: '添加 OpenAI-compatible 上游地址和服务端 Key，再通过接口管理绑定路由。',
+  },
+  models: {
+    title: '还没有模型目录',
+    description: '维护模型能力、尺寸、质量和推荐用途，接口默认参数会优先参考这里。',
+  },
+  quality: {
+    title: '还没有质量预设',
+    description: '新增摄影、电商、海报、图标等 Prompt 模板，让生图质量更稳定。',
+  },
+  qualityCases: {
+    title: '还没有质量案例',
+    description: '在日志详情里标记质量差或优秀案例，用于持续优化 Prompt 模板。',
+  },
+  generationLogs: {
+    title: '还没有生图日志',
+    description: '完成一次图片生成或编辑调用后，这里会显示请求、上游、耗时和质量标记。',
+  },
+  apiLogs: {
+    title: '还没有后台 API 日志',
+    description: '后台配置、查询和安全相关请求会在这里留下可审计记录。',
+  },
+  alerts: {
+    title: '当前没有活跃告警',
+    description: '上游、Key、成功率、P95 和备份状态都没有触发待处理事件。',
+  },
+  sessions: {
+    title: '还没有会话记录',
+    description: '登录后台后会同步当前会话，也可以在这里退出其他会话。',
+  },
+  audit: {
+    title: '还没有审计记录',
+    description: '登录、配置保存、Key 查看、恢复配置等关键操作会进入审计日志。',
+  },
+  backups: {
+    title: '还没有配置备份',
+    description: '创建备份后可下载或恢复，系统会自动保留最近 10 个配置快照。',
+  },
+  versions: {
+    title: '还没有配置版本',
+    description: '每次保存配置前会生成快照，可用于快速恢复到旧版本。',
+  },
+}
 const filteredInterfaces = computed(() => filterTableRows(activeInterfaces.value, tableSearch.interfaces))
 const filteredUpstreams = computed(() => filterTableRows(activeUpstreams.value, tableSearch.upstreams))
 const filteredModels = computed(() => filterTableRows(activeModels.value, tableSearch.models))
@@ -596,6 +646,10 @@ function upstreamNames(ids: string[] = []) {
 
 function upstreamHealthFor(id?: string) {
   return upstreamHealth.value.find((item) => item.id === id)
+}
+
+function emptyState(key: keyof typeof emptyStateCopy) {
+  return emptyStateCopy[key]
 }
 
 function alertTagType(severity: string) {
@@ -1506,6 +1560,14 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </div>
           <el-table :data="filteredInterfaces" :size="tableSize" row-key="id">
+            <template #empty>
+              <div class="art-empty-state">
+                <Connection />
+                <strong>{{ emptyState('interfaces').title }}</strong>
+                <span>{{ emptyState('interfaces').description }}</span>
+                <el-button type="primary" :icon="Plus" @click="addInterface">新增接口</el-button>
+              </div>
+            </template>
             <el-table-column prop="name" label="名称" min-width="150" />
             <el-table-column prop="apiTokenSet" label="API Key" width="150">
               <template #default="{ row }">
@@ -1567,6 +1629,14 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </div>
           <el-table :data="filteredUpstreams" :size="tableSize" row-key="id">
+            <template #empty>
+              <div class="art-empty-state">
+                <Link />
+                <strong>{{ emptyState('upstreams').title }}</strong>
+                <span>{{ emptyState('upstreams').description }}</span>
+                <el-button type="primary" :icon="Plus" @click="addUpstream">新增上游</el-button>
+              </div>
+            </template>
             <el-table-column prop="name" label="名称" min-width="160" />
             <el-table-column prop="baseURL" label="Base URL" min-width="260" show-overflow-tooltip />
             <el-table-column prop="apiKeySet" label="API Key" width="150">
@@ -1629,6 +1699,14 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </div>
           <el-table :data="filteredModels" :size="tableSize" row-key="id">
+            <template #empty>
+              <div class="art-empty-state">
+                <Box />
+                <strong>{{ emptyState('models').title }}</strong>
+                <span>{{ emptyState('models').description }}</span>
+                <el-button type="primary" :icon="Plus" @click="addModel">新增模型</el-button>
+              </div>
+            </template>
             <el-table-column prop="id" label="模型 ID" min-width="160" />
             <el-table-column prop="name" label="名称" min-width="140" />
             <el-table-column prop="capabilities" label="能力" min-width="160">
@@ -1724,6 +1802,14 @@ window.addEventListener('beforeunload', (event) => {
             </el-card>
           </div>
           <el-table :data="filteredPresets" :size="tableSize" class="preset-list-table">
+            <template #empty>
+              <div class="art-empty-state">
+                <MagicStick />
+                <strong>{{ emptyState('quality').title }}</strong>
+                <span>{{ emptyState('quality').description }}</span>
+                <el-button type="primary" :icon="Plus" @click="addPreset">新增预设</el-button>
+              </div>
+            </template>
             <el-table-column prop="id" label="预设 ID" min-width="180" />
             <el-table-column prop="name" label="名称" min-width="160" />
             <el-table-column prop="quality" label="质量" width="100" />
@@ -1749,6 +1835,14 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </template>
           <el-table :data="qualityCases" height="360" empty-text="暂无质量案例">
+            <template #empty>
+              <div class="art-empty-state">
+                <Document />
+                <strong>{{ emptyState('qualityCases').title }}</strong>
+                <span>{{ emptyState('qualityCases').description }}</span>
+                <el-button :icon="Refresh" @click="refreshAll">刷新案例</el-button>
+              </div>
+            </template>
             <el-table-column prop="createdAt" label="时间" min-width="160">
               <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
             </el-table-column>
@@ -1829,6 +1923,14 @@ window.addEventListener('beforeunload', (event) => {
           <el-tabs v-model="activeLogTab">
             <el-tab-pane label="生图日志" name="generations">
               <el-table :data="filteredGenerationLogs" :size="tableSize" height="520">
+                <template #empty>
+                  <div class="art-empty-state">
+                    <Document />
+                    <strong>{{ emptyState('generationLogs').title }}</strong>
+                    <span>{{ emptyState('generationLogs').description }}</span>
+                    <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
+                  </div>
+                </template>
                 <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
                 <el-table-column prop="id" label="请求 ID" min-width="220" show-overflow-tooltip />
                 <el-table-column prop="interfaceId" label="接口" min-width="120" />
@@ -1852,6 +1954,14 @@ window.addEventListener('beforeunload', (event) => {
             </el-tab-pane>
             <el-tab-pane label="后台 API" name="api">
               <el-table :data="filteredApiLogs" :size="tableSize" height="520">
+                <template #empty>
+                  <div class="art-empty-state">
+                    <Document />
+                    <strong>{{ emptyState('apiLogs').title }}</strong>
+                    <span>{{ emptyState('apiLogs').description }}</span>
+                    <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
+                  </div>
+                </template>
                 <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
                 <el-table-column prop="method" label="方法" width="90" />
                 <el-table-column prop="path" label="路径" min-width="220" />
@@ -1994,6 +2104,14 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </template>
           <el-table :data="activeAlerts" :size="tableSize" height="420" empty-text="暂无活跃告警">
+            <template #empty>
+              <div class="art-empty-state">
+                <Bell />
+                <strong>{{ emptyState('alerts').title }}</strong>
+                <span>{{ emptyState('alerts').description }}</span>
+                <el-button :icon="Refresh" @click="refreshAll">刷新告警</el-button>
+              </div>
+            </template>
             <el-table-column prop="severity" label="级别" width="110">
               <template #default="{ row }"><el-tag :type="alertTagType(row.severity)">{{ row.severity }}</el-tag></template>
             </el-table-column>
@@ -2110,6 +2228,14 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <el-table :data="sessions" :size="tableSize">
+              <template #empty>
+                <div class="art-empty-state">
+                  <Collection />
+                  <strong>{{ emptyState('sessions').title }}</strong>
+                  <span>{{ emptyState('sessions').description }}</span>
+                  <el-button :icon="Refresh" @click="refreshAll">刷新会话</el-button>
+                </div>
+              </template>
               <el-table-column prop="username" label="账号" />
               <el-table-column prop="createdAt" label="登录时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="current" label="当前" width="90"><template #default="{ row }"><el-tag v-if="row.current" type="success">当前</el-tag></template></el-table-column>
@@ -2128,6 +2254,14 @@ window.addEventListener('beforeunload', (event) => {
         <el-card shadow="never" class="audit-workspace">
           <template #header><div class="card-title"><Document />审计日志</div></template>
           <el-table :data="auditLogs" :size="tableSize" height="360">
+            <template #empty>
+              <div class="art-empty-state">
+                <Document />
+                <strong>{{ emptyState('audit').title }}</strong>
+                <span>{{ emptyState('audit').description }}</span>
+                <el-button :icon="Refresh" @click="refreshAll">刷新审计</el-button>
+              </div>
+            </template>
             <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
             <el-table-column prop="username" label="操作者" width="120" />
             <el-table-column prop="action" label="动作" min-width="160" />
@@ -2160,6 +2294,14 @@ window.addEventListener('beforeunload', (event) => {
               <span>{{ backupStatus || '自动保留最近配置快照，恢复前请确认版本。' }}</span>
             </div>
             <el-table :data="backups" :size="tableSize" height="320" empty-text="暂无备份">
+              <template #empty>
+                <div class="art-empty-state">
+                  <Download />
+                  <strong>{{ emptyState('backups').title }}</strong>
+                  <span>{{ emptyState('backups').description }}</span>
+                  <el-button type="primary" :icon="Download" @click="createBackup">一键备份</el-button>
+                </div>
+              </template>
               <el-table-column prop="createdAt" label="备份时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="username" label="操作者" width="120" />
               <el-table-column prop="summary" label="摘要" min-width="180" />
@@ -2174,6 +2316,14 @@ window.addEventListener('beforeunload', (event) => {
           <el-card shadow="never" class="version-workspace">
             <template #header><div class="card-title"><Document />配置版本历史</div></template>
             <el-table :data="versions" :size="tableSize" height="320" empty-text="暂无配置版本">
+              <template #empty>
+                <div class="art-empty-state">
+                  <Document />
+                  <strong>{{ emptyState('versions').title }}</strong>
+                  <span>{{ emptyState('versions').description }}</span>
+                  <el-button :icon="Finished" @click="saveConfig()">保存配置生成快照</el-button>
+                </div>
+              </template>
               <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="username" label="操作者" width="120" />
               <el-table-column prop="summary" label="摘要" min-width="200" />
