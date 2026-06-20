@@ -416,6 +416,15 @@ async function saveDrawer() {
   closeDrawer()
 }
 
+async function copyText(text: string, message: string) {
+  if (!navigator.clipboard?.writeText) {
+    ElMessage.warning('当前浏览器不支持剪贴板复制')
+    return
+  }
+  await navigator.clipboard.writeText(text)
+  ElMessage.success(message)
+}
+
 async function revealSecret(kind: 'interface' | 'upstream', id: string) {
   const key = `${kind}:${id}`
   if (secretValues[key]) {
@@ -426,11 +435,25 @@ async function revealSecret(kind: 'interface' | 'upstream', id: string) {
   secretValues[key] = data.secret.value
 }
 
+async function copySecret(kind: 'interface' | 'upstream', id: string) {
+  const key = `${kind}:${id}`
+  if (!secretValues[key]) {
+    const data = await adminApi.secret(kind, id)
+    secretValues[key] = data.secret.value
+  }
+  if (!secretValues[key]) {
+    ElMessage.warning('当前没有可复制的 Key')
+    return
+  }
+  await copyText(secretValues[key], kind === 'interface' ? '已复制接口 Key' : '已复制上游 Key')
+}
+
 async function rotateKey(item: StudioInterface) {
   await ElMessageBox.confirm('重新生成后旧 Key 会立即失效，确定继续吗？', '重新生成 Key', { type: 'warning' })
   const data = await adminApi.rotateInterfaceKey(item.id)
+  secretValues[`interface:${item.id}`] = data.apiToken
   setConfig(data.config)
-  ElMessage.success('接口 Key 已重新生成')
+  ElMessage.success('接口 Key 已重新生成，可直接复制')
 }
 
 async function cloneInterface(item: StudioInterface) {
@@ -572,8 +595,7 @@ async function copyRollbackCommand() {
     ElMessage.warning('暂无回滚命令')
     return
   }
-  await navigator.clipboard?.writeText(command)
-  ElMessage.success('已复制回滚命令')
+  await copyText(command, '已复制回滚命令')
 }
 
 async function refreshLogsOnly() {
@@ -628,8 +650,7 @@ function sanitizedCurl(record: LogRecord) {
 }
 
 async function copySanitizedCurl(record: LogRecord) {
-  await navigator.clipboard?.writeText(sanitizedCurl(record))
-  ElMessage.success('已复制脱敏 curl')
+  await copyText(sanitizedCurl(record), '已复制脱敏 curl')
 }
 
 async function markQualityCase(record: LogRecord, label: 'poor' | 'excellent') {
@@ -721,8 +742,7 @@ function copySnippet(item: StudioInterface) {
     `IMAGE_STUDIO_DEFAULT_SIZE=${item.defaultSize}`,
     `IMAGE_STUDIO_DEFAULT_QUALITY=${item.defaultQuality}`
   ].join('\n')
-  navigator.clipboard?.writeText(snippet)
-  ElMessage.success('已复制 Skill/Codex 配置片段')
+  copyText(snippet, '已复制 Skill/Codex 配置片段')
 }
 
 onMounted(bootstrap)
@@ -893,6 +913,7 @@ window.addEventListener('beforeunload', (event) => {
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item @click="testInterface(row)">测试接口</el-dropdown-item>
+                      <el-dropdown-item @click="copySecret('interface', row.id)">复制 Key</el-dropdown-item>
                       <el-dropdown-item @click="cloneInterface(row)">克隆</el-dropdown-item>
                       <el-dropdown-item @click="copySnippet(row)">复制 Skill/Codex 配置</el-dropdown-item>
                       <el-dropdown-item divided @click="removeItem('interface', $index)">删除</el-dropdown-item>
@@ -1329,6 +1350,7 @@ window.addEventListener('beforeunload', (event) => {
             <div class="secret-line">
               <el-input v-model="config.interfaces[drawerIndex].apiToken" :placeholder="config.interfaces[drawerIndex].apiTokenSet ? '已保存，留空保持不变' : '请输入 Key'" />
               <el-button :icon="secretValues[`interface:${config.interfaces[drawerIndex].id}`] ? Hide : View" @click="revealSecret('interface', config.interfaces[drawerIndex].id)">显示</el-button>
+              <el-button :icon="Key" @click="copySecret('interface', config.interfaces[drawerIndex].id)">复制</el-button>
             </div>
             <el-input v-if="secretValues[`interface:${config.interfaces[drawerIndex].id}`]" :model-value="secretValues[`interface:${config.interfaces[drawerIndex].id}`]" readonly />
           </el-form-item>
@@ -1353,6 +1375,7 @@ window.addEventListener('beforeunload', (event) => {
             <div class="secret-line">
               <el-input v-model="config.upstreams[drawerIndex].apiKey" :placeholder="config.upstreams[drawerIndex].apiKeySet ? '已保存，留空保持不变' : '请输入 Key'" />
               <el-button :icon="secretValues[`upstream:${config.upstreams[drawerIndex].id}`] ? Hide : View" @click="revealSecret('upstream', config.upstreams[drawerIndex].id)">显示</el-button>
+              <el-button :icon="Key" @click="copySecret('upstream', config.upstreams[drawerIndex].id)">复制</el-button>
             </div>
             <el-input v-if="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" :model-value="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" readonly />
           </el-form-item>
