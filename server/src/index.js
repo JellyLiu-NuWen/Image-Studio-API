@@ -6,6 +6,7 @@ import { createFileConfigStore, loadDotEnv } from "./config.js";
 import { createJsonlLogStore } from "./logStore.js";
 import { renderAdminPage } from "./adminPage.js";
 import { createUpdateService } from "./updateService.js";
+import { createAdminAssetHandler } from "./adminAssets.js";
 
 await loadDotEnv(resolve(process.env.ENV_FILE || ".env"));
 
@@ -15,6 +16,9 @@ const configPath = resolve(process.env.CONFIG_PATH || "data/config.json");
 const dataDir = dirname(configPath);
 
 const store = createFileConfigStore(configPath);
+const adminAssetHandler = createAdminAssetHandler({
+  distDir: resolve(process.env.ADMIN_DIST_DIR || "../admin/dist"),
+});
 const updateService = createUpdateService({
   currentVersion: process.env.IMAGE_STUDIO_VERSION || "dev",
   repository: process.env.IMAGE_STUDIO_GITHUB_REPOSITORY || "",
@@ -42,6 +46,14 @@ function responseFromHTML(html) {
 async function handleNodeRequest(nodeRequest, nodeResponse) {
   try {
     const url = new URL(nodeRequest.url || "/", `http://${nodeRequest.headers.host || "localhost"}`);
+
+    if (nodeRequest.method === "GET" && (url.pathname === "/admin" || url.pathname.startsWith("/admin/"))) {
+      const assetResponse = await adminAssetHandler(new Request(url, { method: nodeRequest.method, headers: nodeRequest.headers }));
+      if (assetResponse) {
+        await writeWebResponse(nodeResponse, assetResponse);
+        return;
+      }
+    }
 
     if (nodeRequest.method === "GET" && url.pathname === "/admin") {
       await writeWebResponse(nodeResponse, responseFromHTML(renderAdminPage()));

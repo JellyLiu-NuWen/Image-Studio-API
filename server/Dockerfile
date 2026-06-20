@@ -1,3 +1,13 @@
+FROM node:22-alpine AS admin-builder
+
+WORKDIR /app/admin
+
+COPY admin/package*.json ./
+RUN npm install
+
+COPY admin ./
+RUN npm run build
+
 FROM node:22-alpine
 
 ARG IMAGE_STUDIO_VERSION=dev
@@ -9,6 +19,7 @@ WORKDIR /app
 
 COPY shared ./shared
 COPY server ./server
+COPY --from=admin-builder /app/admin/dist ./admin/dist
 
 WORKDIR /app/server
 

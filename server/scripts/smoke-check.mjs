@@ -53,6 +53,10 @@ async function main() {
     await waitForHealth(baseURL);
     const admin = await fetch(`${baseURL}/admin`);
     if (!admin.ok) throw new Error(`/admin returned ${admin.status}`);
+    const adminHTML = await admin.text();
+    if (!adminHTML.includes("<div id=\"app\"></div>") && !adminHTML.includes("Image Studio API 管理后台")) {
+      throw new Error("/admin did not return a recognized admin page");
+    }
     const login = await fetch(`${baseURL}/api/login`, {
       method: "POST",
       headers: { "content-type": "application/json" },
