@@ -1525,7 +1525,7 @@ button,
   align-items: start;
 }
 
-.dashboard-visual-grid {
+.art-dashboard-visual-grid {
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
 }
 
@@ -1931,7 +1931,7 @@ button,
   color: var(--art-text);
 }
 
-.usage-trend {
+.art-trend-chart {
   min-height: 210px;
   display: flex;
   align-items: end;
@@ -1939,7 +1939,7 @@ button,
   padding: 12px 4px 2px;
 }
 
-.trend-bar {
+.art-trend-bar {
   min-width: 42px;
   flex: 1;
   height: 180px;
@@ -1950,14 +1950,14 @@ button,
   text-align: center;
 }
 
-.trend-bar span,
-.trend-bar small {
+.art-trend-bar span,
+.art-trend-bar small {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
-.trend-bar i {
+.art-trend-bar i {
   width: 100%;
   min-height: 8px;
   display: block;
@@ -1966,44 +1966,44 @@ button,
   box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
 }
 
-.empty-visual {
+.art-chart-empty {
   width: 100%;
   align-self: center;
   color: var(--art-muted);
   text-align: center;
 }
 
-.status-distribution {
+.art-status-distribution {
   display: grid;
   gap: 18px;
   padding: 14px 2px;
 }
 
-.distribution-row {
+.art-distribution-row {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr) 54px;
   align-items: center;
   gap: 12px;
 }
 
-.distribution-row div {
+.art-distribution-row div {
   display: grid;
   gap: 3px;
 }
 
-.distribution-row span,
-.distribution-row small {
+.art-distribution-row span,
+.art-distribution-row small {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
-.distribution-row strong {
+.art-distribution-row strong {
   color: var(--art-text);
   font-size: 20px;
 }
 
-.distribution-row p {
+.art-distribution-row p {
   height: 12px;
   margin: 0;
   overflow: hidden;
@@ -2011,18 +2011,18 @@ button,
   background: var(--art-soft);
 }
 
-.distribution-row i {
+.art-distribution-row i {
   height: 100%;
   min-width: 2px;
   display: block;
   border-radius: inherit;
 }
 
-.distribution-row i.success {
+.art-distribution-row i.success {
   background: #16a34a;
 }
 
-.distribution-row i.failed {
+.art-distribution-row i.failed {
   background: #dc2626;
 }
 

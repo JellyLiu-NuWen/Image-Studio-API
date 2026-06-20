@@ -2068,7 +2068,7 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
-        <div class="art-console-section-grid dashboard-visual-grid">
+        <div class="art-console-section-grid art-dashboard-visual-grid">
           <el-card shadow="never" class="art-console-panel">
             <template #header>
               <div class="art-console-panel-header">
@@ -2082,13 +2082,13 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </div>
             </template>
-            <div class="usage-trend" aria-label="近 7 日用量趋势">
-              <div v-for="item in usageTrendBars" :key="item.name" class="trend-bar">
+            <div class="art-trend-chart" aria-label="近 7 日用量趋势">
+              <div v-for="item in usageTrendBars" :key="item.name" class="art-trend-bar">
                 <span>{{ item.total }}</span>
                 <i :style="{ height: `${item.height}%` }"></i>
                 <small>{{ item.shortName }}</small>
               </div>
-              <div v-if="!usageTrendBars.length" class="empty-visual">暂无用量数据</div>
+              <div v-if="!usageTrendBars.length" class="art-chart-empty">暂无用量数据</div>
             </div>
           </el-card>
           <el-card shadow="never" class="art-console-panel">
@@ -2104,8 +2104,8 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </div>
             </template>
-            <div class="status-distribution" aria-label="任务状态分布">
-              <div v-for="item in statusDistribution" :key="item.label" class="distribution-row">
+            <div class="art-status-distribution" aria-label="任务状态分布">
+              <div v-for="item in statusDistribution" :key="item.label" class="art-distribution-row">
                 <div>
                   <span>{{ item.label }}</span>
                   <strong>{{ item.count }}</strong>
@@ -2800,13 +2800,13 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="usage-panel-body">
-              <div class="usage-trend" aria-label="近 7 日用量趋势">
-                <div v-for="item in usageTrendBars" :key="item.name" class="trend-bar">
+              <div class="art-trend-chart" aria-label="近 7 日用量趋势">
+                <div v-for="item in usageTrendBars" :key="item.name" class="art-trend-bar">
                   <span>{{ item.total }}</span>
                   <i :style="{ height: item.height + '%' }"></i>
                   <small>{{ item.shortName }}</small>
                 </div>
-                <div v-if="!usageTrendBars.length" class="empty-visual">暂无用量数据</div>
+                <div v-if="!usageTrendBars.length" class="art-chart-empty">暂无用量数据</div>
               </div>
             </div>
           </el-card>
@@ -2832,7 +2832,7 @@ window.addEventListener('beforeunload', (event) => {
                   <p>{{ formatCost(item.estimatedCostUSD) }}</p>
                   <small>{{ item.imageCount }} 张 / {{ item.total }} 次</small>
                 </div>
-                <div v-if="!usageCostLeaders.length" class="empty-visual">暂无成本数据</div>
+                <div v-if="!usageCostLeaders.length" class="art-chart-empty">暂无成本数据</div>
               </div>
             </div>
           </el-card>
@@ -2858,7 +2858,7 @@ window.addEventListener('beforeunload', (event) => {
                   <el-tag :type="item.healthType">{{ item.healthLabel }}</el-tag>
                   <small>{{ formatPercent(item.successRate) }}</small>
                 </div>
-                <div v-if="!usageEfficiencyRows.length" class="empty-visual">暂无效率数据</div>
+                <div v-if="!usageEfficiencyRows.length" class="art-chart-empty">暂无效率数据</div>
               </div>
             </div>
           </el-card>

@@ -108,10 +108,43 @@ test("Vue dashboard exposes trend and status distribution visualizations", async
 
   assert.match(source, /usageTrendBars/, "Dashboard should compute usage trend bars from usage buckets");
   assert.match(source, /statusDistribution/, "Dashboard should compute success and failure distribution");
-  assert.match(dashboardSection, /usage-trend/, "Dashboard should render the usage trend chart area");
-  assert.match(dashboardSection, /status-distribution/, "Dashboard should render the status distribution chart area");
-  assert.match(styleSource, /\.usage-trend/, "Styles should include trend chart layout");
-  assert.match(styleSource, /\.status-distribution/, "Styles should include status distribution layout");
+  assert.match(dashboardSection, /art-dashboard-visual-grid/, "Dashboard visualization row should use an Art dashboard visual grid");
+  assert.match(dashboardSection, /art-trend-chart/, "Dashboard should render the Art trend chart area");
+  assert.match(dashboardSection, /art-trend-bar/, "Dashboard trend chart should render Art trend bars");
+  assert.match(dashboardSection, /art-chart-empty/, "Dashboard trend chart should render an Art empty state");
+  assert.match(dashboardSection, /art-status-distribution/, "Dashboard should render the Art status distribution chart area");
+  assert.match(dashboardSection, /art-distribution-row/, "Dashboard status chart should render Art distribution rows");
+  for (const legacyClass of [
+    "dashboard-visual-grid",
+    "usage-trend",
+    "trend-bar",
+    "empty-visual",
+    "status-distribution",
+    "distribution-row",
+  ]) {
+    assert.doesNotMatch(
+      dashboardSection,
+      new RegExp(`(?<![A-Za-z0-9_-])${legacyClass}(?![A-Za-z0-9_-])`),
+      `Dashboard visualizations should not keep generic ${legacyClass} classes`,
+    );
+  }
+  assert.match(styleSource, /\.art-dashboard-visual-grid/, "Styles should include Art dashboard visual grid layout");
+  assert.match(styleSource, /\.art-trend-chart/, "Styles should include Art trend chart layout");
+  assert.match(styleSource, /\.art-status-distribution/, "Styles should include Art status distribution layout");
+  for (const legacyClass of [
+    "dashboard-visual-grid",
+    "usage-trend",
+    "trend-bar",
+    "empty-visual",
+    "status-distribution",
+    "distribution-row",
+  ]) {
+    assert.doesNotMatch(
+      styleSource,
+      new RegExp(`\\.${legacyClass}(?![A-Za-z0-9_-])`),
+      `Styles should remove the generic ${legacyClass} selector`,
+    );
+  }
 });
 
 test("Vue dashboard uses an Art Design Pro console card list", async () => {
