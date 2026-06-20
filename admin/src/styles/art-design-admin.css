@@ -3157,7 +3157,7 @@ button,
 }
 
 .changelog-preview,
-.rollback-command {
+.art-rollback-command {
   margin-top: 16px;
   padding: 12px;
   border: 1px solid var(--art-border);
@@ -3166,7 +3166,7 @@ button,
 }
 
 .changelog-preview strong,
-.rollback-command span {
+.art-rollback-command span {
   display: block;
   margin-bottom: 8px;
   color: var(--art-text-soft);
@@ -3183,7 +3183,7 @@ button,
   white-space: pre-wrap;
 }
 
-.rollback-command code {
+.art-rollback-command code {
   display: block;
   color: var(--art-text);
   font-size: 12px;
@@ -3881,7 +3881,7 @@ button,
   font-weight: 800;
 }
 
-.detail-text {
+.art-detail-text {
   margin: 0;
   color: var(--art-text-soft);
   line-height: 1.7;

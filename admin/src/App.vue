@@ -3285,7 +3285,7 @@ window.addEventListener('beforeunload', (event) => {
                 <strong>Changelog</strong>
                 <pre>{{ updateInfo.changelog }}</pre>
               </div>
-              <div v-if="updateInfo.rollbackCommand" class="rollback-command">
+              <div v-if="updateInfo.rollbackCommand" class="art-rollback-command">
                 <span>回滚入口</span>
                 <code>{{ updateInfo.rollbackCommand }}</code>
               </div>
@@ -3699,7 +3699,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="detail-panel-body">
-              <p class="detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
+              <p class="art-detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
             </div>
           </el-card>
           <el-card shadow="never" class="detail-curl-card art-detail-panel curl-detail-panel">
