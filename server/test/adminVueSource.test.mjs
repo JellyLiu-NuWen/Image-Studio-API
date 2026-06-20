@@ -848,18 +848,28 @@ test("Vue logs page query panel follows the ArtSearchBar template pattern", asyn
   assert.doesNotMatch(logSection, /query-grid/, "Logs query fields should not keep the legacy query-grid class");
   assert.match(logSection, /visibleLogSearchFields/, "Logs query grid should render the visible field list");
   assert.match(logSection, /art-search-action-column/, "Logs search bar should render the ArtSearchBar action column");
+  assert.match(logSection, /art-search-action-stack/, "Logs search bar should wrap actions in an ArtSearchBar action stack");
   assert.match(logSection, /art-search-form-buttons/, "Logs search bar should group reset and search actions");
+  assert.match(logSection, /art-search-reset-button/, "Logs search bar reset button should use an ArtSearchBar class");
+  assert.match(logSection, /art-search-submit-button/, "Logs search bar submit button should use an ArtSearchBar class");
+  assert.match(logSection, /art-search-filter-toggle/, "Logs search bar should expose expand and collapse control");
   assert.doesNotMatch(logSection, /class="action-column"/, "Logs search bar should not keep the legacy action-column class");
+  assert.doesNotMatch(logSection, /class="action-buttons-wrapper"/, "Logs search bar should not keep the legacy action wrapper class");
   assert.doesNotMatch(logSection, /class="form-buttons"/, "Logs search bar should not keep the legacy form-buttons class");
-  assert.match(logSection, /filter-toggle/, "Logs search bar should expose expand and collapse control");
+  assert.doesNotMatch(logSection, /class="reset-button"/, "Logs search bar should not keep the legacy reset button class");
+  assert.doesNotMatch(logSection, /class="search-button"/, "Logs search bar should not keep the legacy search button class");
+  assert.doesNotMatch(logSection, /class="filter-toggle"/, "Logs search bar should not keep the legacy filter toggle class");
   assert.match(styleSource, /\.art-search-bar/, "Styles should include the ArtSearchBar shell");
   assert.match(styleSource, /\.art-search-form-grid/, "Styles should include the ArtSearchBar form grid");
   assert.doesNotMatch(styleSource, /\.query-grid\b/, "Styles should remove the legacy query grid selector");
   assert.match(styleSource, /\.art-search-action-column/, "Styles should include the ArtSearchBar action column");
+  assert.match(styleSource, /\.art-search-action-stack/, "Styles should include the ArtSearchBar action stack");
   assert.match(styleSource, /\.art-search-form-buttons/, "Styles should include the ArtSearchBar form buttons");
+  assert.match(styleSource, /\.art-search-filter-toggle/, "Styles should include the ArtSearchBar expand toggle");
   assert.doesNotMatch(styleSource, /(^|\n)\.action-column\b/, "Styles should not keep the standalone legacy action-column selector");
+  assert.doesNotMatch(styleSource, /(^|\n)\.action-buttons-wrapper\b/, "Styles should not keep the standalone legacy action wrapper selector");
   assert.doesNotMatch(styleSource, /(^|\n)\.form-buttons\b/, "Styles should not keep the standalone legacy form-buttons selector");
-  assert.match(styleSource, /\.filter-toggle/, "Styles should include the expand toggle");
+  assert.doesNotMatch(styleSource, /(^|\n)\.filter-toggle\b/, "Styles should not keep the standalone legacy filter toggle selector");
 });
 
 test("Vue logs page panels use Art Design Pro panel headers", async () => {

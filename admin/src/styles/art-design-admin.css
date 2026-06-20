@@ -2766,7 +2766,7 @@ button,
   min-width: 0;
 }
 
-.action-buttons-wrapper {
+.art-search-action-stack {
   min-height: 34px;
   display: flex;
   align-items: center;
@@ -2781,7 +2781,7 @@ button,
   gap: 8px;
 }
 
-.filter-toggle {
+.art-search-filter-toggle {
   min-height: 32px;
   display: inline-flex;
   align-items: center;
@@ -2796,7 +2796,7 @@ button,
   transition: color 180ms ease, transform 180ms ease;
 }
 
-.filter-toggle:hover {
+.art-search-filter-toggle:hover {
   color: var(--art-text);
   transform: translateY(-1px);
 }
@@ -4199,14 +4199,14 @@ button,
     grid-column: auto;
   }
 
-  .action-buttons-wrapper,
+  .art-search-action-stack,
   .art-search-form-buttons {
     align-items: stretch;
     flex-direction: column;
   }
 
   .art-search-form-buttons .el-button,
-  .filter-toggle {
+  .art-search-filter-toggle {
     width: 100%;
     justify-content: center;
   }

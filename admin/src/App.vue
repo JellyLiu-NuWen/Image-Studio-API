@@ -2691,12 +2691,12 @@ window.addEventListener('beforeunload', (event) => {
                 <el-input-number v-else-if="field.key === 'maxDurationMs'" v-model="logFilter.maxDurationMs" :min="0" placeholder="耗时≤ms" controls-position="right" />
               </div>
               <div class="art-search-action-column">
-                <div class="action-buttons-wrapper">
+                <div class="art-search-action-stack">
                   <div class="art-search-form-buttons">
-                    <el-button class="reset-button" @click="resetLogFilters">重置</el-button>
-                    <el-button class="search-button" type="primary" :icon="Refresh" @click="refreshLogsOnly">查询</el-button>
+                    <el-button class="art-search-reset-button" @click="resetLogFilters">重置</el-button>
+                    <el-button class="art-search-submit-button" type="primary" :icon="Refresh" @click="refreshLogsOnly">查询</el-button>
                   </div>
-                  <button v-if="hiddenLogSearchFieldCount || logSearchExpanded" type="button" class="filter-toggle" @click="toggleLogSearchExpanded">
+                  <button v-if="hiddenLogSearchFieldCount || logSearchExpanded" type="button" class="art-search-filter-toggle" @click="toggleLogSearchExpanded">
                     <span>{{ logSearchExpanded ? '收起筛选' : `展开 ${hiddenLogSearchFieldCount} 项` }}</span>
                     <el-icon>
                       <ArrowUpBold v-if="logSearchExpanded" />
