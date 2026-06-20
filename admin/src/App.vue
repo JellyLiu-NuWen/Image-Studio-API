@@ -2761,54 +2761,90 @@ window.addEventListener('beforeunload', (event) => {
           </button>
         </div>
         <div class="usage-analytics-grid">
-          <el-card shadow="never" class="usage-trend-workspace">
-            <template #header><div class="card-title"><DataAnalysis />近 7 日消耗趋势</div></template>
-            <div class="usage-trend" aria-label="近 7 日用量趋势">
-              <div v-for="item in usageTrendBars" :key="item.name" class="trend-bar">
-                <span>{{ item.total }}</span>
-                <i :style="{ height: item.height + '%' }"></i>
-                <small>{{ item.shortName }}</small>
+          <el-card shadow="never" class="usage-trend-workspace art-usage-panel">
+            <template #header>
+              <div class="usage-panel-header">
+                <div class="usage-panel-title">
+                  <h4><DataAnalysis />近 7 日消耗趋势</h4>
+                  <p>观察近期生成量波动和峰值日期。</p>
+                </div>
+                <div class="usage-panel-meta">
+                  <span>{{ usageTrendBars.length }} 天</span>
+                </div>
               </div>
-              <div v-if="!usageTrendBars.length" class="empty-visual">暂无用量数据</div>
+            </template>
+            <div class="usage-panel-body">
+              <div class="usage-trend" aria-label="近 7 日用量趋势">
+                <div v-for="item in usageTrendBars" :key="item.name" class="trend-bar">
+                  <span>{{ item.total }}</span>
+                  <i :style="{ height: item.height + '%' }"></i>
+                  <small>{{ item.shortName }}</small>
+                </div>
+                <div v-if="!usageTrendBars.length" class="empty-visual">暂无用量数据</div>
+              </div>
             </div>
           </el-card>
-          <el-card shadow="never" class="usage-cost-workspace">
-            <template #header><div class="card-title"><Timer />成本排行</div></template>
-            <div class="usage-leader-list">
-              <div v-for="item in usageCostLeaders" :key="item.scope + item.name" class="usage-leader-row">
-                <div>
-                  <span>{{ item.scope }}</span>
-                  <strong>{{ item.name }}</strong>
+          <el-card shadow="never" class="usage-cost-workspace art-usage-panel">
+            <template #header>
+              <div class="usage-panel-header">
+                <div class="usage-panel-title">
+                  <h4><Timer />成本排行</h4>
+                  <p>按模型、接口和上游聚合估算支出。</p>
                 </div>
-                <p>{{ formatCost(item.estimatedCostUSD) }}</p>
-                <small>{{ item.imageCount }} 张 / {{ item.total }} 次</small>
+                <div class="usage-panel-meta">
+                  <span>Top {{ usageCostLeaders.length }}</span>
+                </div>
               </div>
-              <div v-if="!usageCostLeaders.length" class="empty-visual">暂无成本数据</div>
+            </template>
+            <div class="usage-panel-body">
+              <div class="usage-leader-list">
+                <div v-for="item in usageCostLeaders" :key="item.scope + item.name" class="usage-leader-row">
+                  <div>
+                    <span>{{ item.scope }}</span>
+                    <strong>{{ item.name }}</strong>
+                  </div>
+                  <p>{{ formatCost(item.estimatedCostUSD) }}</p>
+                  <small>{{ item.imageCount }} 张 / {{ item.total }} 次</small>
+                </div>
+                <div v-if="!usageCostLeaders.length" class="empty-visual">暂无成本数据</div>
+              </div>
             </div>
           </el-card>
-          <el-card shadow="never" class="usage-efficiency-workspace">
-            <template #header><div class="card-title"><Monitor />效率诊断</div></template>
-            <div class="usage-efficiency-list">
-              <div v-for="item in usageEfficiencyRows" :key="item.name" class="usage-efficiency-row">
-                <div>
-                  <strong>{{ item.name }}</strong>
-                  <span>{{ formatDuration(item.averageDurationMs) }} 平均耗时</span>
+          <el-card shadow="never" class="usage-efficiency-workspace art-usage-panel">
+            <template #header>
+              <div class="usage-panel-header">
+                <div class="usage-panel-title">
+                  <h4><Monitor />效率诊断</h4>
+                  <p>按成功率和平均耗时定位慢路径。</p>
                 </div>
-                <el-tag :type="item.healthType">{{ item.healthLabel }}</el-tag>
-                <small>{{ formatPercent(item.successRate) }}</small>
+                <div class="usage-panel-meta">
+                  <span>{{ usageEfficiencyRows.length }} 项</span>
+                </div>
               </div>
-              <div v-if="!usageEfficiencyRows.length" class="empty-visual">暂无效率数据</div>
+            </template>
+            <div class="usage-panel-body">
+              <div class="usage-efficiency-list">
+                <div v-for="item in usageEfficiencyRows" :key="item.name" class="usage-efficiency-row">
+                  <div>
+                    <strong>{{ item.name }}</strong>
+                    <span>{{ formatDuration(item.averageDurationMs) }} 平均耗时</span>
+                  </div>
+                  <el-tag :type="item.healthType">{{ item.healthLabel }}</el-tag>
+                  <small>{{ formatPercent(item.successRate) }}</small>
+                </div>
+                <div v-if="!usageEfficiencyRows.length" class="empty-visual">暂无效率数据</div>
+              </div>
             </div>
           </el-card>
         </div>
-        <el-card shadow="never" class="usage-breakdown-workspace">
+        <el-card shadow="never" class="usage-breakdown-workspace art-usage-panel usage-breakdown-panel">
           <template #header>
-            <div class="result-toolbar">
-              <div>
-                <div class="card-title"><DataAnalysis />用量明细</div>
+            <div class="result-toolbar usage-panel-header">
+              <div class="usage-panel-title">
+                <h4><DataAnalysis />用量明细</h4>
                 <p>按日期、接口、模型和上游拆分调用量、成功率、耗时与估算成本。</p>
               </div>
-              <div class="toolbar-actions">
+              <div class="usage-panel-meta toolbar-actions">
                 <el-segmented v-model="tableDensity" :options="[
                   { label: '默认', value: 'default' },
                   { label: '舒适', value: 'comfortable' },

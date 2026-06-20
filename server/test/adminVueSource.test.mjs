@@ -862,6 +862,27 @@ test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
   assert.match(styleSource, /\.usage-breakdown-workspace/, "Styles should include usage breakdown workspace styling");
 });
 
+test("Vue usage analytics cards use Art Design Pro panel headers", async () => {
+  const source = await readAppSource();
+  const usageSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'usage'\"",
+    "<section v-if=\"activeView === 'alerts'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(usageSection, /art-usage-panel/, "Usage analytics cards should share an Art usage panel class");
+  assert.match(usageSection, /usage-panel-header/, "Usage analytics cards should render a structured panel header");
+  assert.match(usageSection, /usage-panel-title/, "Usage analytics cards should expose a title block");
+  assert.match(usageSection, /usage-panel-meta/, "Usage analytics cards should expose right-side metadata");
+  assert.match(usageSection, /usage-panel-body/, "Usage analytics cards should wrap content in a panel body");
+  assert.match(usageSection, /usage-breakdown-panel/, "Usage breakdown should use the shared Art usage panel shell");
+  assert.doesNotMatch(usageSection, /<template #header><div class="card-title"/, "Usage page should not use legacy one-line card titles");
+  assert.match(styleSource, /\.art-usage-panel/, "Styles should include the Art usage panel shell");
+  assert.match(styleSource, /\.usage-panel-header/, "Styles should include the structured usage panel header");
+  assert.match(styleSource, /\.usage-panel-body/, "Styles should include the usage panel body");
+});
+
 test("Vue security page uses an Art Design Pro security workspace", async () => {
   const source = await readAppSource();
   const securitySection = sourceBetween(
