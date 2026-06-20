@@ -10,6 +10,8 @@ export async function writeWebResponse(nodeResponse, webResponse) {
     return;
   }
   if ((webResponse.headers.get("content-type") || "").toLowerCase().includes("text/event-stream")) {
+    nodeResponse.socket?.setTimeout?.(0);
+    nodeResponse.socket?.setKeepAlive?.(true, 10_000);
     nodeResponse.flushHeaders?.();
     Readable.fromWeb(webResponse.body).pipe(nodeResponse);
     return;

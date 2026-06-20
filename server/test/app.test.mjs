@@ -89,6 +89,35 @@ test("health check is public", async () => {
   });
 });
 
+test("stream health check is public and emits an immediate heartbeat", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore(),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      throw new Error("stream health check must not call upstream");
+    },
+  });
+
+  const response = await app.handle(new Request("http://localhost/healthz/stream?durationMs=1&intervalMs=1"));
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "text/event-stream; charset=utf-8");
+  assert.equal(response.headers.get("x-accel-buffering"), "no");
+  const reader = response.body.getReader();
+  const firstChunk = await reader.read();
+  assert.equal(new TextDecoder().decode(firstChunk.value), ": image-studio health keepalive\n\n");
+  const decoder = new TextDecoder();
+  let rest = "";
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    rest += decoder.decode(chunk.value, { stream: true });
+  }
+  rest += decoder.decode();
+  assert.match(rest, /"service":"image-studio-self-hosted-api"/);
+  assert.match(rest, /data: \[DONE\]/);
+});
+
 test("image generation rejects missing client token", async () => {
   const app = createSelfHostedApp({
     store: memoryStore({

@@ -1004,6 +1004,62 @@ function configForClientInterface(config, clientInterface) {
   };
 }
 
+function boundedInteger(value, fallback, min, max) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(number)));
+}
+
+function streamHealthCheck(url) {
+  const encoder = new TextEncoder();
+  const durationMs = boundedInteger(url.searchParams.get("durationMs"), 70_000, 1, 120_000);
+  const intervalMs = boundedInteger(url.searchParams.get("intervalMs"), 10_000, 1, 30_000);
+  const startedAt = Date.now();
+  let timer = null;
+  const body = new ReadableStream({
+    start(controller) {
+      let closed = false;
+      const enqueue = (text) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(text));
+        } catch {
+          closed = true;
+          if (timer) clearInterval(timer);
+        }
+      };
+      const tick = () => {
+        const elapsedMs = Date.now() - startedAt;
+        enqueue(`data: ${JSON.stringify({
+          ok: true,
+          service: "image-studio-self-hosted-api",
+          elapsedMs,
+        })}\n\n`);
+        if (elapsedMs >= durationMs && !closed) {
+          closed = true;
+          if (timer) clearInterval(timer);
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        }
+      };
+      enqueue(": image-studio health keepalive\n\n");
+      timer = setInterval(tick, intervalMs);
+      tick();
+    },
+    cancel() {
+      if (timer) clearInterval(timer);
+    },
+  });
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      "x-accel-buffering": "no",
+    },
+  });
+}
+
 export function createSelfHostedApp({
   store,
   adminUsername = process.env.ADMIN_USERNAME || "admin",
@@ -1038,6 +1094,10 @@ export function createSelfHostedApp({
     try {
       if (request.method === "GET" && url.pathname === "/healthz") {
         response = json({ ok: true, service: "image-studio-self-hosted-api" });
+        return response;
+      }
+      if (request.method === "GET" && url.pathname === "/healthz/stream") {
+        response = streamHealthCheck(url);
         return response;
       }
 
