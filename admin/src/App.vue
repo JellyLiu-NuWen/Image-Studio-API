@@ -3506,7 +3506,7 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </div>
       <template v-if="config && drawerMode === 'interface' && config.interfaces[drawerIndex]">
-        <el-form :model="config.interfaces[drawerIndex]" label-position="top" class="drawer-form">
+        <el-form :model="config.interfaces[drawerIndex]" label-position="top" class="art-drawer-form">
           <section class="drawer-section">
             <div class="drawer-section-title"><Connection /><span>基础信息</span></div>
             <div class="drawer-form-grid">
@@ -3552,7 +3552,7 @@ window.addEventListener('beforeunload', (event) => {
       </template>
 
       <template v-if="config && drawerMode === 'upstream' && config.upstreams[drawerIndex]">
-        <el-form :model="config.upstreams[drawerIndex]" label-position="top" class="drawer-form">
+        <el-form :model="config.upstreams[drawerIndex]" label-position="top" class="art-drawer-form">
           <section class="drawer-section">
             <div class="drawer-section-title"><Link /><span>基础信息</span></div>
             <div class="drawer-form-grid">
@@ -3585,7 +3585,7 @@ window.addEventListener('beforeunload', (event) => {
       </template>
 
       <template v-if="config && drawerMode === 'model' && config.models[drawerIndex]">
-        <el-form :model="config.models[drawerIndex]" label-position="top" class="drawer-form">
+        <el-form :model="config.models[drawerIndex]" label-position="top" class="art-drawer-form">
           <section class="drawer-section">
             <div class="drawer-section-title"><Box /><span>模型信息</span></div>
             <div class="drawer-form-grid">
@@ -3612,7 +3612,7 @@ window.addEventListener('beforeunload', (event) => {
       </template>
 
       <template v-if="config && drawerMode === 'quality' && config.qualityPresets[drawerIndex]">
-        <el-form :model="config.qualityPresets[drawerIndex]" label-position="top" class="drawer-form">
+        <el-form :model="config.qualityPresets[drawerIndex]" label-position="top" class="art-drawer-form">
           <section class="drawer-section">
             <div class="drawer-section-title"><MagicStick /><span>预设信息</span></div>
             <div class="drawer-form-grid">

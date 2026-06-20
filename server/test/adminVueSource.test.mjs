@@ -813,16 +813,20 @@ test("Vue config drawer uses an Art Design Pro form workspace", async () => {
   assert.match(drawerSection, /drawer-overview/, "Config drawer should render an overview header");
   assert.match(drawerSection, /drawer-status-grid/, "Config drawer should render status cards");
   assert.match(drawerSection, /drawer-section/, "Config drawer should group fields into sections");
+  assert.match(drawerSection, /art-drawer-form/, "Config drawer forms should use an Art drawer form shell");
   assert.match(drawerSection, /drawer-form-grid/, "Config drawer should use a structured field grid");
   assert.match(drawerSection, /art-secret-line/, "Config drawer secret controls should use an Art secret action row");
   assert.match(drawerSection, /drawer-footer-actions/, "Config drawer should render a sticky action bar");
+  assert.doesNotMatch(drawerSection, /(?<![A-Za-z0-9_-])drawer-form(?![A-Za-z0-9_-])/, "Config drawer should not keep the generic drawer-form class");
   assert.doesNotMatch(drawerSection, /(?<![A-Za-z0-9_-])secret-line(?![A-Za-z0-9_-])/, "Config drawer should not keep the generic secret-line class");
   assert.match(styleSource, /\.config-drawer/, "Styles should include config drawer styling");
   assert.match(styleSource, /\.drawer-overview/, "Styles should include drawer overview styling");
   assert.match(styleSource, /\.drawer-status-grid/, "Styles should include drawer status card styling");
+  assert.match(styleSource, /\.art-drawer-form/, "Styles should include Art drawer form shell styling");
   assert.match(styleSource, /\.drawer-form-grid/, "Styles should include drawer form grid styling");
   assert.match(styleSource, /\.art-secret-line/, "Styles should include Art secret action row styling");
   assert.match(styleSource, /\.drawer-footer-actions/, "Styles should include drawer footer action styling");
+  assert.doesNotMatch(styleSource, /\.drawer-form(?![A-Za-z0-9_-])/, "Styles should remove the legacy drawer-form selector");
   assert.doesNotMatch(styleSource, /\.secret-line\b/, "Styles should remove the legacy secret-line selector");
 });
 
