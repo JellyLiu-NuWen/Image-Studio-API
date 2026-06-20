@@ -827,6 +827,9 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(styleSource, /\.log-summary-grid/, "Styles should include log summary layout");
   assert.match(styleSource, /\.query-panel/, "Styles should include query panel layout");
   assert.match(styleSource, /\.result-toolbar/, "Styles should include result toolbar layout");
+  assert.doesNotMatch(styleSource, /\.filter-bar\b/, "Styles should remove the legacy filter-bar selector");
+  assert.doesNotMatch(styleSource, /\.query-actions\b/, "Styles should remove the legacy query-actions selector");
+  assert.doesNotMatch(styleSource, /\.log-actions\b/, "Styles should remove the legacy log-actions selector");
 });
 
 test("Vue logs page query panel follows the ArtSearchBar template pattern", async () => {

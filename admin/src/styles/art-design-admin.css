@@ -2800,13 +2800,6 @@ button,
   transform: translateY(-1px);
 }
 
-.query-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .result-toolbar {
   padding: 12px 0 2px;
   border-top: 1px solid var(--art-border);
@@ -2977,13 +2970,6 @@ button,
 .notification-workspace :deep(.el-card__body) {
   display: grid;
   gap: 12px;
-}
-
-.filter-bar {
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) 140px 180px 180px;
-  gap: 10px;
-  margin-bottom: 14px;
 }
 
 .advanced-filter {
@@ -3161,10 +3147,6 @@ button,
 .update-workspace :deep(.el-card__body) {
   display: grid;
   gap: 12px;
-}
-
-.log-actions {
-  margin-bottom: 14px;
 }
 
 .art-system-backup-status {
@@ -4148,7 +4130,6 @@ button,
   .login-signal-grid,
   .art-search-form-grid,
   .risk-board,
-  .filter-bar,
   .art-console-status-list,
   .art-alert-status-list,
   .art-system-status-list {
@@ -4185,16 +4166,14 @@ button,
   .table-toolbar,
   .art-toolbar-actions,
   .query-panel-heading,
-  .result-toolbar,
-  .query-actions {
+  .result-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
 
   .art-toolbar-actions .el-input,
   .art-toolbar-actions .el-button,
-  .art-toolbar-actions .el-segmented,
-  .query-actions .el-button {
+  .art-toolbar-actions .el-segmented {
     width: 100%;
   }
 
