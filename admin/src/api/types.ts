@@ -163,8 +163,11 @@ export interface MetricsResponse {
       success: number
       failed: number
       successRate: number
+      averageDurationMs: number
       p95DurationMs: number
+      lastCheckedAt: string
       lastFailure: string
+      lastFailureReason: string
     }>
     activeRequests?: number
   }
@@ -182,8 +185,11 @@ export interface UpstreamHealthRecord {
     success: number
     failed: number
     successRate: number
+    averageDurationMs: number
     p95DurationMs: number
+    lastCheckedAt: string
     lastFailure: string
+    lastFailureReason: string
   }
 }
 

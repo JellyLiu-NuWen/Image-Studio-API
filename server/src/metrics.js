@@ -34,18 +34,26 @@ function summarizeUpstreams(generations) {
         total: 0,
         success: 0,
         failed: 0,
+        durationMs: 0,
+        lastCheckedAt: "",
         lastFailure: "",
+        lastFailureReason: "",
       };
     }
     const group = groups[upstreamId];
     group.records.push(record);
     group.total += 1;
+    group.durationMs += Number(record?.durationMs) || 0;
+    if (!group.lastCheckedAt || String(record?.createdAt || "") > group.lastCheckedAt) {
+      group.lastCheckedAt = String(record?.createdAt || "");
+    }
     if (record?.status === "success") {
       group.success += 1;
     } else {
       group.failed += 1;
       if (!group.lastFailure || String(record?.createdAt || "") > group.lastFailure) {
         group.lastFailure = String(record?.createdAt || "");
+        group.lastFailureReason = String(record?.errorSummary || "");
       }
     }
   }
@@ -54,8 +62,11 @@ function summarizeUpstreams(generations) {
     success: group.success,
     failed: group.failed,
     successRate: percent(group.success, group.total),
+    averageDurationMs: group.total ? Math.round(group.durationMs / group.total) : 0,
     p95DurationMs: percentile(group.records, 0.95),
+    lastCheckedAt: group.lastCheckedAt,
     lastFailure: group.lastFailure,
+    lastFailureReason: group.lastFailureReason,
   }]));
 }
 

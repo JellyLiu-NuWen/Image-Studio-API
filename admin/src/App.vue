@@ -925,9 +925,16 @@ window.addEventListener('beforeunload', (event) => {
                   <el-tag :type="(upstreamHealthFor(row.id)?.metrics.successRate || 0) >= 90 ? 'success' : 'warning'">
                     {{ upstreamHealthFor(row.id)?.metrics.successRate || 0 }}%
                   </el-tag>
+                  <span>平均 {{ formatDuration(upstreamHealthFor(row.id)?.metrics.averageDurationMs) }}</span>
                   <span>P95 {{ formatDuration(upstreamHealthFor(row.id)?.metrics.p95DurationMs) }}</span>
                 </div>
               </template>
+            </el-table-column>
+            <el-table-column label="最近检测" min-width="160">
+              <template #default="{ row }">{{ formatTime(upstreamHealthFor(row.id)?.metrics.lastCheckedAt) }}</template>
+            </el-table-column>
+            <el-table-column label="最近失败原因" min-width="220" show-overflow-tooltip>
+              <template #default="{ row }">{{ upstreamHealthFor(row.id)?.metrics.lastFailureReason || '-' }}</template>
             </el-table-column>
             <el-table-column prop="healthCheckEnabled" label="健康检查" width="110">
               <template #default="{ row }"><el-switch v-model="row.healthCheckEnabled" /></template>

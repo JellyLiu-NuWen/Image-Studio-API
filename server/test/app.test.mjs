@@ -1388,6 +1388,50 @@ test("admin can test upstreams and receives clear validation errors", async () =
   assert.match((await missing.json()).error.message, /API Key/);
 });
 
+test("admin upstream health exposes latency and latest failure diagnostics", async () => {
+  const generationLogStore = createMemoryLogStore();
+  await generationLogStore.append({
+    id: "gen-success",
+    createdAt: "2026-06-19T01:00:00.000Z",
+    status: "success",
+    upstreamId: "primary",
+    durationMs: 1000,
+  });
+  await generationLogStore.append({
+    id: "gen-failed",
+    createdAt: "2026-06-19T02:00:00.000Z",
+    status: "failed",
+    upstreamId: "primary",
+    durationMs: 3000,
+    errorSummary: "upstream gateway timed out after billing",
+  });
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://primary.example/v1",
+        apiKey: "primary-key",
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+  const headers = await loginHeaders(app);
+
+  const response = await app.handle(new Request("http://localhost/api/upstreams/health", { headers }));
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.upstreams[0].metrics.averageDurationMs, 2000);
+  assert.equal(body.upstreams[0].metrics.lastCheckedAt, "2026-06-19T02:00:00.000Z");
+  assert.equal(body.upstreams[0].metrics.lastFailureReason, "upstream gateway timed out after billing");
+});
+
 test("admin can read and restore config versions and audit logs", async () => {
   const store = memoryStore({
     imageApiToken: "client-token",

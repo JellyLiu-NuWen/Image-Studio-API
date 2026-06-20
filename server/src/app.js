@@ -1218,8 +1218,11 @@ export function createSelfHostedApp({
               success: 0,
               failed: 0,
               successRate: 0,
+              averageDurationMs: 0,
               p95DurationMs: 0,
+              lastCheckedAt: "",
               lastFailure: "",
+              lastFailureReason: "",
             },
           })),
         });

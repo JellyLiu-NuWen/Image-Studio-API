@@ -60,6 +60,7 @@ test("summarizeMetrics groups generation records by upstream and counts today's 
         upstreamId: "primary",
         durationMs: 3000,
         createdAt: "2026-06-19T02:00:00.000Z",
+        errorSummary: "upstream 502 after billing",
       },
       {
         status: "success",
@@ -78,16 +79,22 @@ test("summarizeMetrics groups generation records by upstream and counts today's 
       success: 1,
       failed: 1,
       successRate: 50,
+      averageDurationMs: 2000,
       p95DurationMs: 3000,
+      lastCheckedAt: "2026-06-19T02:00:00.000Z",
       lastFailure: "2026-06-19T02:00:00.000Z",
+      lastFailureReason: "upstream 502 after billing",
     },
     backup: {
       total: 1,
       success: 1,
       failed: 0,
       successRate: 100,
+      averageDurationMs: 2000,
       p95DurationMs: 2000,
+      lastCheckedAt: "2026-06-18T02:00:00.000Z",
       lastFailure: "",
+      lastFailureReason: "",
     },
   });
 });
