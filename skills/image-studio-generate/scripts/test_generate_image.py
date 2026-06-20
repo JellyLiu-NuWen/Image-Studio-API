@@ -236,6 +236,57 @@ class GenerateImageScriptTest(TestCase):
             server.shutdown()
             server.server_close()
 
+    def test_streaming_error_event_reports_upstream_error(self):
+        class ErrorStreamHandler(Handler):
+            def do_POST(self):
+                Handler.seen = {"path": self.path}
+                raw = (
+                    ": image-studio keepalive\n\n"
+                    + "data: "
+                    + json.dumps({"error": {"message": "上游请求失败:Bad Gateway", "upstreamStatus": 502}})
+                    + "\n\n"
+                    + "data: [DONE]\n\n"
+                ).encode("utf-8")
+                self.send_response(200)
+                self.send_header("content-type", "text/event-stream")
+                self.send_header("content-length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+
+        server = HTTPServer(("127.0.0.1", 0), ErrorStreamHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                env = {
+                    **os.environ,
+                    "IMAGE_STUDIO_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
+                    "IMAGE_STUDIO_API_TOKEN": "client-token",
+                }
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--prompt",
+                        "a streaming failure",
+                        "--output-dir",
+                        temp_dir,
+                    ],
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 1, result.stderr)
+                data = json.loads(result.stdout)
+                self.assertFalse(data["ok"])
+                self.assertIn("上游请求失败:Bad Gateway", data["error"]["message"])
+                self.assertEqual(data["error"]["status"], 502)
+        finally:
+            server.shutdown()
+            server.server_close()
+
     def test_posts_multiple_images_and_mask_as_multipart_edit(self):
         server = HTTPServer(("127.0.0.1", 0), Handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)

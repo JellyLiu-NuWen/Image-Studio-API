@@ -210,6 +210,7 @@ def event_image_item(event):
 def parse_sse_image_response(raw):
     completed = []
     partials = []
+    errors = []
     for line in str(raw or "").splitlines():
         if not line.startswith("data:"):
             continue
@@ -219,6 +220,9 @@ def parse_sse_image_response(raw):
         try:
             event = json.loads(payload)
         except json.JSONDecodeError:
+            continue
+        if isinstance(event, dict) and isinstance(event.get("error"), dict):
+            errors.append(event["error"])
             continue
         event_type = str(event.get("type") or "")
         item = event_image_item(event)
@@ -233,7 +237,20 @@ def parse_sse_image_response(raw):
         "_stream": {
             "partial_count": len(partials),
             "completed_count": len(completed),
+            "errors": errors,
         },
+    }
+
+
+def stream_error(data):
+    stream_meta = data.get("_stream") if isinstance(data.get("_stream"), dict) else {}
+    errors = stream_meta.get("errors")
+    if not isinstance(errors, list) or not errors:
+        return None
+    error = errors[-1] if isinstance(errors[-1], dict) else {}
+    return {
+        "message": str(error.get("message") or "Image API stream returned an error event."),
+        "status": error.get("upstreamStatus") or error.get("status"),
     }
 
 
@@ -400,6 +417,9 @@ def main(argv):
     except json.JSONDecodeError:
         return fail("Image API returned non-JSON response", status=status, raw=raw)
     if not data.get("data"):
+        error_event = stream_error(data)
+        if error_event:
+            return fail(error_event["message"], status=error_event["status"], raw=raw)
         stream_meta = data.get("_stream") if isinstance(data.get("_stream"), dict) else {}
         if args.stream and raw.strip().startswith(": image-studio keepalive"):
             return fail(

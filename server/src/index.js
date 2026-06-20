@@ -1,12 +1,12 @@
 import { createServer } from "node:http";
 import { dirname, join, resolve } from "node:path";
-import { Readable } from "node:stream";
 import { createSelfHostedApp } from "./app.js";
 import { createFileConfigStore, loadDotEnv } from "./config.js";
 import { createJsonlLogStore } from "./logStore.js";
 import { renderAdminPage } from "./adminPage.js";
 import { createUpdateService } from "./updateService.js";
 import { createAdminAssetHandler } from "./adminAssets.js";
+import { writeWebResponse } from "./nodeResponse.js";
 
 await loadDotEnv(resolve(process.env.ENV_FILE || ".env"));
 
@@ -76,23 +76,6 @@ async function handleNodeRequest(nodeRequest, nodeResponse) {
       headers: { "content-type": "application/json; charset=utf-8" },
     }));
   }
-}
-
-async function writeWebResponse(nodeResponse, webResponse) {
-  nodeResponse.statusCode = webResponse.status;
-  for (const [key, value] of webResponse.headers) {
-    nodeResponse.setHeader(key, value);
-  }
-  if (!webResponse.body) {
-    nodeResponse.end();
-    return;
-  }
-  if ((webResponse.headers.get("content-type") || "").toLowerCase().includes("text/event-stream")) {
-    Readable.fromWeb(webResponse.body).pipe(nodeResponse);
-    return;
-  }
-  const body = Buffer.from(await webResponse.arrayBuffer());
-  nodeResponse.end(body);
 }
 
 createServer(handleNodeRequest).listen(port, host, () => {
