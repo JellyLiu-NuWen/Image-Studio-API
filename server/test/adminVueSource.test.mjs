@@ -134,6 +134,28 @@ test("Vue dashboard uses an Art Design Pro console card list", async () => {
   assert.match(styleSource, /\.console-stat-icon/, "Styles should include console stat icon blocks");
 });
 
+test("Vue dashboard chart modules use Art Design Pro console panels", async () => {
+  const source = await readAppSource();
+  const dashboardSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'dashboard'\"",
+    "<section v-if=\"activeView === 'interfaces'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(dashboardSection, /art-console-panel/g, "Dashboard modules should use the console panel card shell");
+  assert.match(dashboardSection, /console-panel-header/g, "Dashboard modules should render template-style panel headers");
+  assert.match(dashboardSection, /console-panel-title/g, "Dashboard modules should render compact title blocks");
+  assert.match(dashboardSection, /console-panel-badge/g, "Dashboard module headers should include status badges");
+  assert.match(dashboardSection, /console-panel-action/g, "Dashboard module headers should expose small action affordances");
+  assert.match(dashboardSection, /@click="navigateTo\('usage'\)"/, "Usage trend panel should link to usage details");
+  assert.match(dashboardSection, /@click="navigateTo\('logs'\)"/, "Failure panel should link to logs");
+  assert.match(styleSource, /\.art-console-panel/, "Styles should include console panel shell");
+  assert.match(styleSource, /\.console-panel-header/, "Styles should include console panel header");
+  assert.match(styleSource, /\.console-panel-badge/, "Styles should include console panel status badges");
+  assert.match(styleSource, /\.console-panel-action/, "Styles should include console panel action buttons");
+});
+
 test("Vue shell exposes Art Design Pro workspace navigation and quick actions", async () => {
   const source = await readAppSource();
   const shellSection = sourceBetween(

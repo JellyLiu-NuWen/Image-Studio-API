@@ -2035,8 +2035,19 @@ window.addEventListener('beforeunload', (event) => {
           </el-card>
         </div>
         <div class="content-grid dashboard-visual-grid">
-          <el-card shadow="never">
-            <template #header><div class="card-title"><DataAnalysis />近 7 日用量趋势</div></template>
+          <el-card shadow="never" class="art-console-panel">
+            <template #header>
+              <div class="console-panel-header">
+                <div class="console-panel-title">
+                  <h4><DataAnalysis />近 7 日用量趋势</h4>
+                  <p>按日期汇总生成量与估算成本</p>
+                </div>
+                <div class="console-panel-tools">
+                  <span class="console-panel-badge">Usage</span>
+                  <button type="button" class="console-panel-action" @click="navigateTo('usage')">详情</button>
+                </div>
+              </div>
+            </template>
             <div class="usage-trend" aria-label="近 7 日用量趋势">
               <div v-for="item in usageTrendBars" :key="item.name" class="trend-bar">
                 <span>{{ item.total }}</span>
@@ -2046,8 +2057,19 @@ window.addEventListener('beforeunload', (event) => {
               <div v-if="!usageTrendBars.length" class="empty-visual">暂无用量数据</div>
             </div>
           </el-card>
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Monitor />任务状态分布</div></template>
+          <el-card shadow="never" class="art-console-panel">
+            <template #header>
+              <div class="console-panel-header">
+                <div class="console-panel-title">
+                  <h4><Monitor />任务状态分布</h4>
+                  <p>成功、失败与处理中请求占比</p>
+                </div>
+                <div class="console-panel-tools">
+                  <span class="console-panel-badge">Live</span>
+                  <button type="button" class="console-panel-action" @click="refreshAll">刷新</button>
+                </div>
+              </div>
+            </template>
             <div class="status-distribution" aria-label="任务状态分布">
               <div v-for="item in statusDistribution" :key="item.label" class="distribution-row">
                 <div>
@@ -2061,8 +2083,19 @@ window.addEventListener('beforeunload', (event) => {
           </el-card>
         </div>
         <div class="content-grid">
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Monitor />服务状态</div></template>
+          <el-card shadow="never" class="art-console-panel">
+            <template #header>
+              <div class="console-panel-header">
+                <div class="console-panel-title">
+                  <h4><Monitor />服务状态</h4>
+                  <p>接口、上游、模型和版本概览</p>
+                </div>
+                <div class="console-panel-tools">
+                  <span class="console-panel-badge">Service</span>
+                  <button type="button" class="console-panel-action" @click="navigateTo('system')">系统</button>
+                </div>
+              </div>
+            </template>
             <div class="status-list">
               <div><span>接口数量</span><strong>{{ activeInterfaces.length }}</strong></div>
               <div><span>上游数量</span><strong>{{ activeUpstreams.length }}</strong></div>
@@ -2070,8 +2103,19 @@ window.addEventListener('beforeunload', (event) => {
               <div><span>版本状态</span><strong>{{ updateInfo.status || 'unknown' }}</strong></div>
             </div>
           </el-card>
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Timer />最近失败</div></template>
+          <el-card shadow="never" class="art-console-panel">
+            <template #header>
+              <div class="console-panel-header">
+                <div class="console-panel-title">
+                  <h4><Timer />最近失败</h4>
+                  <p>快速定位近期失败请求</p>
+                </div>
+                <div class="console-panel-tools">
+                  <span class="console-panel-badge">Errors</span>
+                  <button type="button" class="console-panel-action" @click="navigateTo('logs')">日志</button>
+                </div>
+              </div>
+            </template>
             <el-table :data="generationLogs.filter((item) => item.status === 'failed').slice(0, 6)" size="small">
               <el-table-column prop="createdAt" label="时间" min-width="160">
                 <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>

@@ -1420,6 +1420,105 @@ button,
   color: #15803d;
 }
 
+.art-console-panel {
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  box-shadow: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.art-console-panel:hover {
+  border-color: rgba(68, 93, 255, 0.18);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
+}
+
+.art-console-panel :deep(.el-card__header) {
+  padding: 16px 18px 10px;
+  border-bottom: 0;
+}
+
+.art-console-panel :deep(.el-card__body) {
+  padding: 10px 18px 18px;
+}
+
+.console-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.console-panel-title {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.console-panel-title h4 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--art-text);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.console-panel-title h4 svg {
+  width: 18px;
+  height: 18px;
+}
+
+.console-panel-title p {
+  margin: 0;
+  color: var(--art-muted);
+  font-size: 12px;
+}
+
+.console-panel-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.console-panel-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--art-soft);
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.console-panel-action {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--art-border);
+  border-radius: 8px;
+  background: var(--art-card);
+  color: var(--art-primary);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.console-panel-action:hover {
+  border-color: rgba(68, 93, 255, 0.25);
+  background: rgba(68, 93, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.console-panel-action:focus-visible {
+  outline: 2px solid rgba(68, 93, 255, 0.35);
+  outline-offset: 2px;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.72fr);
