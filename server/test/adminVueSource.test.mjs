@@ -645,6 +645,27 @@ test("Vue management table operations use ArtButtonTable style icon actions", as
   assert.match(styleSource, /\.art-table-action-button\.action-danger/, "Styles should define destructive action styling");
 });
 
+test("Vue quality case library uses an Art Design Pro table panel", async () => {
+  const source = await readAppSource();
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(qualitySection, /art-quality-case-panel/, "Quality cases should use a dedicated Art panel shell");
+  assert.match(qualitySection, /quality-case-panel-header/, "Quality case panel should use a structured header");
+  assert.match(qualitySection, /quality-case-panel-title/, "Quality case panel should expose title and helper copy");
+  assert.match(qualitySection, /quality-case-panel-badge/, "Quality case panel should show case counts as badges");
+  assert.match(qualitySection, /quality-case-panel-tools/, "Quality case panel should group compact actions");
+  assert.match(qualitySection, /art-table-action-button action-view/, "Quality case rows should use icon action buttons");
+  assert.match(qualitySection, /aria-label="查看质量案例日志"/, "Quality case log action should be accessible");
+  assert.match(styleSource, /\.art-quality-case-panel/, "Styles should include the quality case panel shell");
+  assert.match(styleSource, /\.quality-case-panel-header/, "Styles should include quality case panel header");
+  assert.match(styleSource, /\.quality-case-panel-badge/, "Styles should include quality case badges");
+});
+
 test("Vue tables expose Art Design Pro empty states", async () => {
   const source = await readAppSource();
   const managementSection = sourceBetween(

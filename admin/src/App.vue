@@ -2544,11 +2544,19 @@ window.addEventListener('beforeunload', (event) => {
             />
           </div>
         </el-card>
-        <el-card shadow="never">
+        <el-card shadow="never" class="art-quality-case-panel">
           <template #header>
-            <div class="section-actions">
-              <div class="card-title"><Document />质量案例库</div>
-              <el-button size="small" :icon="Refresh" @click="refreshAll">刷新案例</el-button>
+            <div class="quality-case-panel-header">
+              <div class="quality-case-panel-title">
+                <h4><Document />质量案例库</h4>
+                <p>沉淀优秀样例和质量差案例，用于继续优化 Prompt 模板。</p>
+              </div>
+              <div class="quality-case-panel-tools">
+                <span class="quality-case-panel-badge">总计 {{ qualityCases.length }}</span>
+                <span class="quality-case-panel-badge danger">差例 {{ poorQualityCases.length }}</span>
+                <span class="quality-case-panel-badge success">优秀 {{ excellentQualityCases.length }}</span>
+                <button type="button" class="console-panel-action" @click="refreshAll">刷新案例</button>
+              </div>
             </div>
           </template>
           <el-table :data="qualityCases" height="360" empty-text="暂无质量案例">
@@ -2577,7 +2585,13 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column prop="errorSummary" label="错误摘要" min-width="220" show-overflow-tooltip />
             <el-table-column label="操作" width="120" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" :icon="View" @click="openQualityCaseLog(row)">日志</el-button>
+                <div class="art-table-actions">
+                  <el-tooltip content="查看日志" placement="top">
+                    <button type="button" class="art-table-action-button action-view" aria-label="查看质量案例日志" @click="openQualityCaseLog(row)">
+                      <View />
+                    </button>
+                  </el-tooltip>
+                </div>
               </template>
             </el-table-column>
           </el-table>
