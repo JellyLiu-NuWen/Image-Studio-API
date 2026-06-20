@@ -2661,7 +2661,7 @@ window.addEventListener('beforeunload', (event) => {
                 <span>{{ visibleLogSearchFields.length }} 个条件</span>
               </div>
             </div>
-            <div class="query-grid search-form-grid log-panel-body">
+            <div class="art-search-form-grid log-panel-body">
               <div
                 v-for="field in visibleLogSearchFields"
                 :key="field.key"

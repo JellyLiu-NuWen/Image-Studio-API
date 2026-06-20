@@ -806,7 +806,7 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(logSection, /log-workspace/, "Logs page should render a workspace wrapper");
   assert.match(logSection, /log-summary-grid/, "Logs page should render compact summary cards");
   assert.match(logSection, /query-panel/, "Logs page should render a query panel");
-  assert.match(logSection, /query-grid/, "Query panel should use a structured grid layout");
+  assert.match(logSection, /art-search-form-grid/, "Query panel should use an ArtSearchBar form grid layout");
   assert.match(logSection, /result-toolbar/, "Logs page should render a result toolbar above tables");
   assert.match(logSection, /v-model="activeLogTab"/, "Logs tabs should bind the active tab");
   assert.match(logSection, /:size="tableSize"/, "Logs tables should respect shared density size");
@@ -832,13 +832,15 @@ test("Vue logs page query panel follows the ArtSearchBar template pattern", asyn
   assert.match(logSection, /art-search-bar/, "Logs query panel should use the ArtSearchBar shell class");
   assert.match(logSection, /art-card-xs/, "Logs query panel should use the compact card token");
   assert.match(logSection, /:class="\{ 'is-expanded': logSearchExpanded \}"/, "Logs query panel should bind expanded state");
-  assert.match(logSection, /search-form-grid/, "Logs query fields should render in the template form grid");
+  assert.match(logSection, /art-search-form-grid/, "Logs query fields should render in the template form grid");
+  assert.doesNotMatch(logSection, /query-grid/, "Logs query fields should not keep the legacy query-grid class");
   assert.match(logSection, /visibleLogSearchFields/, "Logs query grid should render the visible field list");
   assert.match(logSection, /action-column/, "Logs search bar should render the ArtSearchBar action column");
   assert.match(logSection, /form-buttons/, "Logs search bar should group reset and search actions");
   assert.match(logSection, /filter-toggle/, "Logs search bar should expose expand and collapse control");
   assert.match(styleSource, /\.art-search-bar/, "Styles should include the ArtSearchBar shell");
-  assert.match(styleSource, /\.search-form-grid/, "Styles should include the search form grid");
+  assert.match(styleSource, /\.art-search-form-grid/, "Styles should include the ArtSearchBar form grid");
+  assert.doesNotMatch(styleSource, /\.query-grid\b/, "Styles should remove the legacy query grid selector");
   assert.match(styleSource, /\.action-column/, "Styles should include the action column");
   assert.match(styleSource, /\.filter-toggle/, "Styles should include the expand toggle");
 });

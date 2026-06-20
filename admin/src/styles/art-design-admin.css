@@ -2728,8 +2728,7 @@ button,
   gap: 12px;
 }
 
-.query-grid,
-.search-form-grid {
+.art-search-form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(168px, 1fr));
   gap: 12px;
@@ -2760,10 +2759,8 @@ button,
   border-radius: 8px;
 }
 
-.query-grid .el-input-number,
-.query-grid .el-date-editor,
-.search-form-grid .el-input-number,
-.search-form-grid .el-date-editor {
+.art-search-form-grid .el-input-number,
+.art-search-form-grid .el-date-editor {
   width: 100%;
 }
 
@@ -4057,7 +4054,7 @@ button,
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .query-grid {
+  .art-search-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -4148,7 +4145,7 @@ button,
   .system-summary-grid,
   .usage-summary-grid,
   .login-signal-grid,
-  .query-grid,
+  .art-search-form-grid,
   .risk-board,
   .filter-bar,
   .status-list {
