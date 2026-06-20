@@ -28,6 +28,7 @@ class Handler(BaseHTTPRequestHandler):
         Handler.seen = {
             "path": self.path,
             "authorization": self.headers.get("authorization"),
+            "accept": self.headers.get("accept"),
             "content_type": content_type,
             "body": body,
             "body_text": body_text,
@@ -228,10 +229,49 @@ class GenerateImageScriptTest(TestCase):
                 self.assertTrue(data["ok"])
                 self.assertEqual(Handler.seen["body"]["stream"], True)
                 self.assertEqual(Handler.seen["body"]["partial_images"], 1)
+                self.assertEqual(Handler.seen["accept"], "text/event-stream")
                 self.assertEqual(Path(data["files"][0]).read_bytes(), b"fake-png")
                 metadata = json.loads(Path(data["metadata_file"]).read_text(encoding="utf-8"))
                 self.assertEqual(metadata["response"]["stream"], True)
                 self.assertEqual(metadata["response"]["partial_count"], 1)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_no_stream_requests_json_response(self):
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                env = {
+                    **os.environ,
+                    "IMAGE_STUDIO_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
+                    "IMAGE_STUDIO_API_TOKEN": "client-token",
+                }
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--prompt",
+                        "a non streaming poster",
+                        "--no-stream",
+                        "--output-dir",
+                        temp_dir,
+                    ],
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                data = json.loads(result.stdout)
+                self.assertTrue(data["ok"])
+                self.assertEqual(Handler.seen["accept"], "application/json")
+                self.assertNotIn("stream", Handler.seen["body"])
+                metadata = json.loads(Path(data["metadata_file"]).read_text(encoding="utf-8"))
+                self.assertEqual(metadata["response"]["stream"], False)
         finally:
             server.shutdown()
             server.server_close()
@@ -336,6 +376,7 @@ class GenerateImageScriptTest(TestCase):
                 self.assertTrue(data["ok"])
                 self.assertEqual(Handler.seen["path"], "/v1/images/edits")
                 self.assertEqual(Handler.seen["authorization"], "Bearer client-token")
+                self.assertEqual(Handler.seen["accept"], "text/event-stream")
                 self.assertIn("multipart/form-data; boundary=", Handler.seen["content_type"])
                 body = Handler.seen["body_text"]
                 self.assertEqual(body.count('name="image[]"'), 2)

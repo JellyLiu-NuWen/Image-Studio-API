@@ -294,7 +294,11 @@ def build_multipart_body(fields, files):
     return b"".join(chunks), boundary
 
 
-def post_json(url, token, payload, timeout):
+def accept_header(stream):
+    return "text/event-stream" if stream else "application/json"
+
+
+def post_json(url, token, payload, timeout, stream=False):
     body = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
         url,
@@ -303,7 +307,7 @@ def post_json(url, token, payload, timeout):
         headers={
             "authorization": f"Bearer {token}",
             "content-type": "application/json",
-            "accept": "application/json",
+            "accept": accept_header(stream),
             "user-agent": "image-studio-generate-skill/0.1",
         },
     )
@@ -312,7 +316,7 @@ def post_json(url, token, payload, timeout):
         return response.status, raw
 
 
-def post_multipart(url, token, fields, files, timeout):
+def post_multipart(url, token, fields, files, timeout, stream=False):
     body, boundary = build_multipart_body(fields, files)
     request = urllib.request.Request(
         url,
@@ -321,7 +325,7 @@ def post_multipart(url, token, fields, files, timeout):
         headers={
             "authorization": f"Bearer {token}",
             "content-type": f"multipart/form-data; boundary={boundary}",
-            "accept": "application/json",
+            "accept": accept_header(stream),
             "user-agent": "image-studio-generate-skill/0.1",
         },
     )
@@ -395,9 +399,9 @@ def main(argv):
 
     try:
         if is_edit:
-            status, raw = post_multipart(url, args.token, payload, edit_files, args.timeout)
+            status, raw = post_multipart(url, args.token, payload, edit_files, args.timeout, stream=args.stream)
         else:
-            status, raw = post_json(url, args.token, payload, args.timeout)
+            status, raw = post_json(url, args.token, payload, args.timeout, stream=args.stream)
     except urllib.error.HTTPError as error:
         raw = error.read().decode("utf-8", errors="replace")
         try:
