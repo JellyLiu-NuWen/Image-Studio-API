@@ -242,6 +242,33 @@ const systemSummaryCards = computed(() => [
     type: updateInfo.value.rollbackCommand ? 'success' : 'info'
   }
 ])
+const pendingAlertCount = computed(() => activeAlerts.value.filter((item) => !item.acknowledged).length)
+const alertSummaryCards = computed(() => [
+  {
+    label: '活跃告警',
+    value: alertSummary.value.total,
+    hint: `已确认 ${alertSummary.value.acknowledged}`,
+    type: alertSummary.value.total ? 'warning' : 'success'
+  },
+  {
+    label: '严重事件',
+    value: alertSummary.value.critical,
+    hint: 'Key、配置和可用性风险',
+    type: alertSummary.value.critical ? 'critical' : 'success'
+  },
+  {
+    label: '待处理',
+    value: pendingAlertCount.value,
+    hint: pendingAlertCount.value ? '需要人工确认' : '队列已处理',
+    type: pendingAlertCount.value ? 'warning' : 'success'
+  },
+  {
+    label: '通知状态',
+    value: notificationLabel(alertNotification.value.status),
+    hint: alertNotification.value.sentAt ? formatTime(alertNotification.value.sentAt) : (config.value?.alerts.webhookURLSet ? '等待新告警' : 'Webhook 未配置'),
+    type: alertNotification.value.status === 'failed' ? 'critical' : alertNotification.value.status === 'sent' ? 'success' : 'info'
+  }
+])
 const filteredGenerationLogs = computed(() => filterLogs(generationLogs.value))
 const filteredApiLogs = computed(() => filterLogs(apiLogs.value))
 const logSummaryCards = computed(() => {
@@ -1637,21 +1664,26 @@ window.addEventListener('beforeunload', (event) => {
         </el-card>
       </section>
 
-      <section v-if="activeView === 'alerts'" class="view-stack">
-        <div class="metric-grid">
-          <el-card shadow="never" class="metric-card"><span>活跃告警</span><strong>{{ alertSummary.total }}</strong><small>已确认 {{ alertSummary.acknowledged }}</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>严重</span><strong>{{ alertSummary.critical }}</strong><small>Key、配置和可用性风险</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>警告</span><strong>{{ alertSummary.warning }}</strong><small>性能和成功率风险</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>最近通知</span><strong>{{ notificationLabel(alertNotification.status) }}</strong><small>{{ alertNotification.sentAt ? formatTime(alertNotification.sentAt) : (config?.alerts.webhookURLSet ? '等待新告警' : 'Webhook 未配置') }}</small></el-card>
+      <section v-if="activeView === 'alerts'" class="view-stack alerts-workspace">
+        <div class="alerts-summary-grid">
+          <button v-for="item in alertSummaryCards" :key="item.label" :class="item.type === 'critical' ? 'critical' : item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'info'" type="button">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.hint }}</small>
+          </button>
         </div>
-        <el-card shadow="never">
+        <div class="alerts-workspace-grid">
+        <el-card shadow="never" class="alert-queue-workspace">
           <template #header>
             <div class="section-actions">
               <div class="card-title"><Bell />当前告警</div>
-              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+              <div class="card-actions">
+                <el-tag :type="pendingAlertCount ? 'danger' : 'success'">待处理 {{ pendingAlertCount }}</el-tag>
+                <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+              </div>
             </div>
           </template>
-          <el-table :data="activeAlerts" empty-text="暂无活跃告警">
+          <el-table :data="activeAlerts" :size="tableSize" height="420" empty-text="暂无活跃告警">
             <el-table-column prop="severity" label="级别" width="110">
               <template #default="{ row }"><el-tag :type="alertTagType(row.severity)">{{ row.severity }}</el-tag></template>
             </el-table-column>
@@ -1665,21 +1697,29 @@ window.addEventListener('beforeunload', (event) => {
             </el-table-column>
           </el-table>
         </el-card>
-        <el-card shadow="never">
-          <template #header><div class="card-title"><Bell />告警中心</div></template>
-          <el-form v-if="config" :model="alertsForm" label-width="150px" class="narrow-form">
-            <el-form-item label="Webhook 通知"><el-switch v-model="config.alerts.webhookEnabled" /></el-form-item>
-            <el-form-item label="Webhook URL"><el-input v-model="config.alerts.webhookURL" placeholder="https://hooks.example/a" /></el-form-item>
-            <el-form-item label="最近发送">
-              <el-tag :type="alertNotification.status === 'sent' ? 'success' : alertNotification.status === 'failed' ? 'danger' : 'info'">{{ notificationLabel(alertNotification.status) }}</el-tag>
-              <span class="form-tip">{{ alertNotification.webhookStatus ? `HTTP ${alertNotification.webhookStatus}` : '暂无状态码' }} · {{ alertNotification.alertCount || 0 }} 条告警</span>
-            </el-form-item>
-            <el-form-item label="上游失败阈值"><el-input-number v-model="config.alerts.upstreamFailureThreshold" :min="1" /></el-form-item>
-            <el-form-item label="成功率阈值"><el-input-number v-model="config.alerts.successRateThreshold" :min="1" :max="100" /></el-form-item>
-            <el-form-item label="P95 阈值 ms"><el-input-number v-model="config.alerts.p95LatencyMsThreshold" :min="100" /></el-form-item>
-            <el-form-item><el-button type="primary" @click="saveAlerts">保存告警配置</el-button></el-form-item>
-          </el-form>
-        </el-card>
+          <div class="alerts-side-stack">
+            <el-card shadow="never" class="notification-workspace">
+              <template #header><div class="card-title"><Bell />通知状态</div></template>
+              <div class="status-list">
+                <div><span>Webhook</span><strong>{{ config?.alerts.webhookEnabled ? '已启用' : '未启用' }}</strong></div>
+                <div><span>最近发送</span><strong>{{ notificationLabel(alertNotification.status) }}</strong></div>
+                <div><span>HTTP 状态</span><strong>{{ alertNotification.webhookStatus || '-' }}</strong></div>
+                <div><span>通知条数</span><strong>{{ alertNotification.alertCount || 0 }}</strong></div>
+              </div>
+            </el-card>
+            <el-card shadow="never" class="alert-rules-workspace">
+              <template #header><div class="card-title"><Operation />告警规则</div></template>
+              <el-form v-if="config" :model="alertsForm" label-width="150px" class="narrow-form">
+                <el-form-item label="Webhook 通知"><el-switch v-model="config.alerts.webhookEnabled" /></el-form-item>
+                <el-form-item label="Webhook URL"><el-input v-model="config.alerts.webhookURL" placeholder="https://hooks.example/a" /></el-form-item>
+                <el-form-item label="上游失败阈值"><el-input-number v-model="config.alerts.upstreamFailureThreshold" :min="1" /></el-form-item>
+                <el-form-item label="成功率阈值"><el-input-number v-model="config.alerts.successRateThreshold" :min="1" :max="100" /></el-form-item>
+                <el-form-item label="P95 阈值 ms"><el-input-number v-model="config.alerts.p95LatencyMsThreshold" :min="100" /></el-form-item>
+                <el-form-item><el-button type="primary" @click="saveAlerts">保存告警配置</el-button></el-form-item>
+              </el-form>
+            </el-card>
+          </div>
+        </div>
       </section>
 
       <section v-if="activeView === 'security'" class="view-stack security-workspace">

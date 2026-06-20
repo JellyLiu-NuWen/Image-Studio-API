@@ -242,3 +242,26 @@ test("Vue system page uses an Art Design Pro backup and update workspace", async
   assert.match(styleSource, /\.backup-workspace/, "Styles should include backup workspace styling");
   assert.match(styleSource, /\.update-workspace/, "Styles should include update workspace styling");
 });
+
+test("Vue alerts page uses an Art Design Pro alert center workspace", async () => {
+  const source = await readAppSource();
+  const alertsSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'alerts'\"",
+    "<section v-if=\"activeView === 'security'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /alertSummaryCards/, "Alerts page should compute alert summary cards");
+  assert.match(source, /pendingAlertCount/, "Alerts page should compute pending alert count");
+  assert.match(alertsSection, /alerts-workspace/, "Alerts page should render a workspace wrapper");
+  assert.match(alertsSection, /alerts-summary-grid/, "Alerts page should render compact alert summary cards");
+  assert.match(alertsSection, /alert-queue-workspace/, "Alerts page should render an alert queue workspace");
+  assert.match(alertsSection, /alert-rules-workspace/, "Alerts page should render alert rules workspace");
+  assert.match(alertsSection, /notification-workspace/, "Alerts page should render notification workspace");
+  assert.match(alertsSection, /:size="tableSize"/, "Alert table should respect shared density size");
+  assert.match(styleSource, /\.alerts-workspace/, "Styles should include alerts workspace layout");
+  assert.match(styleSource, /\.alerts-summary-grid/, "Styles should include alert summary grid layout");
+  assert.match(styleSource, /\.alert-queue-workspace/, "Styles should include alert queue workspace styling");
+  assert.match(styleSource, /\.alert-rules-workspace/, "Styles should include alert rules workspace styling");
+});

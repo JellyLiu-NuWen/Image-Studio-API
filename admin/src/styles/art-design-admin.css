@@ -812,6 +812,88 @@ button,
   border-top: 1px solid var(--art-border);
 }
 
+.alerts-workspace {
+  gap: 14px;
+}
+
+.alerts-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.alerts-summary-grid button {
+  min-height: 104px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  border: 1px solid var(--art-border);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--art-soft);
+  color: var(--art-text);
+  font: inherit;
+  text-align: left;
+  transition: 180ms ease;
+}
+
+.alerts-summary-grid button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
+.alerts-summary-grid span,
+.alerts-summary-grid small {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.alerts-summary-grid strong {
+  color: var(--art-text);
+  font-size: 24px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.alerts-summary-grid button.critical {
+  border-color: rgba(220, 38, 38, 0.24);
+  background: rgba(220, 38, 38, 0.07);
+}
+
+.alerts-summary-grid button.success {
+  border-color: rgba(22, 163, 74, 0.22);
+  background: rgba(22, 163, 74, 0.07);
+}
+
+.alerts-summary-grid button.warning {
+  border-color: rgba(217, 119, 6, 0.28);
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.alerts-summary-grid button.info {
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
+.alerts-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.58fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.alerts-side-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.alert-queue-workspace :deep(.el-card__body),
+.alert-rules-workspace :deep(.el-card__body),
+.notification-workspace :deep(.el-card__body) {
+  display: grid;
+  gap: 12px;
+}
+
 .filter-bar {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 140px 180px 180px;
@@ -1213,6 +1295,7 @@ button,
   .login-page,
   .admin-shell,
   .content-grid,
+  .alerts-workspace-grid,
   .security-overview,
   .security-policy-grid,
   .session-workspace,
@@ -1228,6 +1311,7 @@ button,
 
   .metric-grid,
   .preset-grid,
+  .alerts-summary-grid,
   .log-summary-grid,
   .security-summary-grid,
   .system-summary-grid,
@@ -1256,6 +1340,7 @@ button,
 
   .metric-grid,
   .preset-grid,
+  .alerts-summary-grid,
   .log-summary-grid,
   .security-summary-grid,
   .system-summary-grid,
