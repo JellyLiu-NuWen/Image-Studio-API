@@ -281,10 +281,56 @@ const logSummaryCards = computed(() => {
     { label: '质量案例', value: qualityCases.value.length, hint: '差评与优秀沉淀', type: 'info' }
   ]
 })
+const usageSummaryCards = computed(() => {
+  const total = usage.value?.total
+  const failureCount = Number(total?.failed || 0)
+  return [
+    {
+      label: '总调用',
+      value: Number(total?.total || 0),
+      hint: `成功 ${Number(total?.success || 0)} / 失败 ${failureCount}`,
+      type: failureCount ? 'warning' : 'success'
+    },
+    {
+      label: '估算成本',
+      value: formatCost(total?.estimatedCostUSD),
+      hint: `图片 ${Number(total?.imageCount || 0)} 张`,
+      type: Number(total?.estimatedCostUSD || 0) > 0 ? 'info' : 'success'
+    },
+    {
+      label: '成功率',
+      value: formatPercent(total?.successRate),
+      hint: failureCount ? '需要关注失败调用' : '当前调用稳定',
+      type: Number(total?.successRate || 0) >= 95 || !Number(total?.total || 0) ? 'success' : 'warning'
+    },
+    {
+      label: '平均耗时',
+      value: formatDuration(total?.averageDurationMs),
+      hint: `累计 ${formatDuration(total?.durationMs)}`,
+      type: Number(total?.averageDurationMs || 0) > 60000 ? 'warning' : 'info'
+    }
+  ]
+})
 const usageInterfaceRows = computed(() => usageRows(usage.value?.byInterface))
 const usageModelRows = computed(() => usageRows(usage.value?.byModel))
 const usageUpstreamRows = computed(() => usageRows(usage.value?.byUpstream))
 const usageDateRows = computed(() => usageRows(usage.value?.byDate).sort((left, right) => right.name.localeCompare(left.name)))
+const usageCostLeaders = computed(() => [
+  ...usageModelRows.value.map((item) => ({ ...item, scope: '模型' })),
+  ...usageInterfaceRows.value.map((item) => ({ ...item, scope: '接口' })),
+  ...usageUpstreamRows.value.map((item) => ({ ...item, scope: '上游' }))
+].sort((left, right) => Number(right.estimatedCostUSD || 0) - Number(left.estimatedCostUSD || 0)).slice(0, 6))
+const usageEfficiencyRows = computed(() => {
+  const rows = usageUpstreamRows.value.length ? usageUpstreamRows.value : usageModelRows.value
+  return rows
+    .map((item) => ({
+      ...item,
+      healthLabel: Number(item.successRate || 0) >= 95 ? '稳定' : Number(item.successRate || 0) >= 80 ? '波动' : '异常',
+      healthType: Number(item.successRate || 0) >= 95 ? 'success' : Number(item.successRate || 0) >= 80 ? 'warning' : 'danger'
+    }))
+    .sort((left, right) => Number(right.averageDurationMs || 0) - Number(left.averageDurationMs || 0))
+    .slice(0, 5)
+})
 const usageTrendBars = computed(() => {
   const rows = usageRows(usage.value?.byDate).sort((left, right) => left.name.localeCompare(right.name)).slice(-7)
   const maxTotal = Math.max(1, ...rows.map((item) => item.total))
@@ -1606,23 +1652,75 @@ window.addEventListener('beforeunload', (event) => {
         </el-card>
       </section>
 
-      <section v-if="activeView === 'usage'" class="view-stack">
-        <div class="metric-grid">
-          <el-card shadow="never" class="metric-card"><span>总调用</span><strong>{{ usage?.total.total || 0 }}</strong><small>成功 {{ usage?.total.success || 0 }}</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>估算成本</span><strong>{{ formatCost(usage?.total.estimatedCostUSD) }}</strong><small>图片 {{ usage?.total.imageCount || 0 }} 张</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>成功率</span><strong>{{ formatPercent(usage?.total.successRate) }}</strong><small>失败 {{ usage?.total.failed || 0 }}</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>平均耗时</span><strong>{{ formatDuration(usage?.total.averageDurationMs) }}</strong><small>累计 {{ formatDuration(usage?.total.durationMs) }}</small></el-card>
+      <section v-if="activeView === 'usage'" class="view-stack usage-workspace">
+        <div class="usage-summary-grid">
+          <button v-for="item in usageSummaryCards" :key="item.label" :class="item.type" type="button">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.hint }}</small>
+          </button>
         </div>
-        <el-card shadow="never">
+        <div class="usage-analytics-grid">
+          <el-card shadow="never" class="usage-trend-workspace">
+            <template #header><div class="card-title"><DataAnalysis />近 7 日消耗趋势</div></template>
+            <div class="usage-trend" aria-label="近 7 日用量趋势">
+              <div v-for="item in usageTrendBars" :key="item.name" class="trend-bar">
+                <span>{{ item.total }}</span>
+                <i :style="{ height: item.height + '%' }"></i>
+                <small>{{ item.shortName }}</small>
+              </div>
+              <div v-if="!usageTrendBars.length" class="empty-visual">暂无用量数据</div>
+            </div>
+          </el-card>
+          <el-card shadow="never" class="usage-cost-workspace">
+            <template #header><div class="card-title"><Timer />成本排行</div></template>
+            <div class="usage-leader-list">
+              <div v-for="item in usageCostLeaders" :key="item.scope + item.name" class="usage-leader-row">
+                <div>
+                  <span>{{ item.scope }}</span>
+                  <strong>{{ item.name }}</strong>
+                </div>
+                <p>{{ formatCost(item.estimatedCostUSD) }}</p>
+                <small>{{ item.imageCount }} 张 / {{ item.total }} 次</small>
+              </div>
+              <div v-if="!usageCostLeaders.length" class="empty-visual">暂无成本数据</div>
+            </div>
+          </el-card>
+          <el-card shadow="never" class="usage-efficiency-workspace">
+            <template #header><div class="card-title"><Monitor />效率诊断</div></template>
+            <div class="usage-efficiency-list">
+              <div v-for="item in usageEfficiencyRows" :key="item.name" class="usage-efficiency-row">
+                <div>
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ formatDuration(item.averageDurationMs) }} 平均耗时</span>
+                </div>
+                <el-tag :type="item.healthType">{{ item.healthLabel }}</el-tag>
+                <small>{{ formatPercent(item.successRate) }}</small>
+              </div>
+              <div v-if="!usageEfficiencyRows.length" class="empty-visual">暂无效率数据</div>
+            </div>
+          </el-card>
+        </div>
+        <el-card shadow="never" class="usage-breakdown-workspace">
           <template #header>
-            <div class="section-actions">
-              <div class="card-title"><DataAnalysis />用量明细</div>
-              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+            <div class="result-toolbar">
+              <div>
+                <div class="card-title"><DataAnalysis />用量明细</div>
+                <p>按日期、接口、模型和上游拆分调用量、成功率、耗时与估算成本。</p>
+              </div>
+              <div class="toolbar-actions">
+                <el-segmented v-model="tableDensity" :options="[
+                  { label: '默认', value: 'default' },
+                  { label: '舒适', value: 'comfortable' },
+                  { label: '紧凑', value: 'compact' }
+                ]" />
+                <el-button :icon="Refresh" @click="refreshAll">刷新用量</el-button>
+              </div>
             </div>
           </template>
           <el-tabs>
             <el-tab-pane label="按日期">
-              <el-table :data="usageDateRows" empty-text="暂无日期用量">
+              <el-table :data="usageDateRows" :size="tableSize" height="420" empty-text="暂无日期用量">
                 <el-table-column prop="name" label="日期" min-width="130" />
                 <el-table-column prop="total" label="调用" width="90" />
                 <el-table-column prop="imageCount" label="图片" width="90" />
@@ -1632,7 +1730,7 @@ window.addEventListener('beforeunload', (event) => {
               </el-table>
             </el-tab-pane>
             <el-tab-pane label="按接口">
-              <el-table :data="usageInterfaceRows" empty-text="暂无接口用量">
+              <el-table :data="usageInterfaceRows" :size="tableSize" height="420" empty-text="暂无接口用量">
                 <el-table-column prop="name" label="接口" min-width="140" />
                 <el-table-column prop="total" label="调用" width="90" />
                 <el-table-column prop="success" label="成功" width="90" />
@@ -1642,7 +1740,7 @@ window.addEventListener('beforeunload', (event) => {
               </el-table>
             </el-tab-pane>
             <el-tab-pane label="按模型">
-              <el-table :data="usageModelRows" empty-text="暂无模型用量">
+              <el-table :data="usageModelRows" :size="tableSize" height="420" empty-text="暂无模型用量">
                 <el-table-column prop="name" label="模型" min-width="160" />
                 <el-table-column prop="total" label="调用" width="90" />
                 <el-table-column prop="imageCount" label="图片" width="90" />
@@ -1651,7 +1749,7 @@ window.addEventListener('beforeunload', (event) => {
               </el-table>
             </el-tab-pane>
             <el-tab-pane label="按上游">
-              <el-table :data="usageUpstreamRows" empty-text="暂无上游用量">
+              <el-table :data="usageUpstreamRows" :size="tableSize" height="420" empty-text="暂无上游用量">
                 <el-table-column prop="name" label="上游" min-width="140" />
                 <el-table-column prop="total" label="调用" width="90" />
                 <el-table-column prop="success" label="成功" width="90" />

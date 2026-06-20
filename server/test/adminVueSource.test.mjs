@@ -193,6 +193,31 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(styleSource, /\.result-toolbar/, "Styles should include result toolbar layout");
 });
 
+test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
+  const source = await readAppSource();
+  const usageSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'usage'\"",
+    "<section v-if=\"activeView === 'alerts'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /usageSummaryCards/, "Usage page should compute compact KPI summary cards");
+  assert.match(source, /usageCostLeaders/, "Usage page should compute cost leader rows");
+  assert.match(source, /usageEfficiencyRows/, "Usage page should compute efficiency diagnostics");
+  assert.match(usageSection, /usage-workspace/, "Usage page should render a workspace wrapper");
+  assert.match(usageSection, /usage-summary-grid/, "Usage page should render compact usage summary cards");
+  assert.match(usageSection, /usage-analytics-grid/, "Usage page should render an analytics grid");
+  assert.match(usageSection, /usage-trend-workspace/, "Usage page should render a dedicated trend workspace");
+  assert.match(usageSection, /usage-breakdown-workspace/, "Usage page should render a breakdown table workspace");
+  assert.match(usageSection, /result-toolbar/, "Usage page should render a result toolbar above tables");
+  assert.match(usageSection, /:size="tableSize"/, "Usage tables should respect shared density size");
+  assert.match(styleSource, /\.usage-workspace/, "Styles should include usage workspace layout");
+  assert.match(styleSource, /\.usage-summary-grid/, "Styles should include usage summary layout");
+  assert.match(styleSource, /\.usage-analytics-grid/, "Styles should include usage analytics grid layout");
+  assert.match(styleSource, /\.usage-breakdown-workspace/, "Styles should include usage breakdown workspace styling");
+});
+
 test("Vue security page uses an Art Design Pro security workspace", async () => {
   const source = await readAppSource();
   const securitySection = sourceBetween(
