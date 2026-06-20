@@ -1034,13 +1034,17 @@ test("Vue security policy and session cards use Art Design Pro panels", async ()
   assert.match(securitySection, /security-panel-body/g, "Security panels should wrap body content consistently");
   assert.match(securitySection, /security-panel-action/, "Security panels should use compact action affordances");
   assert.match(securitySection, /art-security-form/g, "Security policy forms should use a dedicated Art form layout");
+  assert.match(securitySection, /art-security-status-row/, "TOTP status should use a dedicated Art status row");
   assert.doesNotMatch(securitySection, /class="narrow-form"/, "Security panels should not keep the generic narrow-form class");
+  assert.doesNotMatch(securitySection, /class="status-row"/, "Security panels should not keep the generic status-row class");
   assert.match(styleSource, /\.art-security-panel/, "Styles should include security panel shell");
   assert.match(styleSource, /\.security-panel-header/, "Styles should include security panel header");
   assert.match(styleSource, /\.security-panel-body/, "Styles should include security panel body layout");
   assert.match(styleSource, /\.security-panel-action/, "Styles should include security panel actions");
   assert.match(styleSource, /\.art-security-form/, "Styles should include security form layout");
+  assert.match(styleSource, /\.art-security-status-row/, "Styles should include security status row layout");
   assert.doesNotMatch(styleSource, /\.narrow-form\b/, "Styles should remove the legacy narrow-form selector");
+  assert.doesNotMatch(styleSource, /\.status-row\b/, "Styles should remove the legacy status-row selector");
 });
 
 test("Vue audit log uses an Art Design Pro security panel", async () => {

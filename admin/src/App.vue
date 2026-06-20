@@ -3067,7 +3067,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="security-panel-body totp-panel">
-              <div class="status-row">
+              <div class="art-security-status-row">
                 <span>当前状态</span>
                 <el-tag :type="securityForm.totpEnabled ? 'success' : 'info'">{{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
                 <el-tag v-if="securityForm.totpConfigured && !securityForm.totpEnabled" type="warning">待验证</el-tag>

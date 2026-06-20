@@ -3223,7 +3223,7 @@ button,
   gap: 14px;
 }
 
-.status-row {
+.art-security-status-row {
   display: flex;
   align-items: center;
   gap: 10px;
