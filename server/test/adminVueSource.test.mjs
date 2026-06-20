@@ -54,3 +54,24 @@ test("Vue interface and upstream tables expose masked key previews", async () =>
   assert.match(interfaceSection, /apiTokenPreview/, "Interface table should show the masked client key suffix");
   assert.match(upstreamSection, /apiKeyPreview/, "Upstream table should show the masked upstream key suffix");
 });
+
+test("Vue admin shell exposes an Art Design Pro style theme switch", async () => {
+  const source = await readAppSource();
+  const shellSection = sourceBetween(
+    source,
+    "<div v-else class=\"admin-shell\"",
+    "<main class=\"admin-main\">",
+  );
+  const topbarSection = sourceBetween(
+    source,
+    "<header class=\"admin-topbar\">",
+    "</header>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /themeMode/, "Admin shell should track a theme mode state");
+  assert.match(source, /toggleTheme/, "Admin shell should expose a theme toggle action");
+  assert.match(shellSection, /data-theme/, "Admin shell should bind the current theme to a data attribute");
+  assert.match(topbarSection, /主题/, "Topbar should expose a visible theme switch control");
+  assert.match(styleSource, /\.admin-shell\[data-theme="dark"\]/, "Styles should define dark theme variables");
+});

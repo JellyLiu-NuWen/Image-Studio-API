@@ -19,8 +19,10 @@ import {
   MagicStick,
   Monitor,
   More,
+  Moon,
   Plus,
   Refresh,
+  Sunny,
   SwitchButton,
   Timer,
   Upload,
@@ -81,6 +83,7 @@ const loading = ref(false)
 const authenticated = ref(false)
 const username = ref('admin')
 const activeView = ref<ViewKey>('dashboard')
+const themeMode = ref<'light' | 'dark'>('light')
 const loginForm = reactive({ username: 'admin', password: '', totpCode: '' })
 const accountForm = reactive({ username: '', currentPassword: '', newPassword: '' })
 const totpSetup = ref<{ secret: string; otpauthURL: string } | null>(null)
@@ -218,6 +221,19 @@ function alertTagType(severity: string) {
   if (severity === 'critical') return 'danger'
   if (severity === 'warning') return 'warning'
   return 'info'
+}
+
+function loadThemeMode() {
+  if (typeof window === 'undefined') return
+  const stored = window.localStorage.getItem('image-studio-admin-theme')
+  themeMode.value = stored === 'dark' ? 'dark' : 'light'
+}
+
+function toggleTheme() {
+  themeMode.value = themeMode.value === 'dark' ? 'light' : 'dark'
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('image-studio-admin-theme', themeMode.value)
+  }
 }
 
 function filterLogs(records: LogRecord[]) {
@@ -773,7 +789,10 @@ function copySnippet(item: StudioInterface) {
   copyText(snippet, '已复制 Skill/Codex 配置片段')
 }
 
-onMounted(bootstrap)
+onMounted(() => {
+  loadThemeMode()
+  bootstrap()
+})
 
 window.addEventListener('beforeunload', (event) => {
   if (!config.value || JSON.stringify(config.value) === lastSavedConfig.value) return
@@ -822,7 +841,7 @@ window.addEventListener('beforeunload', (event) => {
     </el-card>
   </div>
 
-  <div v-else class="admin-shell" v-loading="loading">
+  <div v-else class="admin-shell" :data-theme="themeMode" v-loading="loading">
     <aside class="admin-sidebar">
       <div class="sidebar-brand">
         <div class="brand-logo">IS</div>
@@ -854,6 +873,9 @@ window.addEventListener('beforeunload', (event) => {
           <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
         </div>
         <div class="topbar-actions">
+          <el-button :icon="themeMode === 'dark' ? Sunny : Moon" @click="toggleTheme">
+            {{ themeMode === 'dark' ? '浅色主题' : '深色主题' }}
+          </el-button>
           <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
           <el-button :icon="SwitchButton" type="danger" plain @click="logout">退出登录</el-button>
         </div>
