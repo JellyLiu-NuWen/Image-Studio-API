@@ -74,7 +74,9 @@ const authenticated = ref(false)
 const username = ref('admin')
 const activeView = ref<ViewKey>('dashboard')
 const loginForm = reactive({ username: 'admin', password: '' })
+const accountForm = reactive({ username: '', currentPassword: '', newPassword: '' })
 const config = ref<AdminConfig | null>(null)
+const lastSavedConfig = ref('')
 const metrics = ref<MetricsResponse['metrics'] | null>(null)
 const generationLogs = ref<LogRecord[]>([])
 const apiLogs = ref<LogRecord[]>([])
@@ -84,6 +86,7 @@ const auditLogs = ref<AuditRecord[]>([])
 const sessions = ref<SessionRecord[]>([])
 const updateInfo = ref<Record<string, string>>({})
 const backupStatus = ref('')
+const backupFileInput = ref<HTMLInputElement | null>(null)
 const drawerVisible = ref(false)
 const drawerMode = ref<DrawerMode>(null)
 const drawerIndex = ref(-1)
@@ -141,6 +144,12 @@ function filterLogs(records: LogRecord[]) {
 
 function setConfig(next: AdminConfig) {
   config.value = structuredClone(next)
+  lastSavedConfig.value = JSON.stringify(config.value)
+  accountForm.username = next.adminUsername || username.value
+}
+
+function markSaved() {
+  if (config.value) lastSavedConfig.value = JSON.stringify(config.value)
 }
 
 function createInterface(): StudioInterface {
@@ -274,6 +283,7 @@ async function saveConfig(message = '配置已保存') {
   if (!config.value) return
   const result = await adminApi.saveConfig(config.value)
   setConfig(result.config)
+  markSaved()
   ElMessage.success(message)
 }
 
@@ -369,6 +379,7 @@ async function saveModels() {
   if (!config.value) return
   const result = await adminApi.saveModels(config.value.models)
   config.value.models = result.models
+  markSaved()
   ElMessage.success('模型目录已保存')
 }
 
@@ -376,6 +387,7 @@ async function saveQualityPresets() {
   if (!config.value) return
   const result = await adminApi.saveQualityPresets(config.value.qualityPresets)
   config.value.qualityPresets = result.qualityPresets
+  markSaved()
   ElMessage.success('质量预设已保存')
 }
 
@@ -383,6 +395,7 @@ async function saveAlerts() {
   if (!config.value) return
   const result = await adminApi.saveAlerts(config.value.alerts)
   config.value.alerts = result.alerts
+  markSaved()
   ElMessage.success('告警配置已保存')
 }
 
@@ -390,13 +403,55 @@ async function restoreVersion(id: string) {
   await ElMessageBox.confirm('恢复后当前配置会被覆盖，确定继续吗？', '恢复配置版本', { type: 'warning' })
   const result = await adminApi.restoreVersion(id)
   setConfig(result.config)
+  markSaved()
   ElMessage.success('配置版本已恢复')
 }
 
 async function createBackup() {
   const result = await adminApi.backup()
   backupStatus.value = `已生成备份：${formatTime(result.backup.createdAt)}`
+  downloadJSON(`image-studio-backup-${Date.now()}.json`, result.backup)
   ElMessage.success('备份已生成')
+}
+
+function downloadJSON(filename: string, data: unknown) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function exportLogs(format: 'jsonl' | 'csv') {
+  window.location.href = `/api/logs/export?type=generations&format=${format}`
+}
+
+function openRestorePicker() {
+  backupFileInput.value?.click()
+}
+
+async function restoreFromFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  const raw = await file.text()
+  const parsed = JSON.parse(raw)
+  await ElMessageBox.confirm('上传恢复会覆盖当前配置，确定继续吗？', '上传恢复', { type: 'warning' })
+  const result = await adminApi.restore(parsed.config ? { config: parsed.config } : { backup: parsed })
+  setConfig(result.config)
+  markSaved()
+  ElMessage.success('配置已从备份恢复')
+}
+
+async function saveAccount() {
+  const result = await adminApi.account(accountForm)
+  username.value = result.account.username
+  accountForm.currentPassword = ''
+  accountForm.newPassword = ''
+  ElMessage.success('账号密码已更新')
 }
 
 async function revokeSession(id: string) {
@@ -418,6 +473,12 @@ function copySnippet(item: StudioInterface) {
 }
 
 onMounted(bootstrap)
+
+window.addEventListener('beforeunload', (event) => {
+  if (!config.value || JSON.stringify(config.value) === lastSavedConfig.value) return
+  event.preventDefault()
+  event.returnValue = ''
+})
 </script>
 
 <template>
@@ -486,6 +547,7 @@ onMounted(bootstrap)
         <div>
           <span class="eyebrow">Image Studio API</span>
           <h1>{{ currentTitle }}</h1>
+          <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
         </div>
         <div class="topbar-actions">
           <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
@@ -675,6 +737,10 @@ onMounted(bootstrap)
 
       <section v-if="activeView === 'logs'" class="view-stack">
         <el-card shadow="never">
+          <div class="section-actions log-actions">
+            <el-button :icon="Download" @click="exportLogs('jsonl')">导出 JSONL</el-button>
+            <el-button :icon="Download" @click="exportLogs('csv')">导出 CSV</el-button>
+          </div>
           <div class="filter-bar">
             <el-input v-model="logFilter.keyword" placeholder="搜索请求 ID、模型、错误摘要" clearable />
             <el-select v-model="logFilter.status" placeholder="状态" clearable>
@@ -762,12 +828,30 @@ onMounted(bootstrap)
             </el-form>
           </el-card>
           <el-card shadow="never">
+            <template #header><div class="card-title"><Key />修改账号密码</div></template>
+            <el-form :model="accountForm" label-width="120px" class="narrow-form">
+              <el-form-item label="账号"><el-input v-model="accountForm.username" /></el-form-item>
+              <el-form-item label="当前密码"><el-input v-model="accountForm.currentPassword" type="password" show-password /></el-form-item>
+              <el-form-item label="新密码"><el-input v-model="accountForm.newPassword" type="password" show-password /></el-form-item>
+              <el-form-item><el-button type="primary" @click="saveAccount">保存账号</el-button></el-form-item>
+            </el-form>
+          </el-card>
+        </div>
+        <div class="content-grid">
+          <el-card shadow="never">
             <template #header><div class="card-title"><Collection />当前会话</div></template>
             <el-table :data="sessions">
               <el-table-column prop="username" label="账号" />
               <el-table-column prop="createdAt" label="登录时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="current" label="当前" width="90"><template #default="{ row }"><el-tag v-if="row.current" type="success">当前</el-tag></template></el-table-column>
               <el-table-column label="操作" width="100"><template #default="{ row }"><el-button v-if="!row.current" size="small" @click="revokeSession(row.id)">退出</el-button></template></el-table-column>
+            </el-table>
+          </el-card>
+          <el-card shadow="never">
+            <template #header><div class="card-title"><Document />登录历史</div></template>
+            <el-table :data="auditLogs.filter((item) => item.action === 'auth.login').slice(0, 8)" height="280">
+              <el-table-column prop="createdAt" label="时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+              <el-table-column prop="username" label="账号" />
             </el-table>
           </el-card>
         </div>
@@ -788,7 +872,8 @@ onMounted(bootstrap)
             <template #header><div class="card-title"><Download />备份恢复</div></template>
             <div class="system-actions">
               <el-button type="primary" :icon="Download" @click="createBackup">一键备份</el-button>
-              <el-button :icon="Upload">上传恢复</el-button>
+              <el-button :icon="Upload" @click="openRestorePicker">上传恢复</el-button>
+              <input ref="backupFileInput" class="hidden-file" type="file" accept="application/json,.json" @change="restoreFromFile" />
               <span>{{ backupStatus || '自动保留最近配置快照，恢复前请确认版本。' }}</span>
             </div>
             <el-table :data="versions" height="360">

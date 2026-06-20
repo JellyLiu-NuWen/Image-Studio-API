@@ -54,6 +54,10 @@ export const adminApi = {
   }),
   auditLogs: () => requestJSON<{ records: AuditRecord[] }>('/audit-logs'),
   sessions: () => requestJSON<{ sessions: SessionRecord[] }>('/sessions'),
+  account: (body: { username: string; currentPassword: string; newPassword: string }) => requestJSON<{ ok: boolean; account: { username: string } }>('/account', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  }),
   revokeSession: (id: string) => requestJSON<{ ok: boolean }>('/sessions/revoke', {
     method: 'POST',
     body: JSON.stringify({ id })
@@ -91,6 +95,10 @@ export const adminApi = {
   backup: () => requestJSON<{ ok: boolean; backup: { createdAt: string; config: AdminConfig } }>('/backup', {
     method: 'POST',
     body: '{}'
+  }),
+  restore: (backup: { config: AdminConfig } | { backup: { config: AdminConfig } }) => requestJSON<{ ok: boolean; config: AdminConfig }>('/restore', {
+    method: 'POST',
+    body: JSON.stringify(backup)
   }),
   updateCheck: () => requestJSON<{ update: Record<string, string> }>('/update/check')
 }

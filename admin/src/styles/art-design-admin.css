@@ -254,6 +254,14 @@ button,
   letter-spacing: 0;
 }
 
+.dirty-hint {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--art-warning);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .eyebrow {
   color: var(--art-muted);
   font-size: 12px;
@@ -385,9 +393,17 @@ button,
   margin-bottom: 14px;
 }
 
+.log-actions {
+  margin-bottom: 14px;
+}
+
 .system-actions span {
   color: var(--art-muted);
   font-size: 13px;
+}
+
+.hidden-file {
+  display: none;
 }
 
 .el-card {
