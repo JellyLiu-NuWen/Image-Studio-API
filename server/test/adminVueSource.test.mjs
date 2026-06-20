@@ -499,13 +499,24 @@ test("Vue global search uses an Art Design Pro command dialog", async () => {
   assert.match(source, /document\.addEventListener\('keydown', handleGlobalSearchKeydown\)/, "Global search should register Ctrl/Command+K");
   assert.match(topbarSection, /@click="openGlobalSearch"/, "Search trigger should open the command dialog");
   assert.match(searchDialog, /global-search-command/, "Search should render a command dialog");
-  assert.match(searchDialog, /command-search-input/, "Command dialog should include a focused search input");
-  assert.match(searchDialog, /command-result-list/, "Command dialog should render command results");
-  assert.match(searchDialog, /command-shortcuts/, "Command dialog should show keyboard affordances");
+  assert.match(searchDialog, /art-command-search-input/, "Command dialog should include a focused Art search input");
+  assert.match(searchDialog, /art-command-result-list/, "Command dialog should render Art command results");
+  assert.match(searchDialog, /art-command-empty/, "Command dialog should render an Art empty state");
+  assert.match(searchDialog, /art-command-shortcuts/, "Command dialog should show Art keyboard affordances");
+  assert.doesNotMatch(searchDialog, /(?<![A-Za-z0-9_-])command-search-input(?![A-Za-z0-9_-])/, "Command dialog should not keep the generic command-search-input class");
+  assert.doesNotMatch(searchDialog, /(?<![A-Za-z0-9_-])command-result-list(?![A-Za-z0-9_-])/, "Command dialog should not keep the generic command-result-list class");
+  assert.doesNotMatch(searchDialog, /(?<![A-Za-z0-9_-])global-search-empty(?![A-Za-z0-9_-])/, "Command dialog should not keep the generic global-search-empty class");
+  assert.doesNotMatch(searchDialog, /(?<![A-Za-z0-9_-])command-shortcuts(?![A-Za-z0-9_-])/, "Command dialog should not keep the generic command-shortcuts class");
   assert.match(searchDialog, /@click="selectHeaderSearch/, "Command results should navigate to modules");
   assert.match(styleSource, /\.global-search-command/, "Styles should include command dialog shell");
-  assert.match(styleSource, /\.command-result-list/, "Styles should include command result list");
-  assert.match(styleSource, /\.command-shortcuts/, "Styles should include keyboard shortcut footer");
+  assert.match(styleSource, /\.art-command-search-input/, "Styles should include Art command search input");
+  assert.match(styleSource, /\.art-command-result-list/, "Styles should include Art command result list");
+  assert.match(styleSource, /\.art-command-empty/, "Styles should include Art command empty state");
+  assert.match(styleSource, /\.art-command-shortcuts/, "Styles should include Art keyboard shortcut footer");
+  assert.doesNotMatch(styleSource, /\.command-search-input(?![A-Za-z0-9_-])/, "Styles should remove the generic command-search-input selector");
+  assert.doesNotMatch(styleSource, /\.command-result-list(?![A-Za-z0-9_-])/, "Styles should remove the generic command-result-list selector");
+  assert.doesNotMatch(styleSource, /\.global-search-empty(?![A-Za-z0-9_-])/, "Styles should remove the generic global-search-empty selector");
+  assert.doesNotMatch(styleSource, /\.command-shortcuts(?![A-Za-z0-9_-])/, "Styles should remove the generic command-shortcuts selector");
 });
 
 test("Vue topbar settings open an Art Design Pro settings panel", async () => {

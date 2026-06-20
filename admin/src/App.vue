@@ -3370,7 +3370,7 @@ window.addEventListener('beforeunload', (event) => {
     </div>
 
     <el-dialog v-model="globalSearchVisible" width="620px" :show-close="false" class="global-search-command" @closed="closeGlobalSearch">
-      <div class="command-search-input">
+      <div class="art-command-search-input">
         <el-input
           ref="globalSearchInputRef"
           v-model="headerSearchKeyword"
@@ -3379,7 +3379,7 @@ window.addEventListener('beforeunload', (event) => {
           placeholder="搜索页面、配置、日志"
         />
       </div>
-      <div class="command-result-list">
+      <div class="art-command-result-list">
         <button
           v-for="(item, index) in headerSearchResults"
           :key="item.key"
@@ -3392,10 +3392,10 @@ window.addEventListener('beforeunload', (event) => {
           <span>{{ item.label }}</span>
           <small>{{ item.hint }}</small>
         </button>
-        <div v-if="!headerSearchResults.length" class="global-search-empty">没有匹配的模块</div>
+        <div v-if="!headerSearchResults.length" class="art-command-empty">没有匹配的模块</div>
       </div>
       <template #footer>
-        <div class="command-shortcuts">
+        <div class="art-command-shortcuts">
           <span><kbd>Enter</kbd> 进入</span>
           <span><kbd>↑ ↓</kbd> 切换</span>
           <span><kbd>Esc</kbd> 退出</span>
