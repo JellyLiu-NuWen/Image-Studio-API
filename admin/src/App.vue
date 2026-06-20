@@ -915,8 +915,13 @@ window.addEventListener('beforeunload', (event) => {
         <el-card shadow="never">
           <el-table :data="activeInterfaces" row-key="id">
             <el-table-column prop="name" label="名称" min-width="150" />
-            <el-table-column prop="apiTokenSet" label="API Key" width="120">
-              <template #default="{ row }"><el-tag :type="row.apiTokenSet ? 'success' : 'danger'">{{ row.apiTokenSet ? '已配置' : '未配置' }}</el-tag></template>
+            <el-table-column prop="apiTokenSet" label="API Key" width="150">
+              <template #default="{ row }">
+                <div class="key-preview">
+                  <el-tag :type="row.apiTokenSet ? 'success' : 'danger'">{{ row.apiTokenSet ? '已配置' : '未配置' }}</el-tag>
+                  <span v-if="row.apiTokenPreview">{{ row.apiTokenPreview }}</span>
+                </div>
+              </template>
             </el-table-column>
             <el-table-column prop="defaultImageModel" label="模型" min-width="140" />
             <el-table-column label="尺寸/质量" min-width="150">
@@ -963,8 +968,13 @@ window.addEventListener('beforeunload', (event) => {
           <el-table :data="activeUpstreams" row-key="id">
             <el-table-column prop="name" label="名称" min-width="160" />
             <el-table-column prop="baseURL" label="Base URL" min-width="260" show-overflow-tooltip />
-            <el-table-column prop="apiKeySet" label="API Key" width="120">
-              <template #default="{ row }"><el-tag :type="row.apiKeySet ? 'success' : 'danger'">{{ row.apiKeySet ? '已配置' : '未配置' }}</el-tag></template>
+            <el-table-column prop="apiKeySet" label="API Key" width="150">
+              <template #default="{ row }">
+                <div class="key-preview">
+                  <el-tag :type="row.apiKeySet ? 'success' : 'danger'">{{ row.apiKeySet ? '已配置' : '未配置' }}</el-tag>
+                  <span v-if="row.apiKeyPreview">{{ row.apiKeyPreview }}</span>
+                </div>
+              </template>
             </el-table-column>
             <el-table-column prop="priority" label="优先级" width="90" />
             <el-table-column prop="weight" label="权重" width="80" />

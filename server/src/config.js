@@ -37,6 +37,11 @@ export const DEFAULT_CONFIG = {
 const DEFAULT_INTERFACE_ID = "default";
 const DEFAULT_UPSTREAM_ID = "default";
 
+function secretPreview(value) {
+  const text = String(value || "");
+  return text ? `••••${text.slice(-4)}` : "";
+}
+
 const DEFAULT_ALERTS = {
   webhookEnabled: false,
   webhookURL: "",
@@ -622,6 +627,7 @@ export function publicConfig(config) {
       name: item.name,
       enabled: item.enabled,
       apiTokenSet: !!item.apiToken,
+      apiTokenPreview: secretPreview(item.apiToken),
       upstreamIds: item.upstreamIds,
       defaultImageModel: item.defaultImageModel,
       defaultTextModel: item.defaultTextModel,
@@ -640,6 +646,7 @@ export function publicConfig(config) {
       enabled: item.enabled,
       baseURL: item.baseURL,
       apiKeySet: !!item.apiKey,
+      apiKeyPreview: secretPreview(item.apiKey),
       priority: item.priority,
       weight: item.weight,
       healthCheckEnabled: item.healthCheckEnabled,

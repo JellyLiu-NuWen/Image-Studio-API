@@ -33,6 +33,7 @@ export interface StudioInterface {
   name: string
   enabled: boolean
   apiTokenSet: boolean
+  apiTokenPreview?: string
   apiToken?: string
   upstreamIds: string[]
   defaultImageModel: string
@@ -53,6 +54,7 @@ export interface StudioUpstream {
   enabled: boolean
   baseURL: string
   apiKeySet: boolean
+  apiKeyPreview?: string
   apiKey?: string
   priority: number
   weight: number

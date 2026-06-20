@@ -37,3 +37,20 @@ test("Vue model catalog exposes the complete model capability fields", async () 
   assert.match(modelDrawer, /upstreamIds/, "Model drawer should edit upstream bindings");
   assert.match(modelDrawer, /activeUpstreams/, "Model drawer should use configured upstream choices");
 });
+
+test("Vue interface and upstream tables expose masked key previews", async () => {
+  const source = await readAppSource();
+  const interfaceSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'upstreams'\"",
+  );
+  const upstreamSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'upstreams'\"",
+    "<section v-if=\"activeView === 'models'\"",
+  );
+
+  assert.match(interfaceSection, /apiTokenPreview/, "Interface table should show the masked client key suffix");
+  assert.match(upstreamSection, /apiKeyPreview/, "Upstream table should show the masked upstream key suffix");
+});

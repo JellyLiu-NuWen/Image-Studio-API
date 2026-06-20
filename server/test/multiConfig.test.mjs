@@ -43,8 +43,10 @@ test("publicConfig exposes interface and upstream secret flags without raw value
 
   const exposed = publicConfig(config);
   assert.equal(exposed.interfaces[0].apiTokenSet, true);
+  assert.equal(exposed.interfaces[0].apiTokenPreview, "••••oken");
   assert.equal(exposed.interfaces[0].apiToken, undefined);
   assert.equal(exposed.upstreams[0].apiKeySet, true);
+  assert.equal(exposed.upstreams[0].apiKeyPreview, "••••-key");
   assert.equal(exposed.upstreams[0].apiKey, undefined);
 });
 

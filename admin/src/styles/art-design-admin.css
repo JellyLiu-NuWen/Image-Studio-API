@@ -496,6 +496,19 @@ button,
   gap: 4px;
 }
 
+.key-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.key-preview span {
+  color: var(--art-muted);
+  font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
 .detail-stack {
   display: grid;
   gap: 14px;
