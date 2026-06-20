@@ -2999,7 +2999,7 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </template>
               <div class="alert-panel-body">
-                <el-form v-if="config" :model="alertsForm" label-width="150px" class="narrow-form">
+                <el-form v-if="config" :model="alertsForm" label-width="150px" class="art-alert-form">
                   <el-form-item label="Webhook 通知"><el-switch v-model="config.alerts.webhookEnabled" /></el-form-item>
                   <el-form-item label="Webhook URL"><el-input v-model="config.alerts.webhookURL" placeholder="https://hooks.example/a" /></el-form-item>
                   <el-form-item label="上游失败阈值"><el-input-number v-model="config.alerts.upstreamFailureThreshold" :min="1" /></el-form-item>

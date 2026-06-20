@@ -3002,6 +3002,10 @@ button,
   max-width: 720px;
 }
 
+.art-alert-form {
+  max-width: 720px;
+}
+
 .form-tip {
   margin-left: 10px;
   color: var(--art-muted);

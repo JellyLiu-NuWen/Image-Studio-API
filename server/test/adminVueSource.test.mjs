@@ -1150,10 +1150,13 @@ test("Vue alerts cards use Art Design Pro panels", async () => {
   assert.match(alertsSection, /alert-panel-actions/g, "Alert panels should group compact actions");
   assert.match(alertsSection, /alert-panel-action/, "Alert panel buttons should use compact action styling");
   assert.match(alertsSection, /art-alert-status-list/, "Alert notification status should use a dedicated Art status list");
+  assert.match(alertsSection, /art-alert-form/, "Alert rules should use a dedicated Art form layout");
   assert.doesNotMatch(alertsSection, /class="status-list"/, "Alert panels should not keep the legacy status-list class");
+  assert.doesNotMatch(alertsSection, /class="narrow-form"/, "Alert panels should not keep the generic narrow-form class");
   assert.match(styleSource, /\.art-alert-panel/, "Styles should include alert panel shell");
   assert.match(styleSource, /\.alert-panel-header/, "Styles should include alert panel header");
   assert.match(styleSource, /\.alert-panel-body/, "Styles should include alert panel body layout");
   assert.match(styleSource, /\.alert-panel-action/, "Styles should include alert panel actions");
   assert.match(styleSource, /\.art-alert-status-list/, "Styles should include alert status list styling");
+  assert.match(styleSource, /\.art-alert-form/, "Styles should include alert form layout");
 });
