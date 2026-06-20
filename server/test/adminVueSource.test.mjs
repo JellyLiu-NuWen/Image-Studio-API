@@ -259,11 +259,15 @@ test("Vue topbar exposes Art Design Pro header tools", async () => {
   assert.match(source, /headerSearchKeyword/, "Topbar should keep a global search keyword");
   assert.match(source, /headerSearchResults/, "Topbar should compute global search results");
   assert.match(source, /toggleFullscreen/, "Topbar should expose fullscreen switching");
+  assert.match(topbarSection, /art-header-actions/, "Topbar should render an Art header action group");
   assert.match(topbarSection, /header-tools/, "Topbar should render a template-style tools group");
+  assert.doesNotMatch(topbarSection, /topbar-actions/, "Topbar should not keep the generic topbar-actions class");
   assert.match(topbarSection, /global-search/, "Topbar should render a global search control");
   assert.match(topbarSection, /notification-entry/, "Topbar should render a notification entry");
   assert.match(topbarSection, /settings-entry/, "Topbar should render a settings entry");
   assert.match(topbarSection, /user-entry/, "Topbar should render a user entry");
+  assert.match(styleSource, /\.art-header-actions/, "Styles should include Art header action group layout");
+  assert.doesNotMatch(styleSource, /\.topbar-actions\b/, "Styles should remove the legacy topbar-actions selector");
   assert.match(styleSource, /\.header-tools/, "Styles should include header tools layout");
   assert.match(styleSource, /\.global-search/, "Styles should include global search layout");
   assert.match(styleSource, /\.notification-entry/, "Styles should include notification entry styling");

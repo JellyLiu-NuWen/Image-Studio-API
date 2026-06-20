@@ -1936,7 +1936,7 @@ window.addEventListener('beforeunload', (event) => {
           <h1>{{ currentTitle }}</h1>
           <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
         </div>
-        <div class="topbar-actions header-tools">
+        <div class="art-header-actions header-tools">
           <button type="button" class="header-tool header-menu-trigger" @click="toggleMenuVisibility" aria-label="切换菜单">
             <Operation />
           </button>
