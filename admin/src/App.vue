@@ -158,6 +158,12 @@ const tableSearch = reactive<Record<'interfaces' | 'upstreams' | 'models' | 'qua
   models: '',
   quality: ''
 })
+const tableSearchVisible = reactive<Record<TableModuleKey, boolean>>({
+  interfaces: true,
+  upstreams: true,
+  models: true,
+  quality: true
+})
 const tableDensity = ref<TableDensity>('comfortable')
 const tableColumnSettingsVisible = ref(false)
 const logFilter = reactive({
@@ -300,7 +306,7 @@ const activeTableModule = computed<TableModuleKey>(() => {
 })
 const visibleTableColumnOptions = computed(() => tableColumnOptions[activeTableModule.value])
 const tableHeaderTools = computed(() => [
-  { key: 'search', icon: Search, active: true },
+  { key: 'search', icon: Search, active: isTableSearchVisible(activeTableModule.value) },
   { key: 'refresh', icon: Refresh, active: false },
   { key: 'density', icon: Operation, active: tableDensity.value === 'compact' },
   { key: 'columns', icon: More, active: false }
@@ -1125,6 +1131,10 @@ function tableHeaderToolLabel(key: TableHeaderToolKey) {
 }
 
 function handleTableHeaderTool(key: TableHeaderToolKey) {
+  if (key === 'search') {
+    toggleTableSearchVisible()
+    return
+  }
   if (key === 'refresh') {
     refreshAll()
     return
@@ -1137,6 +1147,14 @@ function handleTableHeaderTool(key: TableHeaderToolKey) {
   if (key === 'columns') {
     tableColumnSettingsVisible.value = true
   }
+}
+
+function isTableSearchVisible(module: TableModuleKey) {
+  return tableSearchVisible[module] !== false
+}
+
+function toggleTableSearchVisible(module: TableModuleKey = activeTableModule.value) {
+  tableSearchVisible[module] = !isTableSearchVisible(module)
 }
 
 function isTableColumnVisible(module: TableModuleKey, key: string) {
@@ -2009,10 +2027,10 @@ window.addEventListener('beforeunload', (event) => {
       <section v-if="activeView === 'interfaces'" class="view-stack">
         <el-card shadow="never" class="table-workspace art-table-card">
           <div class="table-toolbar art-table-header">
-            <div class="table-header-main">
+            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('interfaces') }">
               <div class="card-title"><Connection />接口管理</div>
               <div class="toolbar-meta">共 {{ activeInterfaces.length }} 个接口，当前显示 {{ filteredInterfaces.length }} 个</div>
-              <el-input v-model="tableSearch.interfaces" clearable placeholder="搜索接口、模型、上游" />
+              <el-input v-show="isTableSearchVisible('interfaces')" v-model="tableSearch.interfaces" class="table-search-input" clearable placeholder="搜索接口、模型、上游" />
             </div>
             <div class="toolbar-actions">
               <div class="table-header-tools">
@@ -2084,10 +2102,10 @@ window.addEventListener('beforeunload', (event) => {
       <section v-if="activeView === 'upstreams'" class="view-stack">
         <el-card shadow="never" class="table-workspace art-table-card">
           <div class="table-toolbar art-table-header">
-            <div class="table-header-main">
+            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('upstreams') }">
               <div class="card-title"><Link />上游管理</div>
               <div class="toolbar-meta">共 {{ activeUpstreams.length }} 个上游，当前显示 {{ filteredUpstreams.length }} 个</div>
-              <el-input v-model="tableSearch.upstreams" clearable placeholder="搜索上游、URL、失败原因" />
+              <el-input v-show="isTableSearchVisible('upstreams')" v-model="tableSearch.upstreams" class="table-search-input" clearable placeholder="搜索上游、URL、失败原因" />
             </div>
             <div class="toolbar-actions">
               <div class="table-header-tools">
@@ -2160,10 +2178,10 @@ window.addEventListener('beforeunload', (event) => {
       <section v-if="activeView === 'models'" class="view-stack">
         <el-card shadow="never" class="table-workspace art-table-card">
           <div class="table-toolbar art-table-header">
-            <div class="table-header-main">
+            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('models') }">
               <div class="card-title"><Box />模型目录</div>
               <div class="toolbar-meta">共 {{ activeModels.length }} 个模型，当前显示 {{ filteredModels.length }} 个</div>
-              <el-input v-model="tableSearch.models" clearable placeholder="搜索模型、能力、用途" />
+              <el-input v-show="isTableSearchVisible('models')" v-model="tableSearch.models" class="table-search-input" clearable placeholder="搜索模型、能力、用途" />
             </div>
             <div class="toolbar-actions">
               <div class="table-header-tools">
@@ -2249,10 +2267,10 @@ window.addEventListener('beforeunload', (event) => {
         </div>
         <el-card shadow="never" class="table-workspace art-table-card">
           <div class="table-toolbar art-table-header">
-            <div class="table-header-main">
+            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('quality') }">
               <div class="card-title"><MagicStick />生图质量预设</div>
               <div class="toolbar-meta">共 {{ activePresets.length }} 个预设，当前显示 {{ filteredPresets.length }} 个</div>
-              <el-input v-model="tableSearch.quality" clearable placeholder="搜索预设、用途、模板" />
+              <el-input v-show="isTableSearchVisible('quality')" v-model="tableSearch.quality" class="table-search-input" clearable placeholder="搜索预设、用途、模板" />
             </div>
             <div class="toolbar-actions">
               <div class="table-header-tools">

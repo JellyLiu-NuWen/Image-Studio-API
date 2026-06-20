@@ -431,6 +431,44 @@ test("Vue management tables use the ArtTableHeader card pattern", async () => {
   assert.match(styleSource, /\.table-tool-button/, "Styles should include compact table tool buttons");
 });
 
+test("Vue management table search follows the ArtTableHeader search toggle", async () => {
+  const source = await readAppSource();
+  const interfaceSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'upstreams'\"",
+  );
+  const upstreamSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'upstreams'\"",
+    "<section v-if=\"activeView === 'models'\"",
+  );
+  const modelSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'models'\"",
+    "<section v-if=\"activeView === 'quality'\"",
+  );
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /tableSearchVisible/, "Management tables should track per-module search visibility");
+  assert.match(source, /isTableSearchVisible/, "Management tables should expose a search visibility helper");
+  assert.match(source, /toggleTableSearchVisible/, "Management tables should toggle search visibility from the header tool");
+  assert.match(sourceBetween(source, "function handleTableHeaderTool", "function isTableColumnVisible"), /key === 'search'/, "The search table tool should handle search visibility");
+
+  assert.match(interfaceSection, /search-hidden/, "Interface table header should expose hidden search state");
+  assert.match(interfaceSection, /v-show="isTableSearchVisible\('interfaces'\)"/, "Interface search input should be hideable");
+  assert.match(upstreamSection, /v-show="isTableSearchVisible\('upstreams'\)"/, "Upstream search input should be hideable");
+  assert.match(modelSection, /v-show="isTableSearchVisible\('models'\)"/, "Model search input should be hideable");
+  assert.match(qualitySection, /v-show="isTableSearchVisible\('quality'\)"/, "Quality search input should be hideable");
+  assert.match(styleSource, /\.table-header-main\.search-hidden/, "Styles should define hidden-search header layout");
+  assert.match(styleSource, /\.table-header-main \.table-search-input/, "Styles should scope table search inputs");
+});
+
 test("Vue management table headers expose ArtTable column visibility settings", async () => {
   const source = await readAppSource();
   const interfaceSection = sourceBetween(
