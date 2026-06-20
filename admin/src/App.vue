@@ -3092,84 +3092,103 @@ window.addEventListener('beforeunload', (event) => {
           </button>
         </div>
         <div class="system-workspace-grid">
-          <el-card shadow="never" class="backup-workspace">
+          <el-card shadow="never" class="backup-workspace art-system-panel system-backup-panel">
             <template #header>
-              <div class="section-actions">
-                <div class="card-title"><Download />备份恢复</div>
-                <div class="card-actions">
-                  <el-button type="primary" :icon="Download" @click="createBackup">一键备份</el-button>
-                  <el-button :icon="Upload" @click="openRestorePicker">上传恢复</el-button>
+              <div class="system-panel-header">
+                <div class="system-panel-title">
+                  <h4><Download />备份恢复</h4>
+                  <p>下载配置快照，上传备份文件恢复到指定版本。</p>
+                </div>
+                <div class="system-panel-actions">
+                  <el-button type="primary" class="system-panel-action" :icon="Download" @click="createBackup">一键备份</el-button>
+                  <el-button class="system-panel-action" :icon="Upload" @click="openRestorePicker">上传恢复</el-button>
                 </div>
               </div>
             </template>
-            <div class="system-actions">
-              <input ref="backupFileInput" class="hidden-file" type="file" accept="application/json,.json" @change="restoreFromFile" />
-              <span>{{ backupStatus || '自动保留最近配置快照，恢复前请确认版本。' }}</span>
-            </div>
-            <el-table :data="backups" :size="tableSize" height="320" empty-text="暂无备份">
-              <template #empty>
-                <div class="art-empty-state">
-                  <Download />
-                  <strong>{{ emptyState('backups').title }}</strong>
-                  <span>{{ emptyState('backups').description }}</span>
-                  <el-button type="primary" :icon="Download" @click="createBackup">一键备份</el-button>
-                </div>
-              </template>
-              <el-table-column prop="createdAt" label="备份时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
-              <el-table-column prop="username" label="操作者" width="120" />
-              <el-table-column prop="summary" label="摘要" min-width="180" />
-              <el-table-column label="操作" width="180">
-                <template #default="{ row }">
-                  <el-button size="small" @click="downloadBackup(row)">下载</el-button>
-                  <el-button size="small" type="warning" plain @click="restoreBackup(row.id)">恢复</el-button>
+            <div class="system-panel-body">
+              <div class="system-actions">
+                <input ref="backupFileInput" class="hidden-file" type="file" accept="application/json,.json" @change="restoreFromFile" />
+                <span>{{ backupStatus || '自动保留最近配置快照，恢复前请确认版本。' }}</span>
+              </div>
+              <el-table :data="backups" :size="tableSize" height="320" empty-text="暂无备份">
+                <template #empty>
+                  <div class="art-empty-state">
+                    <Download />
+                    <strong>{{ emptyState('backups').title }}</strong>
+                    <span>{{ emptyState('backups').description }}</span>
+                    <el-button type="primary" :icon="Download" @click="createBackup">一键备份</el-button>
+                  </div>
                 </template>
-              </el-table-column>
-            </el-table>
+                <el-table-column prop="createdAt" label="备份时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+                <el-table-column prop="username" label="操作者" width="120" />
+                <el-table-column prop="summary" label="摘要" min-width="180" />
+                <el-table-column label="操作" width="180">
+                  <template #default="{ row }">
+                    <el-button size="small" class="system-panel-action" @click="downloadBackup(row)">下载</el-button>
+                    <el-button size="small" type="warning" plain class="system-panel-action" @click="restoreBackup(row.id)">恢复</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
           </el-card>
-          <el-card shadow="never" class="version-workspace">
-            <template #header><div class="card-title"><Document />配置版本历史</div></template>
-            <el-table :data="versions" :size="tableSize" height="320" empty-text="暂无配置版本">
-              <template #empty>
-                <div class="art-empty-state">
-                  <Document />
-                  <strong>{{ emptyState('versions').title }}</strong>
-                  <span>{{ emptyState('versions').description }}</span>
-                  <el-button :icon="Finished" @click="saveConfig()">保存配置生成快照</el-button>
-                </div>
-              </template>
-              <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
-              <el-table-column prop="username" label="操作者" width="120" />
-              <el-table-column prop="summary" label="摘要" min-width="200" />
-              <el-table-column label="操作" width="120"><template #default="{ row }"><el-button size="small" @click="restoreVersion(row.id)">恢复</el-button></template></el-table-column>
-            </el-table>
-          </el-card>
-          <el-card shadow="never" class="update-workspace">
+          <el-card shadow="never" class="version-workspace art-system-panel system-version-panel">
             <template #header>
-              <div class="section-actions">
-                <div class="card-title"><Cpu />版本更新</div>
+              <div class="system-panel-header">
+                <div class="system-panel-title">
+                  <h4><Document />配置版本历史</h4>
+                  <p>每次保存前生成快照，可按时间点恢复配置。</p>
+                </div>
+              </div>
+            </template>
+            <div class="system-panel-body">
+              <el-table :data="versions" :size="tableSize" height="320" empty-text="暂无配置版本">
+                <template #empty>
+                  <div class="art-empty-state">
+                    <Document />
+                    <strong>{{ emptyState('versions').title }}</strong>
+                    <span>{{ emptyState('versions').description }}</span>
+                    <el-button :icon="Finished" class="system-panel-action" @click="saveConfig()">保存配置生成快照</el-button>
+                  </div>
+                </template>
+                <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+                <el-table-column prop="username" label="操作者" width="120" />
+                <el-table-column prop="summary" label="摘要" min-width="200" />
+                <el-table-column label="操作" width="120"><template #default="{ row }"><el-button size="small" class="system-panel-action" @click="restoreVersion(row.id)">恢复</el-button></template></el-table-column>
+              </el-table>
+            </div>
+          </el-card>
+          <el-card shadow="never" class="update-workspace art-system-panel system-update-panel">
+            <template #header>
+              <div class="system-panel-header">
+                <div class="system-panel-title">
+                  <h4><Cpu />版本更新</h4>
+                  <p>查看当前版本、远端发布状态和回滚入口。</p>
+                </div>
                 <el-tag :type="updateInfo.status === 'outdated' ? 'warning' : updateInfo.status === 'current' ? 'success' : 'info'">{{ updateInfo.status || 'unknown' }}</el-tag>
               </div>
             </template>
-            <div class="status-list">
-              <div><span>当前版本</span><strong>{{ updateInfo.currentVersion || 'dev' }}</strong></div>
-              <div><span>当前 Commit</span><strong>{{ updateInfo.currentCommit || '未知' }}</strong></div>
-              <div><span>Docker Tag</span><strong>{{ updateInfo.dockerImageTag || 'latest' }}</strong></div>
-              <div><span>最新版本</span><strong>{{ updateInfo.latestVersion || '未知' }}</strong></div>
-              <div><span>状态</span><strong>{{ updateInfo.status || 'unknown' }}</strong></div>
-              <div><span>来源</span><strong>{{ updateInfo.source || 'release' }}</strong></div>
-            </div>
-            <div class="update-actions">
-              <el-button type="primary" :icon="Download" @click="createBackup">更新前备份</el-button>
-              <el-button :disabled="!updateInfo.changelogURL && !updateInfo.releaseURL" @click="openUpdateLink">查看 Changelog</el-button>
-              <el-button :disabled="!updateInfo.rollbackCommand" @click="copyRollbackCommand">复制回滚命令</el-button>
-            </div>
-            <div v-if="updateInfo.changelog" class="changelog-preview">
-              <strong>Changelog</strong>
-              <pre>{{ updateInfo.changelog }}</pre>
-            </div>
-            <div v-if="updateInfo.rollbackCommand" class="rollback-command">
-              <span>回滚入口</span>
-              <code>{{ updateInfo.rollbackCommand }}</code>
+            <div class="system-panel-body">
+              <div class="status-list">
+                <div><span>当前版本</span><strong>{{ updateInfo.currentVersion || 'dev' }}</strong></div>
+                <div><span>当前 Commit</span><strong>{{ updateInfo.currentCommit || '未知' }}</strong></div>
+                <div><span>Docker Tag</span><strong>{{ updateInfo.dockerImageTag || 'latest' }}</strong></div>
+                <div><span>最新版本</span><strong>{{ updateInfo.latestVersion || '未知' }}</strong></div>
+                <div><span>状态</span><strong>{{ updateInfo.status || 'unknown' }}</strong></div>
+                <div><span>来源</span><strong>{{ updateInfo.source || 'release' }}</strong></div>
+              </div>
+              <div class="update-actions system-panel-actions">
+                <el-button type="primary" class="system-panel-action" :icon="Download" @click="createBackup">更新前备份</el-button>
+                <el-button class="system-panel-action" :disabled="!updateInfo.changelogURL && !updateInfo.releaseURL" @click="openUpdateLink">查看 Changelog</el-button>
+                <el-button class="system-panel-action" :disabled="!updateInfo.rollbackCommand" @click="copyRollbackCommand">复制回滚命令</el-button>
+              </div>
+              <div v-if="updateInfo.changelog" class="changelog-preview">
+                <strong>Changelog</strong>
+                <pre>{{ updateInfo.changelog }}</pre>
+              </div>
+              <div v-if="updateInfo.rollbackCommand" class="rollback-command">
+                <span>回滚入口</span>
+                <code>{{ updateInfo.rollbackCommand }}</code>
+              </div>
             </div>
           </el-card>
         </div>

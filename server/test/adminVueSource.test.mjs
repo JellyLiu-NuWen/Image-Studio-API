@@ -914,6 +914,30 @@ test("Vue system page uses an Art Design Pro backup and update workspace", async
   assert.match(styleSource, /\.update-workspace/, "Styles should include update workspace styling");
 });
 
+test("Vue system operation cards use Art Design Pro panels", async () => {
+  const source = await readAppSource();
+  const systemSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'system'\"",
+    "</main>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(systemSection, /art-system-panel/g, "System cards should use a reusable Art panel shell");
+  assert.match(systemSection, /system-backup-panel/, "System page should style the backup card");
+  assert.match(systemSection, /system-version-panel/, "System page should style the version history card");
+  assert.match(systemSection, /system-update-panel/, "System page should style the update card");
+  assert.match(systemSection, /system-panel-header/g, "System panels should use structured headers");
+  assert.match(systemSection, /system-panel-title/g, "System panels should expose title and helper copy");
+  assert.match(systemSection, /system-panel-body/g, "System panels should wrap body content consistently");
+  assert.match(systemSection, /system-panel-actions/g, "System panels should group compact actions");
+  assert.match(systemSection, /system-panel-action/, "System panel buttons should use compact action styling");
+  assert.match(styleSource, /\.art-system-panel/, "Styles should include system panel shell");
+  assert.match(styleSource, /\.system-panel-header/, "Styles should include system panel header");
+  assert.match(styleSource, /\.system-panel-body/, "Styles should include system panel body layout");
+  assert.match(styleSource, /\.system-panel-action/, "Styles should include system panel actions");
+});
+
 test("Vue alerts page uses an Art Design Pro alert center workspace", async () => {
   const source = await readAppSource();
   const alertsSection = sourceBetween(
