@@ -275,6 +275,20 @@ test("Vue topbar exposes Art Design Pro header tools", async () => {
   assert.match(styleSource, /\.user-entry/, "Styles should include user entry styling");
 });
 
+test("Vue stylesheet removes legacy generic action row hooks", async () => {
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(styleSource, /\.art-header-actions/, "Styles should keep the Art header action row");
+  assert.match(styleSource, /\.art-secret-line/, "Styles should keep the Art secret action row");
+  for (const legacyClass of ["section-actions", "card-actions", "tag-row"]) {
+    assert.doesNotMatch(
+      styleSource,
+      new RegExp(`\\.${legacyClass}\\b`),
+      `Styles should remove the legacy ${legacyClass} selector`,
+    );
+  }
+});
+
 test("Vue header and sidebar expose Art Design Pro menu collapse and mobile shell", async () => {
   const source = await readAppSource();
   const shellSection = sourceBetween(
