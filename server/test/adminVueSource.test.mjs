@@ -127,17 +127,42 @@ test("Vue dashboard uses an Art Design Pro console card list", async () => {
   assert.match(dashboardSection, /art-console-card-list/, "Dashboard metric row should use the console card-list shell");
   assert.match(dashboardSection, /v-for="item in dashboardSummaryCards"/, "Dashboard should render summary cards from metadata");
   assert.match(dashboardSection, /art-console-stat-card/, "Dashboard should render Art Design stat cards");
-  assert.match(dashboardSection, /console-stat-body/, "Dashboard cards should use the template card body layout");
-  assert.match(dashboardSection, /console-stat-trend/, "Dashboard cards should include the template trend row");
-  assert.match(dashboardSection, /console-stat-icon/, "Dashboard cards should include the right-side icon block");
+  assert.match(dashboardSection, /art-console-stat-body/, "Dashboard cards should use the Art template card body layout");
+  assert.match(dashboardSection, /art-console-stat-meta/, "Dashboard cards should use the Art stat metadata block");
+  assert.match(dashboardSection, /art-console-stat-trend/, "Dashboard cards should include the Art template trend row");
+  assert.match(dashboardSection, /art-console-stat-icon/, "Dashboard cards should include the Art right-side icon block");
   assert.match(dashboardSection, /<component :is="item.icon"/, "Dashboard card icons should be data-driven");
   assert.doesNotMatch(dashboardSection, /metric-card/, "Dashboard cards should not keep the legacy metric-card class");
+  for (const legacyClass of [
+    "console-stat-body",
+    "console-stat-meta",
+    "console-stat-trend",
+    "console-stat-icon",
+  ]) {
+    assert.doesNotMatch(
+      dashboardSection,
+      new RegExp(`(?<![A-Za-z0-9_-])${legacyClass}(?![A-Za-z0-9_-])`),
+      `Dashboard cards should not keep generic ${legacyClass} classes`,
+    );
+  }
   assert.match(styleSource, /\.art-console-card-list/, "Styles should include the console card-list grid");
   assert.match(styleSource, /\.art-console-stat-card/, "Styles should include console stat card styling");
-  assert.match(styleSource, /\.console-stat-body/, "Styles should include the console stat card body");
-  assert.match(styleSource, /\.console-stat-trend/, "Styles should include the console stat trend row");
-  assert.match(styleSource, /\.console-stat-icon/, "Styles should include console stat icon blocks");
+  assert.match(styleSource, /\.art-console-stat-body/, "Styles should include the Art console stat card body");
+  assert.match(styleSource, /\.art-console-stat-trend/, "Styles should include the Art console stat trend row");
+  assert.match(styleSource, /\.art-console-stat-icon/, "Styles should include Art console stat icon blocks");
   assert.doesNotMatch(styleSource, /\.metric-card\b/, "Styles should remove the legacy metric card rules");
+  for (const legacyClass of [
+    "console-stat-body",
+    "console-stat-meta",
+    "console-stat-trend",
+    "console-stat-icon",
+  ]) {
+    assert.doesNotMatch(
+      styleSource,
+      new RegExp(`\\.${legacyClass}(?![A-Za-z0-9_-])`),
+      `Styles should remove the generic ${legacyClass} selector`,
+    );
+  }
 });
 
 test("Vue dashboard chart modules use Art Design Pro console panels", async () => {

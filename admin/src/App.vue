@@ -2054,15 +2054,15 @@ window.addEventListener('beforeunload', (event) => {
             class="art-console-stat-card"
             :class="`tone-${item.tone}`"
           >
-            <div class="console-stat-body">
-              <div class="console-stat-meta">
+            <div class="art-console-stat-body">
+              <div class="art-console-stat-meta">
                 <span>{{ item.label }}</span>
                 <strong>{{ item.value }}</strong>
-                <div class="console-stat-trend">
+                <div class="art-console-stat-trend">
                   <span>{{ item.hint }}</span>
                 </div>
               </div>
-              <div class="console-stat-icon">
+              <div class="art-console-stat-icon">
                 <component :is="item.icon" />
               </div>
             </div>
