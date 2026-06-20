@@ -1533,17 +1533,6 @@ button,
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
 }
 
-.card-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 900;
-}
-
-.card-title svg {
-  width: 18px;
-}
-
 .version-title {
   margin: 12px 0;
 }

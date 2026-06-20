@@ -504,6 +504,7 @@ test("Vue management table titles use ArtTableHeader title blocks", async () => 
   assert.match(styleSource, /\.art-table-title/, "Styles should include Art table title styling");
   assert.match(styleSource, /\.art-table-meta/, "Styles should include Art table meta styling");
   assert.doesNotMatch(styleSource, /\.table-header-main \.card-title/, "Styles should no longer target legacy table card titles");
+  assert.doesNotMatch(styleSource, /(^|\n)\.card-title\b/, "Styles should not keep the standalone legacy card title selector");
 });
 
 test("Vue management table search follows the ArtTableHeader search toggle", async () => {
