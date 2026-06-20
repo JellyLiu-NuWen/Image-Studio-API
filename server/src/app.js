@@ -54,6 +54,10 @@ function requireAdminAuth(request, sessions) {
   return requireDashboardSession(request, sessions);
 }
 
+function forbidden(message = "Forbidden") {
+  return json({ error: { message } }, { status: 403 });
+}
+
 function requireDashboardSession(request, sessions) {
   const token = parseCookies(request).image_studio_session || "";
   if (!token || !sessions.has(token)) return unauthorized("请先登录后台");
@@ -78,6 +82,48 @@ function createApiToken() {
 
 function nowISO(now) {
   return new Date(now()).toISOString();
+}
+
+function clientIP(request) {
+  const forwarded = request.headers.get("x-forwarded-for") || "";
+  const first = forwarded.split(",").map((item) => item.trim()).find(Boolean);
+  return first || request.headers.get("x-real-ip") || "127.0.0.1";
+}
+
+function isIPAllowed(request, security = {}) {
+  const allowlist = Array.isArray(security.ipAllowlist) ? security.ipAllowlist : [];
+  if (!allowlist.length) return true;
+  const ip = clientIP(request);
+  return allowlist.includes(ip);
+}
+
+function createLoginGuard(now = () => Date.now()) {
+  const failures = new Map();
+  const maxFailures = 5;
+  const windowMs = 15 * 60_000;
+  const keyFor = (request, username) => `${clientIP(request)}:${String(username || "").trim().toLowerCase()}`;
+  return {
+    check(request, username, enabled) {
+      if (!enabled) return null;
+      const key = keyFor(request, username);
+      const current = now();
+      const bucket = (failures.get(key) || []).filter((timestamp) => current - timestamp < windowMs);
+      failures.set(key, bucket);
+      if (bucket.length >= maxFailures) return tooManyRequests("Login locked after too many failed attempts");
+      return null;
+    },
+    recordFailure(request, username, enabled) {
+      if (!enabled) return;
+      const key = keyFor(request, username);
+      const current = now();
+      const bucket = (failures.get(key) || []).filter((timestamp) => current - timestamp < windowMs);
+      bucket.push(current);
+      failures.set(key, bucket);
+    },
+    clear(request, username) {
+      failures.delete(keyFor(request, username));
+    },
+  };
 }
 
 function publicInterface(item) {
@@ -342,18 +388,33 @@ async function resolveAdminAccount(store, fallbackUsername, fallbackPassword) {
   return store.save(withHash);
 }
 
-async function handleLogin({ request, store, sessions, fallbackUsername, fallbackPassword, auditRecords, now }) {
+async function handleLogin({ request, store, sessions, fallbackUsername, fallbackPassword, auditRecords, loginGuard, now }) {
   if (request.method !== "POST") return methodNotAllowed();
   const body = await request.json().catch(() => ({}));
   const account = await resolveAdminAccount(store, fallbackUsername, fallbackPassword);
   const username = String(body.username || "").trim();
   const password = String(body.password || "");
+  if (!isIPAllowed(request, account.security)) {
+    appendAudit(auditRecords, "auth.ip-deny", { username, ip: clientIP(request) }, username || "admin", now);
+    return forbidden("IP is not allowed");
+  }
+  const lockoutEnabled = account.security.failedLoginLockoutEnabled !== false;
+  const lockout = loginGuard.check(request, username, lockoutEnabled);
+  if (lockout) {
+    appendAudit(auditRecords, "auth.locked", { username, ip: clientIP(request) }, username || "admin", now);
+    return lockout;
+  }
   if (!account.adminPasswordHash || username !== account.adminUsername) {
+    loginGuard.recordFailure(request, username, lockoutEnabled);
+    appendAudit(auditRecords, "auth.login-failed", { username, ip: clientIP(request) }, username || "admin", now);
     return unauthorized("账号或密码错误");
   }
   if (!(await verifyPassword(password, account.adminPasswordHash))) {
+    loginGuard.recordFailure(request, username, lockoutEnabled);
+    appendAudit(auditRecords, "auth.login-failed", { username, ip: clientIP(request) }, username || "admin", now);
     return unauthorized("账号或密码错误");
   }
+  loginGuard.clear(request, username);
   const sessionToken = createSessionToken();
   sessions.set(sessionToken, { id: createRequestId(), username: account.adminUsername, createdAt: now() });
   appendAudit(auditRecords, "auth.login", { username: account.adminUsername }, account.adminUsername, now);
@@ -652,6 +713,7 @@ export function createSelfHostedApp({
   if (!store) throw new Error("createSelfHostedApp requires a config store");
   if (!fetchImpl) throw new Error("createSelfHostedApp requires fetch");
   const rateLimiter = createRateLimiter(now);
+  const loginGuard = createLoginGuard(now);
   const sessions = new Map();
   const auditRecords = [];
   const configVersions = [];
@@ -683,6 +745,7 @@ export function createSelfHostedApp({
           fallbackUsername: adminUsername,
           fallbackPassword: adminPassword,
           auditRecords,
+          loginGuard,
           now,
         });
         return response;

@@ -839,6 +839,52 @@ test("admin login session can update the dashboard account password", async () =
   assert.equal(newLogin.status, 200);
 });
 
+test("admin security enforces ip allowlist and failed login lockout", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      security: {
+        ipAllowlist: ["203.0.113.10"],
+        failedLoginLockoutEnabled: true,
+      },
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      throw new Error("security checks must not call upstream");
+    },
+    now: (() => {
+      let current = Date.parse("2026-06-20T00:00:00.000Z");
+      return () => current;
+    })(),
+  });
+
+  const blocked = await app.handle(jsonRequest("/api/login", {
+    username: "admin",
+    password: "admin-pass",
+  }, {
+    "x-forwarded-for": "198.51.100.20",
+  }));
+  assert.equal(blocked.status, 403);
+
+  for (let index = 0; index < 5; index += 1) {
+    const failed = await app.handle(jsonRequest("/api/login", {
+      username: "admin",
+      password: "wrong-pass",
+    }, {
+      "x-forwarded-for": "203.0.113.10",
+    }));
+    assert.equal(failed.status, 401);
+  }
+
+  const locked = await app.handle(jsonRequest("/api/login", {
+    username: "admin",
+    password: "admin-pass",
+  }, {
+    "x-forwarded-for": "203.0.113.10",
+  }));
+  assert.equal(locked.status, 429);
+  assert.match((await locked.json()).error.message, /locked/i);
+});
+
 test("admin can rotate interface keys and clone interfaces", async () => {
   const store = memoryStore({
     interfaces: [{

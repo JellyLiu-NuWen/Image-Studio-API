@@ -1021,7 +1021,8 @@ window.addEventListener('beforeunload', (event) => {
           <el-card shadow="never">
             <template #header><div class="card-title"><Lock />账号与安全</div></template>
             <el-form v-if="config" label-width="140px" class="narrow-form">
-              <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
+              <el-alert title="启用 IP 白名单后，后台登录会按 x-forwarded-for / x-real-ip 校验来源；失败登录锁定会在同一 IP 与账号连续失败后临时拒绝登录。" type="info" show-icon :closable="false" />
+              <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP，例如 203.0.113.10" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
               <el-form-item label="失败登录锁定"><el-switch v-model="config.security.failedLoginLockoutEnabled" /></el-form-item>
               <el-form-item label="TOTP 二次验证"><el-switch v-model="config.security.totpEnabled" /></el-form-item>
               <el-form-item><el-button type="primary" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
@@ -1049,9 +1050,10 @@ window.addEventListener('beforeunload', (event) => {
           </el-card>
           <el-card shadow="never">
             <template #header><div class="card-title"><Document />登录历史</div></template>
-            <el-table :data="auditLogs.filter((item) => item.action === 'auth.login').slice(0, 8)" height="280">
+            <el-table :data="auditLogs.filter((item) => item.action.startsWith('auth.')).slice(0, 8)" height="280">
               <el-table-column prop="createdAt" label="时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="username" label="账号" />
+              <el-table-column prop="action" label="动作" />
             </el-table>
           </el-card>
         </div>
