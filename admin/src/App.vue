@@ -3648,8 +3648,8 @@ window.addEventListener('beforeunload', (event) => {
 
     <el-drawer v-model="logDetailVisible" title="请求详情" size="620px" destroy-on-close class="log-detail-drawer">
       <template v-if="selectedLog">
-        <div class="detail-stack">
-          <div class="detail-overview">
+        <div class="art-detail-stack">
+          <div class="art-detail-overview">
             <div>
               <span>{{ selectedLog.endpoint || selectedLog.path || '请求详情' }}</span>
               <h3>{{ selectedLog.id }}</h3>
@@ -3657,7 +3657,7 @@ window.addEventListener('beforeunload', (event) => {
             </div>
             <el-tag :type="selectedLog.status === 'failed' || Number(selectedLog.status) >= 400 ? 'danger' : 'success'">{{ selectedLog.status }}</el-tag>
           </div>
-          <div class="detail-summary-grid">
+          <div class="art-detail-summary-grid">
             <div v-for="item in logDetailSummaryCards" :key="item.label" :class="item.type">
               <span>{{ item.label }}</span>
               <strong>{{ item.value }}</strong>
@@ -3721,7 +3721,7 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </template>
       <template #footer>
-        <div class="detail-action-bar">
+        <div class="art-detail-action-bar">
           <div>
             <strong>{{ selectedLog?.id || '请求详情' }}</strong>
             <span>{{ selectedLog?.model || '未记录模型' }} · {{ formatDuration(selectedLog?.durationMs) }}</span>
