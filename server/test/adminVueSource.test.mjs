@@ -447,8 +447,10 @@ test("Vue management tables use an Art Design Pro style table workspace", async 
   assert.match(source, /filteredPresets/, "Quality preset table should have a filtered data source");
 
   for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
-    assert.match(section, /table-workspace/, "Management section should render a table workspace wrapper");
-    assert.match(section, /table-toolbar/, "Management section should render a table toolbar");
+    assert.match(section, /art-table-workspace/, "Management section should render an Art table workspace wrapper");
+    assert.match(section, /art-table-toolbar/, "Management section should render an Art table toolbar");
+    assert.doesNotMatch(section, /(?<![A-Za-z0-9_-])table-workspace(?![A-Za-z0-9_-])/, "Management section should not keep the generic table-workspace class");
+    assert.doesNotMatch(section, /(?<![A-Za-z0-9_-])table-toolbar(?![A-Za-z0-9_-])/, "Management section should not keep the generic table-toolbar class");
     assert.match(section, /tableSearch/, "Management section should expose module search");
     assert.match(section, /tableDensity/, "Management section should expose density controls");
     assert.match(section, /:size="tableSize"/, "Management table should respect density size");
@@ -458,9 +460,11 @@ test("Vue management tables use an Art Design Pro style table workspace", async 
   assert.match(upstreamSection, /filteredUpstreams/, "Upstream table should render filtered rows");
   assert.match(modelSection, /filteredModels/, "Model table should render filtered rows");
   assert.match(qualitySection, /filteredPresets/, "Quality preset table should render filtered rows");
-  assert.match(styleSource, /\.table-workspace/, "Styles should include table workspace layout");
-  assert.match(styleSource, /\.table-toolbar/, "Styles should include table toolbar layout");
-  assert.match(styleSource, /\.toolbar-meta/, "Styles should include compact table meta styling");
+  assert.match(styleSource, /\.art-table-workspace/, "Styles should include Art table workspace layout");
+  assert.match(styleSource, /\.art-table-toolbar/, "Styles should include Art table toolbar layout");
+  assert.doesNotMatch(styleSource, /\.table-workspace(?![A-Za-z0-9_-])/, "Styles should remove the legacy table-workspace selector");
+  assert.doesNotMatch(styleSource, /\.table-toolbar(?![A-Za-z0-9_-])/, "Styles should remove the legacy table-toolbar selector");
+  assert.doesNotMatch(styleSource, /\.toolbar-meta\b/, "Styles should remove the unused legacy toolbar-meta selector");
 });
 
 test("Vue management tables use the ArtTableHeader card pattern", async () => {
@@ -493,18 +497,25 @@ test("Vue management tables use the ArtTableHeader card pattern", async () => {
   for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
     assert.match(section, /art-table-card/, "Management card should use the Art table card shell");
     assert.match(section, /art-table-header/, "Management card should render an ArtTableHeader-style header");
-    assert.match(section, /table-header-main/, "Art table header should include the title/search side");
-    assert.match(section, /table-header-tools/, "Art table header should include the tool cluster");
-    assert.match(section, /table-tool-button/, "Art table header should render compact tool buttons");
+    assert.match(section, /art-table-header-main/, "Art table header should include the title/search side");
+    assert.match(section, /art-table-header-tools/, "Art table header should include the tool cluster");
+    assert.match(section, /art-table-tool-button/, "Art table header should render compact tool buttons");
+    assert.doesNotMatch(section, /(?<![A-Za-z0-9_-])table-header-main(?![A-Za-z0-9_-])/, "Art table header should not keep the generic table-header-main class");
+    assert.doesNotMatch(section, /(?<![A-Za-z0-9_-])table-header-tools(?![A-Za-z0-9_-])/, "Art table header should not keep the generic table-header-tools class");
+    assert.doesNotMatch(section, /(?<![A-Za-z0-9_-])table-tool-button(?![A-Za-z0-9_-])/, "Art table header should not keep the generic table-tool-button class");
     assert.match(section, /tableHeaderTools/, "Art table header should render the shared tool list");
     assert.match(section, /art-toolbar-actions/, "Art table header should use the shared Art toolbar action cluster");
     assert.doesNotMatch(section, /class="toolbar-actions"/, "Art table header should not keep the legacy toolbar actions class");
   }
   assert.match(styleSource, /\.art-table-card/, "Styles should include Art table card shell");
   assert.match(styleSource, /\.art-table-header/, "Styles should include ArtTableHeader layout");
-  assert.match(styleSource, /\.table-header-tools/, "Styles should include table header tool cluster");
-  assert.match(styleSource, /\.table-tool-button/, "Styles should include compact table tool buttons");
+  assert.match(styleSource, /\.art-table-header-main/, "Styles should include Art table header main layout");
+  assert.match(styleSource, /\.art-table-header-tools/, "Styles should include Art table header tool cluster");
+  assert.match(styleSource, /\.art-table-tool-button/, "Styles should include Art compact table tool buttons");
   assert.match(styleSource, /\.art-toolbar-actions/, "Styles should include the shared Art toolbar actions class");
+  assert.doesNotMatch(styleSource, /\.table-header-main(?![A-Za-z0-9_-])/, "Styles should remove the legacy table-header-main selector");
+  assert.doesNotMatch(styleSource, /\.table-header-tools(?![A-Za-z0-9_-])/, "Styles should remove the legacy table-header-tools selector");
+  assert.doesNotMatch(styleSource, /\.table-tool-button(?![A-Za-z0-9_-])/, "Styles should remove the legacy table-tool-button selector");
   assert.doesNotMatch(styleSource, /(^|\n)\.toolbar-actions\b/, "Styles should not keep the standalone legacy toolbar actions selector");
 });
 
@@ -525,7 +536,7 @@ test("Vue management table titles use ArtTableHeader title blocks", async () => 
   }
   assert.match(styleSource, /\.art-table-title/, "Styles should include Art table title styling");
   assert.match(styleSource, /\.art-table-meta/, "Styles should include Art table meta styling");
-  assert.doesNotMatch(styleSource, /\.table-header-main \.card-title/, "Styles should no longer target legacy table card titles");
+  assert.doesNotMatch(styleSource, /\.art-table-header-main \.card-title/, "Styles should no longer target legacy table card titles");
   assert.doesNotMatch(styleSource, /(^|\n)\.card-title\b/, "Styles should not keep the standalone legacy card title selector");
 });
 
@@ -559,12 +570,20 @@ test("Vue management table search follows the ArtTableHeader search toggle", asy
   assert.match(sourceBetween(source, "function handleTableHeaderTool", "function isTableColumnVisible"), /key === 'search'/, "The search table tool should handle search visibility");
 
   assert.match(interfaceSection, /search-hidden/, "Interface table header should expose hidden search state");
+  assert.match(interfaceSection, /art-table-search-input/, "Interface search input should use an Art table search class");
   assert.match(interfaceSection, /v-show="isTableSearchVisible\('interfaces'\)"/, "Interface search input should be hideable");
+  assert.match(upstreamSection, /art-table-search-input/, "Upstream search input should use an Art table search class");
   assert.match(upstreamSection, /v-show="isTableSearchVisible\('upstreams'\)"/, "Upstream search input should be hideable");
+  assert.match(modelSection, /art-table-search-input/, "Model search input should use an Art table search class");
   assert.match(modelSection, /v-show="isTableSearchVisible\('models'\)"/, "Model search input should be hideable");
+  assert.match(qualitySection, /art-table-search-input/, "Quality search input should use an Art table search class");
   assert.match(qualitySection, /v-show="isTableSearchVisible\('quality'\)"/, "Quality search input should be hideable");
-  assert.match(styleSource, /\.table-header-main\.search-hidden/, "Styles should define hidden-search header layout");
-  assert.match(styleSource, /\.table-header-main \.table-search-input/, "Styles should scope table search inputs");
+  for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
+    assert.doesNotMatch(section, /(?<![A-Za-z0-9_-])table-search-input(?![A-Za-z0-9_-])/, "Management table search should not keep the generic table-search-input class");
+  }
+  assert.match(styleSource, /\.art-table-header-main\.search-hidden/, "Styles should define hidden-search header layout");
+  assert.match(styleSource, /\.art-table-header-main \.art-table-search-input/, "Styles should scope Art table search inputs");
+  assert.doesNotMatch(styleSource, /\.table-search-input(?![A-Za-z0-9_-])/, "Styles should remove the legacy table-search-input selector");
 });
 
 test("Vue management table headers expose ArtTable column visibility settings", async () => {
@@ -818,7 +837,7 @@ test("Vue tables expose Art Design Pro empty states", async () => {
   assert.match(systemSection, /#empty/g, "System tables should provide custom empty slots");
   assert.match(source, /art-empty-state/g, "Tables should render the shared Art Design empty state");
   assert.match(styleSource, /\.art-empty-state/, "Styles should include the shared empty-state shell");
-  assert.match(styleSource, /\.table-workspace :deep\(\.el-table__empty-block\)/, "Styles should give empty tables stable template-like height");
+  assert.match(styleSource, /\.art-table-workspace :deep\(\.el-table__empty-block\)/, "Styles should give empty tables stable template-like height");
 });
 
 test("Vue config drawer uses an Art Design Pro form workspace", async () => {

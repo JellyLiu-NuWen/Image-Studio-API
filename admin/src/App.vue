@@ -2164,20 +2164,20 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'interfaces'" class="view-stack">
-        <el-card shadow="never" class="table-workspace art-table-card">
-          <div class="table-toolbar art-table-header">
-            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('interfaces') }">
+        <el-card shadow="never" class="art-table-workspace art-table-card">
+          <div class="art-table-toolbar art-table-header">
+            <div class="art-table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('interfaces') }">
               <div class="art-table-title">
                 <h4><Connection />接口管理</h4>
                 <span>Skill/API 调用入口</span>
               </div>
               <div class="art-table-meta">共 {{ activeInterfaces.length }} 个接口，当前显示 {{ filteredInterfaces.length }} 个</div>
-              <el-input v-show="isTableSearchVisible('interfaces')" v-model="tableSearch.interfaces" class="table-search-input" clearable placeholder="搜索接口、模型、上游" />
+              <el-input v-show="isTableSearchVisible('interfaces')" v-model="tableSearch.interfaces" class="art-table-search-input" clearable placeholder="搜索接口、模型、上游" />
             </div>
             <div class="art-toolbar-actions">
-              <div class="table-header-tools">
+              <div class="art-table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
-                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                  <button type="button" class="art-table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
                     <component :is="tool.icon" />
                   </button>
                 </el-tooltip>
@@ -2270,20 +2270,20 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'upstreams'" class="view-stack">
-        <el-card shadow="never" class="table-workspace art-table-card">
-          <div class="table-toolbar art-table-header">
-            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('upstreams') }">
+        <el-card shadow="never" class="art-table-workspace art-table-card">
+          <div class="art-table-toolbar art-table-header">
+            <div class="art-table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('upstreams') }">
               <div class="art-table-title">
                 <h4><Link />上游管理</h4>
                 <span>模型服务路由与健康</span>
               </div>
               <div class="art-table-meta">共 {{ activeUpstreams.length }} 个上游，当前显示 {{ filteredUpstreams.length }} 个</div>
-              <el-input v-show="isTableSearchVisible('upstreams')" v-model="tableSearch.upstreams" class="table-search-input" clearable placeholder="搜索上游、URL、失败原因" />
+              <el-input v-show="isTableSearchVisible('upstreams')" v-model="tableSearch.upstreams" class="art-table-search-input" clearable placeholder="搜索上游、URL、失败原因" />
             </div>
             <div class="art-toolbar-actions">
-              <div class="table-header-tools">
+              <div class="art-table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
-                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                  <button type="button" class="art-table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
                     <component :is="tool.icon" />
                   </button>
                 </el-tooltip>
@@ -2375,20 +2375,20 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'models'" class="view-stack">
-        <el-card shadow="never" class="table-workspace art-table-card">
-          <div class="table-toolbar art-table-header">
-            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('models') }">
+        <el-card shadow="never" class="art-table-workspace art-table-card">
+          <div class="art-table-toolbar art-table-header">
+            <div class="art-table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('models') }">
               <div class="art-table-title">
                 <h4><Box />模型目录</h4>
                 <span>能力、尺寸、质量与上游绑定</span>
               </div>
               <div class="art-table-meta">共 {{ activeModels.length }} 个模型，当前显示 {{ filteredModels.length }} 个</div>
-              <el-input v-show="isTableSearchVisible('models')" v-model="tableSearch.models" class="table-search-input" clearable placeholder="搜索模型、能力、用途" />
+              <el-input v-show="isTableSearchVisible('models')" v-model="tableSearch.models" class="art-table-search-input" clearable placeholder="搜索模型、能力、用途" />
             </div>
             <div class="art-toolbar-actions">
-              <div class="table-header-tools">
+              <div class="art-table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
-                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                  <button type="button" class="art-table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
                     <component :is="tool.icon" />
                   </button>
                 </el-tooltip>
@@ -2482,20 +2482,20 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </div>
         </div>
-        <el-card shadow="never" class="table-workspace art-table-card">
-          <div class="table-toolbar art-table-header">
-            <div class="table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('quality') }">
+        <el-card shadow="never" class="art-table-workspace art-table-card">
+          <div class="art-table-toolbar art-table-header">
+            <div class="art-table-header-main" :class="{ 'search-hidden': !isTableSearchVisible('quality') }">
               <div class="art-table-title">
                 <h4><MagicStick />生图质量预设</h4>
                 <span>Prompt 模板和默认参数</span>
               </div>
               <div class="art-table-meta">共 {{ activePresets.length }} 个预设，当前显示 {{ filteredPresets.length }} 个</div>
-              <el-input v-show="isTableSearchVisible('quality')" v-model="tableSearch.quality" class="table-search-input" clearable placeholder="搜索预设、用途、模板" />
+              <el-input v-show="isTableSearchVisible('quality')" v-model="tableSearch.quality" class="art-table-search-input" clearable placeholder="搜索预设、用途、模板" />
             </div>
             <div class="art-toolbar-actions">
-              <div class="table-header-tools">
+              <div class="art-table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
-                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                  <button type="button" class="art-table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
                     <component :is="tool.icon" />
                   </button>
                 </el-tooltip>
