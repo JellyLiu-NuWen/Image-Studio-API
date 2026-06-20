@@ -960,3 +960,27 @@ test("Vue alerts page uses an Art Design Pro alert center workspace", async () =
   assert.match(styleSource, /\.alert-queue-workspace/, "Styles should include alert queue workspace styling");
   assert.match(styleSource, /\.alert-rules-workspace/, "Styles should include alert rules workspace styling");
 });
+
+test("Vue alerts cards use Art Design Pro panels", async () => {
+  const source = await readAppSource();
+  const alertsSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'alerts'\"",
+    "<section v-if=\"activeView === 'security'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(alertsSection, /art-alert-panel/g, "Alert cards should use a reusable Art panel shell");
+  assert.match(alertsSection, /alert-queue-panel/, "Alerts page should style the alert queue card");
+  assert.match(alertsSection, /alert-notification-panel/, "Alerts page should style the notification status card");
+  assert.match(alertsSection, /alert-rules-panel/, "Alerts page should style the rules card");
+  assert.match(alertsSection, /alert-panel-header/g, "Alert panels should use structured headers");
+  assert.match(alertsSection, /alert-panel-title/g, "Alert panels should expose title and helper copy");
+  assert.match(alertsSection, /alert-panel-body/g, "Alert panels should wrap body content consistently");
+  assert.match(alertsSection, /alert-panel-actions/g, "Alert panels should group compact actions");
+  assert.match(alertsSection, /alert-panel-action/, "Alert panel buttons should use compact action styling");
+  assert.match(styleSource, /\.art-alert-panel/, "Styles should include alert panel shell");
+  assert.match(styleSource, /\.alert-panel-header/, "Styles should include alert panel header");
+  assert.match(styleSource, /\.alert-panel-body/, "Styles should include alert panel body layout");
+  assert.match(styleSource, /\.alert-panel-action/, "Styles should include alert panel actions");
+});

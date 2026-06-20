@@ -2866,58 +2866,81 @@ window.addEventListener('beforeunload', (event) => {
           </button>
         </div>
         <div class="alerts-workspace-grid">
-        <el-card shadow="never" class="alert-queue-workspace">
-          <template #header>
-            <div class="section-actions">
-              <div class="card-title"><Bell />当前告警</div>
-              <div class="card-actions">
-                <el-tag :type="pendingAlertCount ? 'danger' : 'success'">待处理 {{ pendingAlertCount }}</el-tag>
-                <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
-              </div>
-            </div>
-          </template>
-          <el-table :data="activeAlerts" :size="tableSize" height="420" empty-text="暂无活跃告警">
-            <template #empty>
-              <div class="art-empty-state">
-                <Bell />
-                <strong>{{ emptyState('alerts').title }}</strong>
-                <span>{{ emptyState('alerts').description }}</span>
-                <el-button :icon="Refresh" @click="refreshAll">刷新告警</el-button>
+          <el-card shadow="never" class="alert-queue-workspace art-alert-panel alert-queue-panel">
+            <template #header>
+              <div class="alert-panel-header">
+                <div class="alert-panel-title">
+                  <h4><Bell />当前告警</h4>
+                  <p>集中查看活跃风险、确认状态和处理入口。</p>
+                </div>
+                <div class="alert-panel-actions">
+                  <el-tag :type="pendingAlertCount ? 'danger' : 'success'">待处理 {{ pendingAlertCount }}</el-tag>
+                  <el-button class="alert-panel-action" :icon="Refresh" @click="refreshAll">刷新</el-button>
+                </div>
               </div>
             </template>
-            <el-table-column prop="severity" label="级别" width="110">
-              <template #default="{ row }"><el-tag :type="alertTagType(row.severity)">{{ row.severity }}</el-tag></template>
-            </el-table-column>
-            <el-table-column prop="title" label="告警" min-width="180" />
-            <el-table-column prop="message" label="说明" min-width="360" show-overflow-tooltip />
-            <el-table-column prop="acknowledged" label="状态" width="110">
-              <template #default="{ row }"><el-tag :type="row.acknowledged ? 'info' : 'danger'">{{ row.acknowledged ? '已确认' : '待处理' }}</el-tag></template>
-            </el-table-column>
-            <el-table-column label="操作" width="120">
-              <template #default="{ row }"><el-button size="small" :disabled="row.acknowledged" @click="acknowledgeAlert(row.id)">确认</el-button></template>
-            </el-table-column>
-          </el-table>
-        </el-card>
+            <div class="alert-panel-body">
+              <el-table :data="activeAlerts" :size="tableSize" height="420" empty-text="暂无活跃告警">
+                <template #empty>
+                  <div class="art-empty-state">
+                    <Bell />
+                    <strong>{{ emptyState('alerts').title }}</strong>
+                    <span>{{ emptyState('alerts').description }}</span>
+                    <el-button :icon="Refresh" @click="refreshAll">刷新告警</el-button>
+                  </div>
+                </template>
+                <el-table-column prop="severity" label="级别" width="110">
+                  <template #default="{ row }"><el-tag :type="alertTagType(row.severity)">{{ row.severity }}</el-tag></template>
+                </el-table-column>
+                <el-table-column prop="title" label="告警" min-width="180" />
+                <el-table-column prop="message" label="说明" min-width="360" show-overflow-tooltip />
+                <el-table-column prop="acknowledged" label="状态" width="110">
+                  <template #default="{ row }"><el-tag :type="row.acknowledged ? 'info' : 'danger'">{{ row.acknowledged ? '已确认' : '待处理' }}</el-tag></template>
+                </el-table-column>
+                <el-table-column label="操作" width="120">
+                  <template #default="{ row }"><el-button size="small" class="alert-panel-action" :disabled="row.acknowledged" @click="acknowledgeAlert(row.id)">确认</el-button></template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </el-card>
           <div class="alerts-side-stack">
-            <el-card shadow="never" class="notification-workspace">
-              <template #header><div class="card-title"><Bell />通知状态</div></template>
-              <div class="status-list">
-                <div><span>Webhook</span><strong>{{ config?.alerts.webhookEnabled ? '已启用' : '未启用' }}</strong></div>
-                <div><span>最近发送</span><strong>{{ notificationLabel(alertNotification.status) }}</strong></div>
-                <div><span>HTTP 状态</span><strong>{{ alertNotification.webhookStatus || '-' }}</strong></div>
-                <div><span>通知条数</span><strong>{{ alertNotification.alertCount || 0 }}</strong></div>
+            <el-card shadow="never" class="notification-workspace art-alert-panel alert-notification-panel">
+              <template #header>
+                <div class="alert-panel-header">
+                  <div class="alert-panel-title">
+                    <h4><Bell />通知状态</h4>
+                    <p>检查 webhook 通知是否启用，以及最近发送结果。</p>
+                  </div>
+                </div>
+              </template>
+              <div class="alert-panel-body">
+                <div class="status-list">
+                  <div><span>Webhook</span><strong>{{ config?.alerts.webhookEnabled ? '已启用' : '未启用' }}</strong></div>
+                  <div><span>最近发送</span><strong>{{ notificationLabel(alertNotification.status) }}</strong></div>
+                  <div><span>HTTP 状态</span><strong>{{ alertNotification.webhookStatus || '-' }}</strong></div>
+                  <div><span>通知条数</span><strong>{{ alertNotification.alertCount || 0 }}</strong></div>
+                </div>
               </div>
             </el-card>
-            <el-card shadow="never" class="alert-rules-workspace">
-              <template #header><div class="card-title"><Operation />告警规则</div></template>
-              <el-form v-if="config" :model="alertsForm" label-width="150px" class="narrow-form">
-                <el-form-item label="Webhook 通知"><el-switch v-model="config.alerts.webhookEnabled" /></el-form-item>
-                <el-form-item label="Webhook URL"><el-input v-model="config.alerts.webhookURL" placeholder="https://hooks.example/a" /></el-form-item>
-                <el-form-item label="上游失败阈值"><el-input-number v-model="config.alerts.upstreamFailureThreshold" :min="1" /></el-form-item>
-                <el-form-item label="成功率阈值"><el-input-number v-model="config.alerts.successRateThreshold" :min="1" :max="100" /></el-form-item>
-                <el-form-item label="P95 阈值 ms"><el-input-number v-model="config.alerts.p95LatencyMsThreshold" :min="100" /></el-form-item>
-                <el-form-item><el-button type="primary" @click="saveAlerts">保存告警配置</el-button></el-form-item>
-              </el-form>
+            <el-card shadow="never" class="alert-rules-workspace art-alert-panel alert-rules-panel">
+              <template #header>
+                <div class="alert-panel-header">
+                  <div class="alert-panel-title">
+                    <h4><Operation />告警规则</h4>
+                    <p>配置成功率、延迟、上游失败和 webhook 触发条件。</p>
+                  </div>
+                </div>
+              </template>
+              <div class="alert-panel-body">
+                <el-form v-if="config" :model="alertsForm" label-width="150px" class="narrow-form">
+                  <el-form-item label="Webhook 通知"><el-switch v-model="config.alerts.webhookEnabled" /></el-form-item>
+                  <el-form-item label="Webhook URL"><el-input v-model="config.alerts.webhookURL" placeholder="https://hooks.example/a" /></el-form-item>
+                  <el-form-item label="上游失败阈值"><el-input-number v-model="config.alerts.upstreamFailureThreshold" :min="1" /></el-form-item>
+                  <el-form-item label="成功率阈值"><el-input-number v-model="config.alerts.successRateThreshold" :min="1" :max="100" /></el-form-item>
+                  <el-form-item label="P95 阈值 ms"><el-input-number v-model="config.alerts.p95LatencyMsThreshold" :min="100" /></el-form-item>
+                  <el-form-item><el-button type="primary" class="alert-panel-action" @click="saveAlerts">保存告警配置</el-button></el-form-item>
+                </el-form>
+              </div>
             </el-card>
           </div>
         </div>
