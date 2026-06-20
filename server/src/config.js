@@ -389,7 +389,7 @@ function secretUpdateOrPrevious(value, previous = "") {
 }
 
 function legacyInterfaceFrom(values) {
-  return {
+  const item = {
     id: DEFAULT_INTERFACE_ID,
     name: "默认接口",
     apiToken: values.imageApiToken,
@@ -399,13 +399,14 @@ function legacyInterfaceFrom(values) {
     defaultSize: values.defaultSize,
     defaultQuality: values.defaultQuality || DEFAULT_CONFIG.defaultQuality,
     defaultOutputFormat: values.defaultOutputFormat,
-    qualityPresetId: values.qualityPresetId || "high-quality-final",
     requestTimeoutSeconds: values.requestTimeoutSeconds,
     maxConcurrentRequests: values.maxConcurrentRequests,
     rateLimitPerMinute: values.rateLimitPerMinute,
     lastUsedAt: values.lastUsedAt || "",
     enabled: true,
   };
+  if (hasOwnValue(values, "qualityPresetId")) item.qualityPresetId = values.qualityPresetId;
+  return item;
 }
 
 function legacyUpstreamFrom(values) {
@@ -423,6 +424,7 @@ function legacyUpstreamFrom(values) {
 
 function normalizeInterface(raw = {}, index = 0, previous = {}) {
   const id = normalizeId(raw.id, index === 0 ? DEFAULT_INTERFACE_ID : `interface-${index + 1}`);
+  const hasExplicitQualityPreset = hasOwnValue(raw, "qualityPresetId") || previous.qualityPresetExplicit === true;
   return {
     id,
     name: String(raw.name || previous.name || (id === DEFAULT_INTERFACE_ID ? "默认接口" : `接口 ${index + 1}`)).trim(),
@@ -435,6 +437,7 @@ function normalizeInterface(raw = {}, index = 0, previous = {}) {
     defaultQuality: String(raw.defaultQuality || previous.defaultQuality || DEFAULT_CONFIG.defaultQuality).trim() || DEFAULT_CONFIG.defaultQuality,
     defaultOutputFormat: String(raw.defaultOutputFormat || previous.defaultOutputFormat || DEFAULT_OUTPUT_FORMAT).trim() || DEFAULT_OUTPUT_FORMAT,
     qualityPresetId: normalizeId(raw.qualityPresetId || previous.qualityPresetId, "high-quality-final"),
+    qualityPresetExplicit: hasExplicitQualityPreset,
     requestTimeoutSeconds: positiveInteger(
       raw.requestTimeoutSeconds ?? previous.requestTimeoutSeconds,
       DEFAULT_CONFIG.requestTimeoutSeconds,

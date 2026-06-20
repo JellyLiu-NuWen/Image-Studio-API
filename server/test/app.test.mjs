@@ -157,6 +157,112 @@ test("image generation forwards with the server-side upstream key and defaults",
   assert.equal(captured.body.output_format, "png");
 });
 
+test("image generation applies the interface quality preset without changing user intent", async () => {
+  let captured = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+        defaultImageModel: "gpt-image-2",
+        defaultSize: "1024x1024",
+        defaultQuality: "medium",
+        defaultOutputFormat: "png",
+        qualityPresetId: "poster",
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://upstream.example/v1",
+        apiKey: "upstream-key",
+        enabled: true,
+      }],
+      qualityPresets: [{
+        id: "poster",
+        name: "Poster",
+        quality: "high",
+        size: "1536x1024",
+        outputFormat: "webp",
+        promptEnhance: false,
+        template: "模板说明不应覆盖用户意图",
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (_url, init) => {
+      captured = JSON.parse(await new Response(init.body).text());
+      return new Response(JSON.stringify({ data: [{ b64_json: "preset" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "画一个绿色骰子",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 200);
+  assert.equal(captured.prompt, "画一个绿色骰子");
+  assert.equal(captured.model, "gpt-image-2");
+  assert.equal(captured.size, "1536x1024");
+  assert.equal(captured.quality, "high");
+  assert.equal(captured.output_format, "webp");
+});
+
+test("image generation appends prompt preset templates only when enhancement is enabled", async () => {
+  let captured = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+        defaultImageModel: "gpt-image-2",
+        qualityPresetId: "product-shot",
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://upstream.example/v1",
+        apiKey: "upstream-key",
+        enabled: true,
+      }],
+      qualityPresets: [{
+        id: "product-shot",
+        name: "Product Shot",
+        quality: "high",
+        size: "1024x1024",
+        outputFormat: "png",
+        promptEnhance: true,
+        template: "商业摄影灯光，边缘清晰",
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (_url, init) => {
+      captured = JSON.parse(await new Response(init.body).text());
+      return new Response(JSON.stringify({ data: [{ b64_json: "enhanced" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "白底上的绿色骰子",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 200);
+  assert.match(captured.prompt, /^白底上的绿色骰子/);
+  assert.match(captured.prompt, /商业摄影灯光，边缘清晰/);
+});
+
 test("image generation falls back across multiple upstreams by priority", async () => {
   const calls = [];
   const app = createSelfHostedApp({
@@ -267,6 +373,150 @@ test("image edits forward multipart bodies with the server-side upstream key", a
   assert.match(captured.body, /name="prompt"/);
   assert.match(captured.body, /make it cinematic/);
   assert.match(captured.body, /name="image\[\]"; filename="input.png"/);
+});
+
+test("image edits apply missing defaults from the interface quality preset", async () => {
+  let captured = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+        defaultImageModel: "gpt-image-2",
+        qualityPresetId: "transparent-asset",
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://upstream.example/v1",
+        apiKey: "upstream-key",
+        enabled: true,
+      }],
+      qualityPresets: [{
+        id: "transparent-asset",
+        name: "Transparent Asset",
+        quality: "high",
+        size: "1024x1024",
+        outputFormat: "png",
+        promptEnhance: false,
+        template: "透明背景素材",
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (_url, init) => {
+      captured = await new Response(init.body).text();
+      return new Response(JSON.stringify({ data: [{ b64_json: "edited" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+  const body = [
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="prompt"',
+    "",
+    "裁成透明素材",
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="image"; filename="input.png"',
+    "Content-Type: image/png",
+    "",
+    "fake-image-bytes",
+    "--edit-boundary--",
+    "",
+  ].join("\r\n");
+
+  const response = await app.handle(new Request("http://localhost/v1/images/edits", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer client-token",
+      "content-type": "multipart/form-data; boundary=edit-boundary",
+    },
+    body,
+  }));
+
+  assert.equal(response.status, 200);
+  assert.match(captured, /name="model"\r\n\r\ngpt-image-2/);
+  assert.match(captured, /name="size"\r\n\r\n1024x1024/);
+  assert.match(captured, /name="quality"\r\n\r\nhigh/);
+  assert.match(captured, /name="output_format"\r\n\r\npng/);
+  assert.match(captured, /name="prompt"\r\n\r\n裁成透明素材/);
+});
+
+test("image edits keep explicit multipart image options over preset defaults", async () => {
+  let captured = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+        defaultImageModel: "gpt-image-2",
+        qualityPresetId: "poster",
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://upstream.example/v1",
+        apiKey: "upstream-key",
+        enabled: true,
+      }],
+      qualityPresets: [{
+        id: "poster",
+        name: "Poster",
+        quality: "high",
+        size: "1536x1024",
+        outputFormat: "webp",
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (_url, init) => {
+      captured = await new Response(init.body).text();
+      return new Response(JSON.stringify({ data: [{ b64_json: "edited" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+  const body = [
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="prompt"',
+    "",
+    "保持小尺寸",
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="size"',
+    "",
+    "1024x1024",
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="quality"',
+    "",
+    "medium",
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="image"; filename="input.png"',
+    "Content-Type: image/png",
+    "",
+    "fake-image-bytes",
+    "--edit-boundary--",
+    "",
+  ].join("\r\n");
+
+  const response = await app.handle(new Request("http://localhost/v1/images/edits", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer client-token",
+      "content-type": "multipart/form-data; boundary=edit-boundary",
+    },
+    body,
+  }));
+
+  assert.equal(response.status, 200);
+  assert.match(captured, /name="size"\r\n\r\n1024x1024/);
+  assert.doesNotMatch(captured, /name="size"\r\n\r\n1536x1024/);
+  assert.match(captured, /name="quality"\r\n\r\nmedium/);
+  assert.doesNotMatch(captured, /name="quality"\r\n\r\nhigh/);
+  assert.match(captured, /name="output_format"\r\n\r\nwebp/);
 });
 
 test("image streaming responses are returned before the upstream stream closes", async () => {

@@ -971,6 +971,10 @@ function configForClientInterface(config, clientInterface) {
   const upstreams = clientInterface.upstreamIds
     .map((id) => upstreamById.get(id))
     .filter((upstream) => upstream?.enabled);
+  const explicitPreset = clientInterface.qualityPresetExplicit === true;
+  const qualityPreset = explicitPreset
+    ? config.qualityPresets.find((preset) => preset.id === clientInterface.qualityPresetId) || null
+    : null;
   return {
     ...config,
     imageApiToken: clientInterface.apiToken,
@@ -984,6 +988,7 @@ function configForClientInterface(config, clientInterface) {
     rateLimitPerMinute: clientInterface.rateLimitPerMinute,
     interfaceId: clientInterface.id,
     interfaceName: clientInterface.name,
+    qualityPreset,
     upstreams,
     upstreamBaseURL: upstreams[0]?.baseURL || "",
     upstreamApiKey: upstreams[0]?.apiKey || "",

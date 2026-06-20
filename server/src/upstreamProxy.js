@@ -24,20 +24,34 @@ function copyPassthroughHeaders(request, upstreamApiKey, overrides = {}) {
 
 function withGenerationDefaults(body, config) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return body;
+  const preset = config.qualityPreset || {};
+  const prompt = enhancePrompt(body.prompt || "", preset);
   return {
     model: body.model || config.defaultImageModel,
-    prompt: body.prompt || "",
-    size: body.size || config.defaultSize,
-    quality: body.quality || config.defaultQuality,
-    output_format: body.output_format || body.outputFormat || config.defaultOutputFormat,
+    prompt,
+    size: body.size || preset.size || config.defaultSize,
+    quality: body.quality || preset.quality || config.defaultQuality,
+    output_format: body.output_format || body.outputFormat || preset.outputFormat || config.defaultOutputFormat,
     ...body,
+    prompt,
   };
+}
+
+function enhancePrompt(prompt, preset = {}) {
+  const base = String(prompt || "").trim();
+  const template = String(preset.template || "").trim();
+  if (!preset.promptEnhance || !template) return base;
+  if (!base) return template;
+  return `${base}\n\nQuality preset guidance: ${template}`;
 }
 
 async function readBodyBuffer(request, config, pathname) {
   if (request.method === "GET" || request.method === "HEAD") return { bodyBuffer: null, parsedBody: null };
   const contentType = request.headers.get("content-type") || "";
   const raw = await request.arrayBuffer();
+  if (pathname === "/v1/images/edits" && contentType.toLowerCase().includes("multipart/form-data")) {
+    return { bodyBuffer: withMultipartEditDefaults(raw, contentType, config), parsedBody: null };
+  }
   if (!contentType.toLowerCase().includes("application/json")) {
     return { bodyBuffer: raw, parsedBody: null };
   }
@@ -55,6 +69,72 @@ async function readBodyBuffer(request, config, pathname) {
     };
   }
   return { bodyBuffer: raw, parsedBody };
+}
+
+function withMultipartEditDefaults(raw, contentType, config) {
+  const boundary = multipartBoundary(contentType);
+  if (!boundary) return raw;
+  const text = new TextDecoder().decode(raw);
+  const preset = config.qualityPreset || {};
+  const fields = {
+    model: config.defaultImageModel,
+    size: preset.size || config.defaultSize,
+    quality: preset.quality || config.defaultQuality,
+    output_format: preset.outputFormat || config.defaultOutputFormat,
+  };
+  const additions = [];
+  for (const [name, value] of Object.entries(fields)) {
+    if (value && !multipartHasField(text, name)) {
+      additions.push(multipartTextPart(boundary, name, value));
+    }
+  }
+  if (!additions.length) return raw;
+  return insertBeforeMultipartClose(raw, boundary, additions.join(""));
+}
+
+function multipartBoundary(contentType) {
+  const match = String(contentType || "").match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+  return (match?.[1] || match?.[2] || "").trim();
+}
+
+function multipartHasField(text, name) {
+  return new RegExp(`name="${escapeRegExp(name)}"`).test(text);
+}
+
+function multipartTextPart(boundary, name, value) {
+  return `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`;
+}
+
+function insertBeforeMultipartClose(raw, boundary, text) {
+  const bytes = new Uint8Array(raw);
+  const marker = new TextEncoder().encode(`--${boundary}--`);
+  const index = lastIndexOfBytes(bytes, marker);
+  if (index < 0) return raw;
+  const addition = new TextEncoder().encode(text);
+  const merged = new Uint8Array(bytes.length + addition.length);
+  merged.set(bytes.slice(0, index), 0);
+  merged.set(addition, index);
+  merged.set(bytes.slice(index), index + addition.length);
+  return merged.buffer;
+}
+
+function lastIndexOfBytes(bytes, needle) {
+  if (!needle.length || needle.length > bytes.length) return -1;
+  for (let index = bytes.length - needle.length; index >= 0; index -= 1) {
+    let matches = true;
+    for (let offset = 0; offset < needle.length; offset += 1) {
+      if (bytes[index + offset] !== needle[offset]) {
+        matches = false;
+        break;
+      }
+    }
+    if (matches) return index;
+  }
+  return -1;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function bodyRequestsStream(request, bodyBuffer, parsedBody) {
