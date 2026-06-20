@@ -837,6 +837,29 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.match(styleSource, /\.detail-action-bar/, "Styles should include detail action bar styling");
 });
 
+test("Vue log detail diagnostic cards use Art Design Pro panels", async () => {
+  const source = await readAppSource();
+  const detailDrawer = sourceBetween(
+    source,
+    "<el-drawer v-model=\"logDetailVisible\"",
+    "</el-drawer>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(detailDrawer, /art-detail-panel/, "Detail cards should share an Art detail panel class");
+  assert.match(detailDrawer, /detail-panel-header/, "Detail cards should render a structured header");
+  assert.match(detailDrawer, /detail-panel-title/, "Detail cards should expose a title block");
+  assert.match(detailDrawer, /detail-panel-meta/, "Detail cards should expose metadata in the header");
+  assert.match(detailDrawer, /detail-panel-body/, "Detail cards should wrap content in a panel body");
+  assert.match(detailDrawer, /route-detail-panel/, "Route card should use the shared detail panel shell");
+  assert.match(detailDrawer, /diagnostic-detail-panel/, "Diagnostic card should use the shared detail panel shell");
+  assert.match(detailDrawer, /curl-detail-panel/, "Curl card should use the shared detail panel shell");
+  assert.doesNotMatch(detailDrawer, /<template #header><div class="card-title"/, "Log detail drawer should not use legacy one-line card titles");
+  assert.match(styleSource, /\.art-detail-panel/, "Styles should include the Art detail panel shell");
+  assert.match(styleSource, /\.detail-panel-header/, "Styles should include detail panel header styling");
+  assert.match(styleSource, /\.detail-panel-body/, "Styles should include detail panel body styling");
+});
+
 test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
   const source = await readAppSource();
   const usageSection = sourceBetween(

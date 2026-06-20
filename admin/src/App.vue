@@ -3638,23 +3638,59 @@ window.addEventListener('beforeunload', (event) => {
               <small>{{ item.hint }}</small>
             </div>
           </div>
-          <el-card shadow="never" class="detail-route-card">
-            <template #header><div class="card-title"><Connection />故障转移链路</div></template>
-            <div class="detail-route-steps">
-              <div v-for="item in logDetailRouteSteps" :key="item.index + item.name" :class="{ active: item.active }">
-                <i>{{ item.index }}</i>
-                <span>{{ item.name }}</span>
-                <small>{{ item.hint }}</small>
+          <el-card shadow="never" class="detail-route-card art-detail-panel route-detail-panel">
+            <template #header>
+              <div class="detail-panel-header">
+                <div class="detail-panel-title">
+                  <h4><Connection />故障转移链路</h4>
+                  <p>展示本次请求经过的上游路由和重试路径。</p>
+                </div>
+                <div class="detail-panel-meta">
+                  <span>{{ logDetailRouteSteps.length }} 步</span>
+                </div>
+              </div>
+            </template>
+            <div class="detail-panel-body">
+              <div class="detail-route-steps">
+                <div v-for="item in logDetailRouteSteps" :key="item.index + item.name" :class="{ active: item.active }">
+                  <i>{{ item.index }}</i>
+                  <span>{{ item.name }}</span>
+                  <small>{{ item.hint }}</small>
+                </div>
               </div>
             </div>
           </el-card>
-          <el-card shadow="never" class="detail-diagnostic-card">
-            <template #header><div class="card-title"><Document />错误摘要</div></template>
-            <p class="detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
+          <el-card shadow="never" class="detail-diagnostic-card art-detail-panel diagnostic-detail-panel">
+            <template #header>
+              <div class="detail-panel-header">
+                <div class="detail-panel-title">
+                  <h4><Document />错误摘要</h4>
+                  <p>保留脱敏后的失败原因，便于复盘和告警判断。</p>
+                </div>
+                <div class="detail-panel-meta">
+                  <span>{{ selectedLog.errorSummary ? '已记录' : '无错误' }}</span>
+                </div>
+              </div>
+            </template>
+            <div class="detail-panel-body">
+              <p class="detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
+            </div>
           </el-card>
-          <el-card shadow="never" class="detail-curl-card">
-            <template #header><div class="card-title"><Document />脱敏 curl</div></template>
-            <pre class="curl-block">{{ sanitizedCurl(selectedLog) }}</pre>
+          <el-card shadow="never" class="detail-curl-card art-detail-panel curl-detail-panel">
+            <template #header>
+              <div class="detail-panel-header">
+                <div class="detail-panel-title">
+                  <h4><Document />脱敏 curl</h4>
+                  <p>用于本地重放请求，敏感 Token 已统一隐藏。</p>
+                </div>
+                <div class="detail-panel-meta">
+                  <span>可复制</span>
+                </div>
+              </div>
+            </template>
+            <div class="detail-panel-body">
+              <pre class="curl-block">{{ sanitizedCurl(selectedLog) }}</pre>
+            </div>
           </el-card>
         </div>
       </template>
