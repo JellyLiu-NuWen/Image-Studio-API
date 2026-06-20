@@ -2468,16 +2468,16 @@ window.addEventListener('beforeunload', (event) => {
 
       <section v-if="activeView === 'quality'" class="view-stack">
         <div class="art-quality-stats-grid">
-          <div v-for="item in qualitySummaryCards" :key="item.label" class="quality-stat-card art-card" :class="`tone-${item.tone}`">
-            <div class="quality-stat-body">
+          <div v-for="item in qualitySummaryCards" :key="item.label" class="art-quality-stat-card" :class="`tone-${item.tone}`">
+            <div class="art-quality-stat-content">
               <p>{{ item.label }}</p>
               <strong>{{ item.value }}</strong>
               <span>{{ item.hint }}</span>
             </div>
-            <div class="quality-stat-icon">
+            <div class="art-quality-stat-icon">
               <component :is="item.icon" />
             </div>
-            <div class="quality-stat-arrow">
+            <div class="art-quality-stat-arrow">
               <ArrowUpBold />
             </div>
           </div>

@@ -704,14 +704,17 @@ test("Vue quality metrics use ArtStatsCard style cards", async () => {
   assert.match(source, /qualitySummaryCards/, "Quality metrics should be driven by summary card metadata");
   assert.match(qualitySection, /art-quality-stats-grid/, "Quality metrics should use a dedicated Art stats grid");
   assert.match(qualitySection, /v-for="item in qualitySummaryCards"/, "Quality metrics should render from metadata");
-  assert.match(qualitySection, /quality-stat-card/, "Quality metrics should use ArtStatsCard style card shells");
-  assert.match(qualitySection, /quality-stat-icon/, "Quality metric cards should include an icon block");
-  assert.match(qualitySection, /quality-stat-body/, "Quality metric cards should separate metric copy from icon chrome");
-  assert.match(qualitySection, /quality-stat-arrow/, "Quality metric cards should include the template-style trailing arrow cue");
+  assert.match(qualitySection, /art-quality-stat-card/, "Quality metrics should use ArtStatsCard style card shells");
+  assert.match(qualitySection, /art-quality-stat-icon/, "Quality metric cards should include an icon block");
+  assert.match(qualitySection, /art-quality-stat-content/, "Quality metric cards should separate metric copy from icon chrome");
+  assert.match(qualitySection, /art-quality-stat-arrow/, "Quality metric cards should include the template-style trailing arrow cue");
   assert.match(qualitySection, /<component :is="item.icon"/, "Quality metric card icons should be data-driven");
+  assert.doesNotMatch(qualitySection, /quality-stat-card art-card/, "Quality metric cards should not keep the legacy card shell");
   assert.match(styleSource, /\.art-quality-stats-grid/, "Styles should include quality stats grid layout");
-  assert.match(styleSource, /\.quality-stat-card/, "Styles should include quality stat card styling");
-  assert.match(styleSource, /\.quality-stat-icon/, "Styles should include quality stat icon blocks");
+  assert.match(styleSource, /\.art-quality-stat-card/, "Styles should include quality stat card styling");
+  assert.match(styleSource, /\.art-quality-stat-content/, "Styles should include quality stat content styling");
+  assert.match(styleSource, /\.art-quality-stat-icon/, "Styles should include quality stat icon blocks");
+  assert.doesNotMatch(styleSource, /\.quality-stat-card\b/, "Styles should remove the legacy quality stat card selector");
 });
 
 test("Vue quality preset cards use an Art Design Pro card template", async () => {
