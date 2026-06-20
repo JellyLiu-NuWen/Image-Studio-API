@@ -94,6 +94,12 @@ jobs:
             printf '\nIMAGE_STUDIO_API_HOST_PORT=%s\n' "$host_port" >> "${release_dir}/.env"
           fi
 
+          if grep -q '^IMAGE_STUDIO_COMMIT=' "${release_dir}/.env"; then
+            sed -i "s/^IMAGE_STUDIO_COMMIT=.*/IMAGE_STUDIO_COMMIT=${short_sha}/" "${release_dir}/.env"
+          else
+            printf '\nIMAGE_STUDIO_COMMIT=%s\n' "$short_sha" >> "${release_dir}/.env"
+          fi
+
           if [ -e "$current_link" ] && [ ! -L "$current_link" ]; then
             echo "$current_link exists and is not a symlink"
             exit 1

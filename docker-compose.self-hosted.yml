@@ -11,6 +11,8 @@ services:
     environment:
       CONFIG_PATH: /data/config.json
       IMAGE_STUDIO_VERSION: ${IMAGE_STUDIO_API_TAG:-dev}
+      IMAGE_STUDIO_COMMIT: ${IMAGE_STUDIO_COMMIT:-}
+      IMAGE_STUDIO_API_TAG: ${IMAGE_STUDIO_API_TAG:-latest}
       IMAGE_STUDIO_GITHUB_REPOSITORY: ${IMAGE_STUDIO_GITHUB_REPOSITORY:-JellyLiu-NuWen/Image-Studio-API}
     ports:
       - "${IMAGE_STUDIO_API_HOST_PORT:-8787}:8787"

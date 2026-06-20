@@ -423,6 +423,47 @@ button,
   font-size: 13px;
 }
 
+.update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.changelog-preview,
+.rollback-command {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--art-border);
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.changelog-preview strong,
+.rollback-command span {
+  display: block;
+  margin-bottom: 8px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.changelog-preview pre {
+  max-height: 180px;
+  margin: 0;
+  overflow: auto;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.rollback-command code {
+  display: block;
+  color: #0f172a;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
 .totp-panel {
   display: grid;
   gap: 14px;

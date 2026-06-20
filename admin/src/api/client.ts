@@ -15,6 +15,7 @@ import type {
   SessionRecord,
   StudioModel,
   UpstreamHealthRecord,
+  UpdateInfo,
   UsageResponse
 } from './types'
 
@@ -140,5 +141,5 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify(backup)
   }),
-  updateCheck: () => requestJSON<{ update: Record<string, string> }>('/update/check')
+  updateCheck: () => requestJSON<{ update: UpdateInfo }>('/update/check')
 }

@@ -227,6 +227,19 @@ export interface UsageResponse {
   }
 }
 
+export interface UpdateInfo {
+  currentVersion?: string
+  currentCommit?: string
+  dockerImageTag?: string
+  latestVersion?: string
+  status?: string
+  source?: string
+  releaseURL?: string
+  changelogURL?: string
+  changelog?: string
+  rollbackCommand?: string
+}
+
 export interface ConfigVersion {
   id: string
   createdAt: string

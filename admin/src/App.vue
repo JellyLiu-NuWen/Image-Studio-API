@@ -46,6 +46,7 @@ import type {
   StudioModel,
   StudioUpstream,
   UpstreamHealthRecord,
+  UpdateInfo,
   UsageBucket,
   UsageResponse
 } from '@/api/types'
@@ -96,7 +97,7 @@ const versions = ref<ConfigVersion[]>([])
 const backups = ref<BackupRecord[]>([])
 const auditLogs = ref<AuditRecord[]>([])
 const sessions = ref<SessionRecord[]>([])
-const updateInfo = ref<Record<string, string>>({})
+const updateInfo = ref<UpdateInfo>({})
 const activeAlerts = ref<ActiveAlert[]>([])
 const alertSummary = ref<AlertSummary>({ total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 })
 const alertNotification = ref<AlertNotification>({ status: 'idle' })
@@ -558,6 +559,21 @@ function exportLogs(format: 'jsonl' | 'csv') {
     if (value !== undefined && value !== '') params.set(key, String(value))
   }
   window.location.href = `/api/logs/export?${params.toString()}`
+}
+
+function openUpdateLink() {
+  const url = updateInfo.value.changelogURL || updateInfo.value.releaseURL
+  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+async function copyRollbackCommand() {
+  const command = updateInfo.value.rollbackCommand || ''
+  if (!command) {
+    ElMessage.warning('暂无回滚命令')
+    return
+  }
+  await navigator.clipboard?.writeText(command)
+  ElMessage.success('已复制回滚命令')
 }
 
 async function refreshLogsOnly() {
@@ -1273,9 +1289,24 @@ window.addEventListener('beforeunload', (event) => {
             <template #header><div class="card-title"><Cpu />版本更新</div></template>
             <div class="status-list">
               <div><span>当前版本</span><strong>{{ updateInfo.currentVersion || 'dev' }}</strong></div>
+              <div><span>当前 Commit</span><strong>{{ updateInfo.currentCommit || '未知' }}</strong></div>
+              <div><span>Docker Tag</span><strong>{{ updateInfo.dockerImageTag || 'latest' }}</strong></div>
               <div><span>最新版本</span><strong>{{ updateInfo.latestVersion || '未知' }}</strong></div>
               <div><span>状态</span><strong>{{ updateInfo.status || 'unknown' }}</strong></div>
               <div><span>来源</span><strong>{{ updateInfo.source || 'release' }}</strong></div>
+            </div>
+            <div class="update-actions">
+              <el-button type="primary" :icon="Download" @click="createBackup">更新前备份</el-button>
+              <el-button :disabled="!updateInfo.changelogURL && !updateInfo.releaseURL" @click="openUpdateLink">查看 Changelog</el-button>
+              <el-button :disabled="!updateInfo.rollbackCommand" @click="copyRollbackCommand">复制回滚命令</el-button>
+            </div>
+            <div v-if="updateInfo.changelog" class="changelog-preview">
+              <strong>Changelog</strong>
+              <pre>{{ updateInfo.changelog }}</pre>
+            </div>
+            <div v-if="updateInfo.rollbackCommand" class="rollback-command">
+              <span>回滚入口</span>
+              <code>{{ updateInfo.rollbackCommand }}</code>
             </div>
           </el-card>
         </div>
