@@ -814,6 +814,29 @@ test("Vue logs page query panel follows the ArtSearchBar template pattern", asyn
   assert.match(styleSource, /\.filter-toggle/, "Styles should include the expand toggle");
 });
 
+test("Vue logs page panels use Art Design Pro panel headers", async () => {
+  const source = await readAppSource();
+  const logSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'logs'\"",
+    "<section v-if=\"activeView === 'usage'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(logSection, /art-log-panel/, "Logs query and result areas should use the Art log panel shell");
+  assert.match(logSection, /log-panel-header/, "Logs panels should render structured headers");
+  assert.match(logSection, /log-panel-title/, "Logs panels should expose title blocks");
+  assert.match(logSection, /log-panel-meta/, "Logs panels should expose metadata/actions in headers");
+  assert.match(logSection, /log-panel-body/, "Logs panels should wrap fields and tables in panel bodies");
+  assert.match(logSection, /log-query-panel/, "Logs query area should use the shared Art panel shell");
+  assert.match(logSection, /log-result-panel/, "Logs result area should use the shared Art panel shell");
+  assert.doesNotMatch(logSection, /<div class="card-title"><Document \/>日志查询<\/div>/, "Logs query panel should not use the legacy card title");
+  assert.doesNotMatch(logSection, /<div class="card-title"><DataAnalysis \/>日志结果<\/div>/, "Logs result panel should not use the legacy card title");
+  assert.match(styleSource, /\.art-log-panel/, "Styles should include the Art log panel shell");
+  assert.match(styleSource, /\.log-panel-header/, "Styles should include log panel header styling");
+  assert.match(styleSource, /\.log-panel-body/, "Styles should include log panel body styling");
+});
+
 test("Vue log detail drawer uses an Art Design Pro detail workspace", async () => {
   const source = await readAppSource();
   const detailDrawer = sourceBetween(

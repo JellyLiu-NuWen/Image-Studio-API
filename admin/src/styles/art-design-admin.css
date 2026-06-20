@@ -2552,7 +2552,7 @@ button,
 
 .log-summary-grid span,
 .log-summary-grid small,
-.query-panel-heading span {
+.log-panel-meta span {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 800;
@@ -2596,6 +2596,31 @@ button,
   background: var(--art-card);
 }
 
+.art-log-panel {
+  overflow: hidden;
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--art-card) 86%, var(--art-soft));
+  box-shadow: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.art-log-panel:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.log-query-panel {
+  padding: 16px;
+}
+
+.log-result-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
 .query-panel-heading,
 .result-toolbar {
   display: flex;
@@ -2603,6 +2628,66 @@ button,
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.log-panel-header {
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.log-panel-title {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.log-panel-title h4 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--art-text);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.log-panel-title h4 svg {
+  width: 18px;
+  height: 18px;
+  color: var(--art-primary);
+}
+
+.log-panel-title p {
+  margin: 0;
+  color: var(--art-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.log-panel-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.log-panel-meta > span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--art-primary);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.log-panel-body {
+  display: grid;
+  gap: 12px;
 }
 
 .query-grid,
@@ -2694,6 +2779,11 @@ button,
 .result-toolbar {
   padding: 12px 0 2px;
   border-top: 1px solid var(--art-border);
+}
+
+.log-result-panel .result-toolbar {
+  padding: 0;
+  border-top: 0;
 }
 
 .alerts-workspace {

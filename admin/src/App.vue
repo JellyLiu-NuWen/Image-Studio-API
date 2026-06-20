@@ -2635,12 +2635,17 @@ window.addEventListener('beforeunload', (event) => {
               <small>{{ item.hint }}</small>
             </button>
           </div>
-          <div class="query-panel art-search-bar art-card-xs" :class="{ 'is-expanded': logSearchExpanded }">
-            <div class="query-panel-heading">
-              <div class="card-title"><Document />日志查询</div>
-              <span>按接口、上游、模型、状态、耗时和请求 ID 组合筛选</span>
+          <div class="query-panel art-search-bar art-card-xs art-log-panel log-query-panel" :class="{ 'is-expanded': logSearchExpanded }">
+            <div class="query-panel-heading log-panel-header">
+              <div class="log-panel-title">
+                <h4><Document />日志查询</h4>
+                <p>按接口、上游、模型、状态、耗时和请求 ID 组合筛选。</p>
+              </div>
+              <div class="log-panel-meta">
+                <span>{{ visibleLogSearchFields.length }} 个条件</span>
+              </div>
             </div>
-            <div class="query-grid search-form-grid">
+            <div class="query-grid search-form-grid log-panel-body">
               <div
                 v-for="field in visibleLogSearchFields"
                 :key="field.key"
@@ -2686,69 +2691,74 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </div>
           </div>
-          <div class="result-toolbar">
-            <div>
-              <div class="card-title"><DataAnalysis />日志结果</div>
-              <div class="toolbar-meta">生图 {{ filteredGenerationLogs.length }} 条 / API {{ filteredApiLogs.length }} 条</div>
+          <div class="art-log-panel log-result-panel">
+            <div class="result-toolbar log-panel-header">
+              <div class="log-panel-title">
+                <h4><DataAnalysis />日志结果</h4>
+                <p>查看调用明细、质量标记、导出文件和脱敏重放命令。</p>
+              </div>
+              <div class="log-panel-meta toolbar-actions">
+                <span>生图 {{ filteredGenerationLogs.length }} / API {{ filteredApiLogs.length }}</span>
+                <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
+                <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
+                <el-button :icon="Download" @click="exportLogs('jsonl')">导出 JSONL</el-button>
+                <el-button :icon="Download" @click="exportLogs('csv')">导出 CSV</el-button>
+              </div>
             </div>
-            <div class="toolbar-actions">
-              <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
-              <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
-              <el-button :icon="Download" @click="exportLogs('jsonl')">导出 JSONL</el-button>
-              <el-button :icon="Download" @click="exportLogs('csv')">导出 CSV</el-button>
+            <div class="log-panel-body">
+              <el-tabs v-model="activeLogTab">
+                <el-tab-pane label="生图日志" name="generations">
+                  <el-table :data="filteredGenerationLogs" :size="tableSize" height="520">
+                    <template #empty>
+                      <div class="art-empty-state">
+                        <Document />
+                        <strong>{{ emptyState('generationLogs').title }}</strong>
+                        <span>{{ emptyState('generationLogs').description }}</span>
+                        <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
+                      </div>
+                    </template>
+                    <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+                    <el-table-column prop="id" label="请求 ID" min-width="220" show-overflow-tooltip />
+                    <el-table-column prop="interfaceId" label="接口" min-width="120" />
+                    <el-table-column prop="upstreamId" label="上游" min-width="120" />
+                    <el-table-column prop="model" label="模型" min-width="140" />
+                    <el-table-column prop="status" label="状态" width="110"><template #default="{ row }"><el-tag :type="row.status === 'success' ? 'success' : 'danger'">{{ row.status }}</el-tag></template></el-table-column>
+                    <el-table-column prop="durationMs" label="耗时" width="100"><template #default="{ row }">{{ formatDuration(row.durationMs) }}</template></el-table-column>
+                    <el-table-column label="质量标记" width="220">
+                      <template #default="{ row }">
+                        <el-button size="small" :type="qualityCaseTag(row.id, 'poor') ? 'danger' : 'default'" @click="markQualityCase(row, 'poor')">质量差案例</el-button>
+                        <el-button size="small" :type="qualityCaseTag(row.id, 'excellent') ? 'success' : 'default'" @click="markQualityCase(row, 'excellent')">优秀案例</el-button>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="170" fixed="right">
+                      <template #default="{ row }">
+                        <el-button size="small" :icon="View" @click="openLogDetail(row)">详情</el-button>
+                        <el-button size="small" @click="copySanitizedCurl(row)">curl</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-tab-pane>
+                <el-tab-pane label="后台 API" name="api">
+                  <el-table :data="filteredApiLogs" :size="tableSize" height="520">
+                    <template #empty>
+                      <div class="art-empty-state">
+                        <Document />
+                        <strong>{{ emptyState('apiLogs').title }}</strong>
+                        <span>{{ emptyState('apiLogs').description }}</span>
+                        <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
+                      </div>
+                    </template>
+                    <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+                    <el-table-column prop="method" label="方法" width="90" />
+                    <el-table-column prop="path" label="路径" min-width="220" />
+                    <el-table-column prop="authKind" label="身份" width="100" />
+                    <el-table-column prop="status" label="状态" width="100" />
+                    <el-table-column prop="durationMs" label="耗时" width="100"><template #default="{ row }">{{ formatDuration(row.durationMs) }}</template></el-table-column>
+                  </el-table>
+                </el-tab-pane>
+              </el-tabs>
             </div>
           </div>
-          <el-tabs v-model="activeLogTab">
-            <el-tab-pane label="生图日志" name="generations">
-              <el-table :data="filteredGenerationLogs" :size="tableSize" height="520">
-                <template #empty>
-                  <div class="art-empty-state">
-                    <Document />
-                    <strong>{{ emptyState('generationLogs').title }}</strong>
-                    <span>{{ emptyState('generationLogs').description }}</span>
-                    <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
-                  </div>
-                </template>
-                <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
-                <el-table-column prop="id" label="请求 ID" min-width="220" show-overflow-tooltip />
-                <el-table-column prop="interfaceId" label="接口" min-width="120" />
-                <el-table-column prop="upstreamId" label="上游" min-width="120" />
-                <el-table-column prop="model" label="模型" min-width="140" />
-                <el-table-column prop="status" label="状态" width="110"><template #default="{ row }"><el-tag :type="row.status === 'success' ? 'success' : 'danger'">{{ row.status }}</el-tag></template></el-table-column>
-                <el-table-column prop="durationMs" label="耗时" width="100"><template #default="{ row }">{{ formatDuration(row.durationMs) }}</template></el-table-column>
-                <el-table-column label="质量标记" width="220">
-                  <template #default="{ row }">
-                    <el-button size="small" :type="qualityCaseTag(row.id, 'poor') ? 'danger' : 'default'" @click="markQualityCase(row, 'poor')">质量差案例</el-button>
-                    <el-button size="small" :type="qualityCaseTag(row.id, 'excellent') ? 'success' : 'default'" @click="markQualityCase(row, 'excellent')">优秀案例</el-button>
-                  </template>
-                </el-table-column>
-                <el-table-column label="操作" width="170" fixed="right">
-                  <template #default="{ row }">
-                    <el-button size="small" :icon="View" @click="openLogDetail(row)">详情</el-button>
-                    <el-button size="small" @click="copySanitizedCurl(row)">curl</el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </el-tab-pane>
-            <el-tab-pane label="后台 API" name="api">
-              <el-table :data="filteredApiLogs" :size="tableSize" height="520">
-                <template #empty>
-                  <div class="art-empty-state">
-                    <Document />
-                    <strong>{{ emptyState('apiLogs').title }}</strong>
-                    <span>{{ emptyState('apiLogs').description }}</span>
-                    <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
-                  </div>
-                </template>
-                <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
-                <el-table-column prop="method" label="方法" width="90" />
-                <el-table-column prop="path" label="路径" min-width="220" />
-                <el-table-column prop="authKind" label="身份" width="100" />
-                <el-table-column prop="status" label="状态" width="100" />
-                <el-table-column prop="durationMs" label="耗时" width="100"><template #default="{ row }">{{ formatDuration(row.durationMs) }}</template></el-table-column>
-              </el-table>
-            </el-tab-pane>
-          </el-tabs>
         </el-card>
       </section>
 
