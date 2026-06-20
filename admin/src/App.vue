@@ -117,6 +117,13 @@ const drawerIndex = ref(-1)
 const logDetailVisible = ref(false)
 const selectedLog = ref<LogRecord | null>(null)
 const secretValues = reactive<Record<string, string>>({})
+const tableSearch = reactive<Record<'interfaces' | 'upstreams' | 'models' | 'quality', string>>({
+  interfaces: '',
+  upstreams: '',
+  models: '',
+  quality: ''
+})
+const tableDensity = ref<'default' | 'comfortable' | 'compact'>('comfortable')
 const logFilter = reactive({
   keyword: '',
   status: '',
@@ -148,6 +155,15 @@ const activeInterfaces = computed(() => config.value?.interfaces || [])
 const activeUpstreams = computed(() => config.value?.upstreams || [])
 const activeModels = computed(() => config.value?.models || [])
 const activePresets = computed(() => config.value?.qualityPresets || [])
+const tableSize = computed(() => {
+  if (tableDensity.value === 'compact') return 'small'
+  if (tableDensity.value === 'default') return 'large'
+  return 'default'
+})
+const filteredInterfaces = computed(() => filterTableRows(activeInterfaces.value, tableSearch.interfaces))
+const filteredUpstreams = computed(() => filterTableRows(activeUpstreams.value, tableSearch.upstreams))
+const filteredModels = computed(() => filterTableRows(activeModels.value, tableSearch.models))
+const filteredPresets = computed(() => filterTableRows(activePresets.value, tableSearch.quality))
 const alertsForm = computed<AlertsConfig>(() => config.value?.alerts || {
   webhookEnabled: false,
   webhookURL: '',
@@ -276,6 +292,18 @@ function metricValue(value?: number) {
 
 function usageRows(group?: Record<string, UsageBucket>) {
   return Object.entries(group || {}).map(([name, value]) => ({ name, ...value }))
+}
+
+function filterTableRows<T>(rows: T[], keyword: string) {
+  const normalized = String(keyword || '').trim().toLowerCase()
+  if (!normalized) return rows
+  return rows.filter((row) => JSON.stringify(row).toLowerCase().includes(normalized))
+}
+
+function rowIndex<T extends { id?: string }>(rows: T[], row: T) {
+  if (!row?.id) return rows.indexOf(row)
+  const index = rows.findIndex((item) => item.id === row.id)
+  return index >= 0 ? index : rows.indexOf(row)
 }
 
 function qualityCaseTag(recordId: string, label: 'poor' | 'excellent') {
@@ -1103,12 +1131,21 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'interfaces'" class="view-stack">
-        <div class="section-actions">
-          <el-button type="primary" :icon="Plus" @click="addInterface">新增接口</el-button>
-          <el-button :icon="Finished" @click="saveConfig()">保存接口配置</el-button>
-        </div>
-        <el-card shadow="never">
-          <el-table :data="activeInterfaces" row-key="id">
+        <el-card shadow="never" class="table-workspace">
+          <div class="table-toolbar">
+            <div>
+              <div class="card-title"><Connection />接口管理</div>
+              <div class="toolbar-meta">共 {{ activeInterfaces.length }} 个接口，当前显示 {{ filteredInterfaces.length }} 个</div>
+            </div>
+            <div class="toolbar-actions">
+              <el-input v-model="tableSearch.interfaces" clearable placeholder="搜索接口、模型、上游" />
+              <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
+              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+              <el-button type="primary" :icon="Plus" @click="addInterface">新增接口</el-button>
+              <el-button :icon="Finished" @click="saveConfig()">保存接口配置</el-button>
+            </div>
+          </div>
+          <el-table :data="filteredInterfaces" :size="tableSize" row-key="id">
             <el-table-column prop="name" label="名称" min-width="150" />
             <el-table-column prop="apiTokenSet" label="API Key" width="150">
               <template #default="{ row }">
@@ -1133,8 +1170,8 @@ window.addEventListener('beforeunload', (event) => {
               <template #default="{ row }">{{ formatTime(row.lastUsedAt) }}</template>
             </el-table-column>
             <el-table-column label="操作" width="360" fixed="right">
-              <template #default="{ row, $index }">
-                <el-button size="small" :icon="Edit" @click="openDrawer('interface', $index)">编辑</el-button>
+              <template #default="{ row }">
+                <el-button size="small" :icon="Edit" @click="openDrawer('interface', rowIndex(activeInterfaces, row))">编辑</el-button>
                 <el-button size="small" :icon="Key" @click="rotateKey(row)">重置 Key</el-button>
                 <el-dropdown>
                   <el-button size="small" :icon="More">更多</el-button>
@@ -1144,7 +1181,7 @@ window.addEventListener('beforeunload', (event) => {
                       <el-dropdown-item @click="copySecret('interface', row.id)">复制 Key</el-dropdown-item>
                       <el-dropdown-item @click="cloneInterface(row)">克隆</el-dropdown-item>
                       <el-dropdown-item @click="copySnippet(row)">复制 Skill/Codex 配置</el-dropdown-item>
-                      <el-dropdown-item divided @click="removeItem('interface', $index)">删除</el-dropdown-item>
+                      <el-dropdown-item divided @click="removeItem('interface', rowIndex(activeInterfaces, row))">删除</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -1155,12 +1192,21 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'upstreams'" class="view-stack">
-        <div class="section-actions">
-          <el-button type="primary" :icon="Plus" @click="addUpstream">新增上游</el-button>
-          <el-button :icon="Finished" @click="saveConfig()">保存上游配置</el-button>
-        </div>
-        <el-card shadow="never">
-          <el-table :data="activeUpstreams" row-key="id">
+        <el-card shadow="never" class="table-workspace">
+          <div class="table-toolbar">
+            <div>
+              <div class="card-title"><Link />上游管理</div>
+              <div class="toolbar-meta">共 {{ activeUpstreams.length }} 个上游，当前显示 {{ filteredUpstreams.length }} 个</div>
+            </div>
+            <div class="toolbar-actions">
+              <el-input v-model="tableSearch.upstreams" clearable placeholder="搜索上游、URL、失败原因" />
+              <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
+              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+              <el-button type="primary" :icon="Plus" @click="addUpstream">新增上游</el-button>
+              <el-button :icon="Finished" @click="saveConfig()">保存上游配置</el-button>
+            </div>
+          </div>
+          <el-table :data="filteredUpstreams" :size="tableSize" row-key="id">
             <el-table-column prop="name" label="名称" min-width="160" />
             <el-table-column prop="baseURL" label="Base URL" min-width="260" show-overflow-tooltip />
             <el-table-column prop="apiKeySet" label="API Key" width="150">
@@ -1197,10 +1243,10 @@ window.addEventListener('beforeunload', (event) => {
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
             <el-table-column label="操作" width="260" fixed="right">
-              <template #default="{ row, $index }">
-                <el-button size="small" :icon="Edit" @click="openDrawer('upstream', $index)">编辑</el-button>
+              <template #default="{ row }">
+                <el-button size="small" :icon="Edit" @click="openDrawer('upstream', rowIndex(activeUpstreams, row))">编辑</el-button>
                 <el-button size="small" :icon="Aim" @click="testUpstream(row)">测试</el-button>
-                <el-button size="small" type="danger" plain @click="removeItem('upstream', $index)">删除</el-button>
+                <el-button size="small" type="danger" plain @click="removeItem('upstream', rowIndex(activeUpstreams, row))">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -1208,12 +1254,21 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'models'" class="view-stack">
-        <div class="section-actions">
-          <el-button type="primary" :icon="Plus" @click="addModel">新增模型</el-button>
-          <el-button :icon="Finished" @click="saveModels">保存模型目录</el-button>
-        </div>
-        <el-card shadow="never">
-          <el-table :data="activeModels" row-key="id">
+        <el-card shadow="never" class="table-workspace">
+          <div class="table-toolbar">
+            <div>
+              <div class="card-title"><Box />模型目录</div>
+              <div class="toolbar-meta">共 {{ activeModels.length }} 个模型，当前显示 {{ filteredModels.length }} 个</div>
+            </div>
+            <div class="toolbar-actions">
+              <el-input v-model="tableSearch.models" clearable placeholder="搜索模型、能力、用途" />
+              <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
+              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+              <el-button type="primary" :icon="Plus" @click="addModel">新增模型</el-button>
+              <el-button :icon="Finished" @click="saveModels">保存模型目录</el-button>
+            </div>
+          </div>
+          <el-table :data="filteredModels" :size="tableSize" row-key="id">
             <el-table-column prop="id" label="模型 ID" min-width="160" />
             <el-table-column prop="name" label="名称" min-width="140" />
             <el-table-column prop="capabilities" label="能力" min-width="160">
@@ -1242,9 +1297,9 @@ window.addEventListener('beforeunload', (event) => {
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
             <el-table-column label="操作" width="170" fixed="right">
-              <template #default="{ $index }">
-                <el-button size="small" :icon="Edit" @click="openDrawer('model', $index)">编辑</el-button>
-                <el-button size="small" type="danger" plain @click="removeItem('model', $index)">删除</el-button>
+              <template #default="{ row }">
+                <el-button size="small" :icon="Edit" @click="openDrawer('model', rowIndex(activeModels, row))">编辑</el-button>
+                <el-button size="small" type="danger" plain @click="removeItem('model', rowIndex(activeModels, row))">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -1252,10 +1307,6 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'quality'" class="view-stack">
-        <div class="section-actions">
-          <el-button type="primary" :icon="Plus" @click="addPreset">新增预设</el-button>
-          <el-button :icon="Finished" @click="saveQualityPresets">保存质量预设</el-button>
-        </div>
         <div class="metric-grid">
           <el-card shadow="never" class="metric-card">
             <span>质量预设</span>
@@ -1278,26 +1329,58 @@ window.addEventListener('beforeunload', (event) => {
             <small>默认关闭，按预设启用</small>
           </el-card>
         </div>
-        <div class="preset-grid">
-          <el-card v-for="(preset, index) in activePresets" :key="preset.id" shadow="never" class="preset-card">
-            <template #header>
-              <div class="card-title">
-                <MagicStick />
-                <span>{{ preset.name }}</span>
+        <el-card shadow="never" class="table-workspace">
+          <div class="table-toolbar">
+            <div>
+              <div class="card-title"><MagicStick />生图质量预设</div>
+              <div class="toolbar-meta">共 {{ activePresets.length }} 个预设，当前显示 {{ filteredPresets.length }} 个</div>
+            </div>
+            <div class="toolbar-actions">
+              <el-input v-model="tableSearch.quality" clearable placeholder="搜索预设、用途、模板" />
+              <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
+              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+              <el-button type="primary" :icon="Plus" @click="addPreset">新增预设</el-button>
+              <el-button :icon="Finished" @click="saveQualityPresets">保存质量预设</el-button>
+            </div>
+          </div>
+          <div class="preset-grid">
+            <el-card v-for="preset in filteredPresets" :key="preset.id" shadow="never" class="preset-card">
+              <template #header>
+                <div class="card-title">
+                  <MagicStick />
+                  <span>{{ preset.name }}</span>
+                </div>
+              </template>
+              <p>{{ preset.useCase }}</p>
+              <div class="tag-row">
+                <el-tag>{{ preset.quality }}</el-tag>
+                <el-tag type="info">{{ preset.size }}</el-tag>
+                <el-tag :type="preset.promptEnhance ? 'success' : 'info'">{{ preset.promptEnhance ? '增强开启' : '增强关闭' }}</el-tag>
               </div>
-            </template>
-            <p>{{ preset.useCase }}</p>
-            <div class="tag-row">
-              <el-tag>{{ preset.quality }}</el-tag>
-              <el-tag type="info">{{ preset.size }}</el-tag>
-              <el-tag :type="preset.promptEnhance ? 'success' : 'info'">{{ preset.promptEnhance ? '增强开启' : '增强关闭' }}</el-tag>
-            </div>
-            <div class="card-actions">
-              <el-button size="small" :icon="Edit" @click="openDrawer('quality', index)">编辑</el-button>
-              <el-button size="small" type="danger" plain @click="removeItem('quality', index)">删除</el-button>
-            </div>
-          </el-card>
-        </div>
+              <div class="card-actions">
+                <el-button size="small" :icon="Edit" @click="openDrawer('quality', rowIndex(activePresets, preset))">编辑</el-button>
+                <el-button size="small" type="danger" plain @click="removeItem('quality', rowIndex(activePresets, preset))">删除</el-button>
+              </div>
+            </el-card>
+          </div>
+          <el-table :data="filteredPresets" :size="tableSize" class="preset-list-table">
+            <el-table-column prop="id" label="预设 ID" min-width="180" />
+            <el-table-column prop="name" label="名称" min-width="160" />
+            <el-table-column prop="quality" label="质量" width="100" />
+            <el-table-column prop="size" label="尺寸" min-width="130" />
+            <el-table-column prop="outputFormat" label="格式" width="90" />
+            <el-table-column prop="promptEnhance" label="增强" width="100">
+              <template #default="{ row }"><el-tag :type="row.promptEnhance ? 'success' : 'info'">{{ row.promptEnhance ? '开启' : '关闭' }}</el-tag></template>
+            </el-table-column>
+            <el-table-column prop="useCase" label="用途" min-width="220" show-overflow-tooltip />
+            <el-table-column label="操作" width="170" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" :icon="Edit" @click="openDrawer('quality', rowIndex(activePresets, row))">编辑</el-button>
+                <el-button size="small" type="danger" plain @click="removeItem('quality', rowIndex(activePresets, row))">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
         <el-card shadow="never">
           <template #header>
             <div class="section-actions">

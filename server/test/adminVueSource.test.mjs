@@ -118,3 +118,52 @@ test("Vue shell exposes Art Design Pro workspace navigation and quick actions", 
   assert.match(styleSource, /\.quick-actions/, "Styles should include quick action layout");
   assert.match(styleSource, /\.risk-board/, "Styles should include risk board layout");
 });
+
+test("Vue management tables use an Art Design Pro style table workspace", async () => {
+  const source = await readAppSource();
+  const interfaceSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'upstreams'\"",
+  );
+  const upstreamSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'upstreams'\"",
+    "<section v-if=\"activeView === 'models'\"",
+  );
+  const modelSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'models'\"",
+    "<section v-if=\"activeView === 'quality'\"",
+  );
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /tableSearch/, "Admin should keep a shared table search state");
+  assert.match(source, /tableDensity/, "Admin should keep a shared table density state");
+  assert.match(source, /tableSize/, "Admin should map table density to Element Plus table size");
+  assert.match(source, /filteredInterfaces/, "Interface table should have a filtered data source");
+  assert.match(source, /filteredUpstreams/, "Upstream table should have a filtered data source");
+  assert.match(source, /filteredModels/, "Model table should have a filtered data source");
+  assert.match(source, /filteredPresets/, "Quality preset table should have a filtered data source");
+
+  for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
+    assert.match(section, /table-workspace/, "Management section should render a table workspace wrapper");
+    assert.match(section, /table-toolbar/, "Management section should render a table toolbar");
+    assert.match(section, /tableSearch/, "Management section should expose module search");
+    assert.match(section, /tableDensity/, "Management section should expose density controls");
+    assert.match(section, /:size="tableSize"/, "Management table should respect density size");
+  }
+
+  assert.match(interfaceSection, /filteredInterfaces/, "Interface table should render filtered rows");
+  assert.match(upstreamSection, /filteredUpstreams/, "Upstream table should render filtered rows");
+  assert.match(modelSection, /filteredModels/, "Model table should render filtered rows");
+  assert.match(qualitySection, /filteredPresets/, "Quality preset table should render filtered rows");
+  assert.match(styleSource, /\.table-workspace/, "Styles should include table workspace layout");
+  assert.match(styleSource, /\.table-toolbar/, "Styles should include table toolbar layout");
+  assert.match(styleSource, /\.toolbar-meta/, "Styles should include compact table meta styling");
+});

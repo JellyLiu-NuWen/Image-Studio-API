@@ -540,6 +540,43 @@ button,
   margin: 12px 0;
 }
 
+.table-workspace :deep(.el-card__body) {
+  display: grid;
+  gap: 14px;
+}
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--art-border);
+}
+
+.toolbar-meta {
+  margin-top: 5px;
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.toolbar-actions .el-input {
+  width: 240px;
+}
+
+.preset-list-table {
+  margin-top: 2px;
+}
+
 .status-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -919,6 +956,18 @@ button,
   .filter-bar,
   .status-list {
     grid-template-columns: 1fr;
+  }
+
+  .table-toolbar,
+  .toolbar-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar-actions .el-input,
+  .toolbar-actions .el-button,
+  .toolbar-actions .el-segmented {
+    width: 100%;
   }
 
   .admin-topbar {
