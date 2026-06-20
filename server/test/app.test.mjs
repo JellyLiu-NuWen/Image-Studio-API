@@ -1056,3 +1056,68 @@ test("admin can manage models quality presets alerts sessions usage and backup",
   const backupBody = await backup.json();
   assert.equal(backupBody.backup.config.interfaces[0].id, "codex");
 });
+
+test("admin can mark generation logs as quality cases and audit the action", async () => {
+  const generationLogStore = createMemoryLogStore();
+  await generationLogStore.append({
+    id: "gen-poor",
+    createdAt: "2026-06-19T01:00:00.000Z",
+    status: "success",
+    endpoint: "/v1/images/edits",
+    interfaceId: "codex",
+    upstreamId: "primary",
+    model: "gpt-image-2",
+    durationMs: 72000,
+  });
+  const store = memoryStore({
+    interfaces: [{
+      id: "codex",
+      name: "Codex",
+      apiToken: "client-token",
+      upstreamIds: ["primary"],
+    }],
+    upstreams: [{
+      id: "primary",
+      name: "Primary",
+      baseURL: "https://primary.example/v1",
+      apiKey: "primary-key",
+    }],
+  });
+  const app = createSelfHostedApp({
+    store,
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => {
+      throw new Error("quality cases must not call upstream");
+    },
+  });
+
+  const unauthorized = await app.handle(new Request("http://localhost/api/quality-cases"));
+  assert.equal(unauthorized.status, 401);
+
+  const headers = await loginHeaders(app);
+  const create = await app.handle(jsonRequest("/api/quality-cases", {
+    recordId: "gen-poor",
+    label: "poor",
+    note: "Text artifacts and low detail",
+  }, headers));
+  assert.equal(create.status, 200);
+  const created = await create.json();
+  assert.equal(created.case.recordId, "gen-poor");
+  assert.equal(created.case.label, "poor");
+  assert.equal(created.case.model, "gpt-image-2");
+  assert.equal(created.case.interfaceId, "codex");
+  assert.equal(created.case.upstreamId, "primary");
+  assert.equal(created.qualityCases.length, 1);
+
+  const list = await app.handle(new Request("http://localhost/api/quality-cases", { headers }));
+  assert.equal(list.status, 200);
+  const listed = await list.json();
+  assert.equal(listed.qualityCases.length, 1);
+  assert.equal(listed.qualityCases[0].recordId, "gen-poor");
+  assert.equal(store.current().qualityCases[0].label, "poor");
+
+  const audit = await app.handle(new Request("http://localhost/api/audit-logs", { headers }));
+  const auditBody = await audit.json();
+  assert.equal(auditBody.records.some((record) => record.action === "quality.case.mark" && record.details.recordId === "gen-poor"), true);
+});

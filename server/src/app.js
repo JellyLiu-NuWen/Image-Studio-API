@@ -447,6 +447,41 @@ async function handleQualityPresets({ request, store }) {
   return json({ ok: true, qualityPresets: saved.qualityPresets, config: publicConfig(saved) });
 }
 
+async function handleQualityCases({ request, store, generationLogStore, auditRecords, username, now }) {
+  const current = normalizeConfig(await store.load());
+  if (request.method === "GET") return json({ qualityCases: current.qualityCases });
+  if (request.method !== "POST") return methodNotAllowed();
+  const body = await request.json().catch(() => ({}));
+  const recordId = String(body.recordId || "").trim();
+  const label = body.label === "excellent" ? "excellent" : body.label === "poor" ? "poor" : "";
+  if (!recordId) return json({ error: { message: "recordId is required" } }, { status: 400 });
+  if (!label) return json({ error: { message: "label must be poor or excellent" } }, { status: 400 });
+  const records = generationLogStore ? await generationLogStore.readRecent(500, { requestId: recordId }) : [];
+  const record = records.find((item) => item.id === recordId) || {};
+  const qualityCase = {
+    id: `case-${recordId}-${label}`,
+    recordId,
+    label,
+    note: String(body.note || "").trim(),
+    createdAt: nowISO(now),
+    username: username || current.adminUsername || "admin",
+    endpoint: record.endpoint || record.path || "",
+    interfaceId: record.interfaceId || "",
+    upstreamId: record.upstreamId || "",
+    model: record.model || "",
+    durationMs: Number(record.durationMs) || 0,
+    status: String(record.status ?? ""),
+    errorSummary: record.errorSummary || "",
+  };
+  const qualityCases = [
+    qualityCase,
+    ...current.qualityCases.filter((item) => !(item.recordId === recordId && item.label === label)),
+  ].slice(0, 500);
+  const saved = await store.save({ ...current, qualityCases });
+  appendAudit(auditRecords, "quality.case.mark", { recordId, label }, username, now);
+  return json({ ok: true, case: saved.qualityCases[0], qualityCases: saved.qualityCases, config: publicConfig(saved) });
+}
+
 async function handleAlerts({ request, store, auditRecords, username, now }) {
   const current = normalizeConfig(await store.load());
   if (request.method === "GET") return json({ alerts: publicConfig(current).alerts });
@@ -730,6 +765,25 @@ export function createSelfHostedApp({
           return response;
         }
         response = await handleQualityPresets({ request, store });
+        return response;
+      }
+
+      if (url.pathname === "/api/quality-cases") {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        const token = parseCookies(request).image_studio_session || "";
+        response = await handleQualityCases({
+          request,
+          store,
+          generationLogStore,
+          auditRecords,
+          username: sessions.get(token)?.username,
+          now,
+        });
         return response;
       }
 

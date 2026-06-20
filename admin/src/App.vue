@@ -35,11 +35,13 @@ import type {
   ConfigVersion,
   LogRecord,
   MetricsResponse,
+  QualityCase,
   QualityPreset,
   SessionRecord,
   StudioInterface,
   StudioModel,
   StudioUpstream,
+  UpstreamHealthRecord,
   UsageResponse
 } from '@/api/types'
 
@@ -80,6 +82,8 @@ const lastSavedConfig = ref('')
 const metrics = ref<MetricsResponse['metrics'] | null>(null)
 const generationLogs = ref<LogRecord[]>([])
 const apiLogs = ref<LogRecord[]>([])
+const qualityCases = ref<QualityCase[]>([])
+const upstreamHealth = ref<UpstreamHealthRecord[]>([])
 const usage = ref<UsageResponse['usage'] | null>(null)
 const versions = ref<ConfigVersion[]>([])
 const auditLogs = ref<AuditRecord[]>([])
@@ -90,6 +94,8 @@ const backupFileInput = ref<HTMLInputElement | null>(null)
 const drawerVisible = ref(false)
 const drawerMode = ref<DrawerMode>(null)
 const drawerIndex = ref(-1)
+const logDetailVisible = ref(false)
+const selectedLog = ref<LogRecord | null>(null)
 const secretValues = reactive<Record<string, string>>({})
 const logFilter = reactive({ keyword: '', status: '', interfaceId: '', upstreamId: '', model: '' })
 
@@ -112,6 +118,15 @@ const securityForm = computed(() => config.value?.security || {
 })
 const filteredGenerationLogs = computed(() => filterLogs(generationLogs.value))
 const filteredApiLogs = computed(() => filterLogs(apiLogs.value))
+const qualityCaseByRecordId = computed(() => {
+  const map = new Map<string, QualityCase[]>()
+  for (const item of qualityCases.value) {
+    const list = map.get(item.recordId) || []
+    list.push(item)
+    map.set(item.recordId, list)
+  }
+  return map
+})
 
 function formatTime(value?: string) {
   if (!value) return '未记录'
@@ -128,6 +143,14 @@ function formatDuration(value?: number) {
 
 function metricValue(value?: number) {
   return Number.isFinite(Number(value)) ? String(value) : '0'
+}
+
+function qualityCaseTag(recordId: string, label: 'poor' | 'excellent') {
+  return qualityCaseByRecordId.value.get(recordId)?.some((item) => item.label === label) || false
+}
+
+function upstreamHealthFor(id?: string) {
+  return upstreamHealth.value.find((item) => item.id === id)
 }
 
 function filterLogs(records: LogRecord[]) {
@@ -231,7 +254,7 @@ async function bootstrap() {
 async function refreshAll() {
   loading.value = true
   try {
-    const [configData, metricData, generationData, apiData, usageData, versionData, auditData, sessionData, updateData] = await Promise.all([
+    const [configData, metricData, generationData, apiData, usageData, versionData, auditData, sessionData, updateData, qualityCaseData, upstreamHealthData] = await Promise.all([
       adminApi.config(),
       adminApi.metrics(),
       adminApi.logs('generations'),
@@ -240,7 +263,9 @@ async function refreshAll() {
       adminApi.versions().catch(() => ({ versions: [] })),
       adminApi.auditLogs().catch(() => ({ records: [] })),
       adminApi.sessions().catch(() => ({ sessions: [] })),
-      adminApi.updateCheck().catch(() => ({ update: {} }))
+      adminApi.updateCheck().catch(() => ({ update: {} })),
+      adminApi.qualityCases().catch(() => ({ qualityCases: [] })),
+      adminApi.upstreamHealth().catch(() => ({ upstreams: [] }))
     ])
     setConfig(configData.config)
     metrics.value = metricData.metrics
@@ -251,6 +276,8 @@ async function refreshAll() {
     auditLogs.value = auditData.records
     sessions.value = sessionData.sessions
     updateInfo.value = updateData.update
+    qualityCases.value = qualityCaseData.qualityCases
+    upstreamHealth.value = upstreamHealthData.upstreams
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '刷新失败')
   } finally {
@@ -426,6 +453,37 @@ function downloadJSON(filename: string, data: unknown) {
 
 function exportLogs(format: 'jsonl' | 'csv') {
   window.location.href = `/api/logs/export?type=generations&format=${format}`
+}
+
+function openLogDetail(record: LogRecord) {
+  selectedLog.value = record
+  logDetailVisible.value = true
+}
+
+function sanitizedCurl(record: LogRecord) {
+  const endpoint = record.endpoint || record.path || '/v1/images/generations'
+  const method = record.method || 'POST'
+  const payload = endpoint.includes('/v1/images')
+    ? JSON.stringify({ model: record.model || '<model>', prompt: '<redacted prompt>' })
+    : '{}'
+  return [
+    `curl -X ${method} "${window.location.origin}${endpoint}"`,
+    '  -H "Authorization: Bearer <IMAGE_STUDIO_API_TOKEN>"',
+    '  -H "Content-Type: application/json"',
+    `  -d '${payload}'`
+  ].join(' \\\n')
+}
+
+async function copySanitizedCurl(record: LogRecord) {
+  await navigator.clipboard?.writeText(sanitizedCurl(record))
+  ElMessage.success('已复制脱敏 curl')
+}
+
+async function markQualityCase(record: LogRecord, label: 'poor' | 'excellent') {
+  const data = await adminApi.markQualityCase(record.id, label)
+  qualityCases.value = data.qualityCases
+  if (config.value) config.value.qualityCases = data.qualityCases
+  ElMessage.success(label === 'poor' ? '已标记为质量差案例' : '已保存为优秀案例')
 }
 
 function openRestorePicker() {
@@ -663,6 +721,16 @@ window.addEventListener('beforeunload', (event) => {
             </el-table-column>
             <el-table-column prop="priority" label="优先级" width="90" />
             <el-table-column prop="weight" label="权重" width="80" />
+            <el-table-column label="健康" min-width="210">
+              <template #default="{ row }">
+                <div class="health-inline">
+                  <el-tag :type="(upstreamHealthFor(row.id)?.metrics.successRate || 0) >= 90 ? 'success' : 'warning'">
+                    {{ upstreamHealthFor(row.id)?.metrics.successRate || 0 }}%
+                  </el-tag>
+                  <span>P95 {{ formatDuration(upstreamHealthFor(row.id)?.metrics.p95DurationMs) }}</span>
+                </div>
+              </template>
+            </el-table-column>
             <el-table-column prop="healthCheckEnabled" label="健康检查" width="110">
               <template #default="{ row }"><el-switch v-model="row.healthCheckEnabled" /></template>
             </el-table-column>
@@ -765,9 +833,15 @@ window.addEventListener('beforeunload', (event) => {
                 <el-table-column prop="status" label="状态" width="110"><template #default="{ row }"><el-tag :type="row.status === 'success' ? 'success' : 'danger'">{{ row.status }}</el-tag></template></el-table-column>
                 <el-table-column prop="durationMs" label="耗时" width="100"><template #default="{ row }">{{ formatDuration(row.durationMs) }}</template></el-table-column>
                 <el-table-column label="质量标记" width="220">
-                  <template #default>
-                    <el-button size="small">质量差案例</el-button>
-                    <el-button size="small">优秀案例</el-button>
+                  <template #default="{ row }">
+                    <el-button size="small" :type="qualityCaseTag(row.id, 'poor') ? 'danger' : 'default'" @click="markQualityCase(row, 'poor')">质量差案例</el-button>
+                    <el-button size="small" :type="qualityCaseTag(row.id, 'excellent') ? 'success' : 'default'" @click="markQualityCase(row, 'excellent')">优秀案例</el-button>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="170" fixed="right">
+                  <template #default="{ row }">
+                    <el-button size="small" :icon="View" @click="openLogDetail(row)">详情</el-button>
+                    <el-button size="small" @click="copySanitizedCurl(row)">curl</el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -966,6 +1040,43 @@ window.addEventListener('beforeunload', (event) => {
       <template #footer>
         <el-button @click="closeDrawer">取消</el-button>
         <el-button type="primary" @click="saveDrawer">保存</el-button>
+      </template>
+    </el-drawer>
+
+    <el-drawer v-model="logDetailVisible" title="请求详情" size="560px" destroy-on-close>
+      <template v-if="selectedLog">
+        <div class="detail-stack">
+          <div class="status-list detail-status">
+            <div><span>请求 ID</span><strong>{{ selectedLog.id }}</strong></div>
+            <div><span>状态</span><strong>{{ selectedLog.status }}</strong></div>
+            <div><span>接口</span><strong>{{ selectedLog.interfaceId || '-' }}</strong></div>
+            <div><span>上游</span><strong>{{ selectedLog.upstreamId || '-' }}</strong></div>
+            <div><span>模型</span><strong>{{ selectedLog.model || '-' }}</strong></div>
+            <div><span>耗时</span><strong>{{ formatDuration(selectedLog.durationMs) }}</strong></div>
+            <div><span>上游状态</span><strong>{{ selectedLog.upstreamStatus || '-' }}</strong></div>
+            <div><span>重试次数</span><strong>{{ selectedLog.retryCount || 0 }}</strong></div>
+          </div>
+          <el-card shadow="never">
+            <template #header><div class="card-title"><Connection />故障转移链路</div></template>
+            <div class="tag-row">
+              <el-tag v-for="item in selectedLog.failoverChain || []" :key="item">{{ item }}</el-tag>
+              <span v-if="!(selectedLog.failoverChain || []).length" class="muted-text">没有记录故障转移链路</span>
+            </div>
+          </el-card>
+          <el-card shadow="never">
+            <template #header><div class="card-title"><Document />错误摘要</div></template>
+            <p class="detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
+          </el-card>
+          <el-card shadow="never">
+            <template #header><div class="card-title"><Document />脱敏 curl</div></template>
+            <pre class="curl-block">{{ sanitizedCurl(selectedLog) }}</pre>
+          </el-card>
+        </div>
+      </template>
+      <template #footer>
+        <el-button v-if="selectedLog" @click="copySanitizedCurl(selectedLog)">复制脱敏 curl</el-button>
+        <el-button v-if="selectedLog" type="danger" plain @click="markQualityCase(selectedLog, 'poor')">标记为质量差案例</el-button>
+        <el-button v-if="selectedLog" type="success" plain @click="markQualityCase(selectedLog, 'excellent')">保存为优秀案例</el-button>
       </template>
     </el-drawer>
   </div>

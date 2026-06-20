@@ -6,9 +6,11 @@ import type {
   ConfigVersion,
   LogRecord,
   MetricsResponse,
+  QualityCase,
   QualityPreset,
   SessionRecord,
   StudioModel,
+  UpstreamHealthRecord,
   UsageResponse
 } from './types'
 
@@ -78,7 +80,7 @@ export const adminApi = {
     method: 'POST',
     body: '{}'
   }),
-  upstreamHealth: () => requestJSON<{ upstreams: Array<Record<string, unknown>> }>('/upstreams/health'),
+  upstreamHealth: () => requestJSON<{ upstreams: UpstreamHealthRecord[] }>('/upstreams/health'),
   saveModels: (models: StudioModel[]) => requestJSON<{ ok: boolean; models: StudioModel[]; config: AdminConfig }>('/models', {
     method: 'PUT',
     body: JSON.stringify({ models })
@@ -86,6 +88,11 @@ export const adminApi = {
   saveQualityPresets: (qualityPresets: QualityPreset[]) => requestJSON<{ ok: boolean; qualityPresets: QualityPreset[]; config: AdminConfig }>('/quality-presets', {
     method: 'PUT',
     body: JSON.stringify({ qualityPresets })
+  }),
+  qualityCases: () => requestJSON<{ qualityCases: QualityCase[] }>('/quality-cases'),
+  markQualityCase: (recordId: string, label: 'poor' | 'excellent', note = '') => requestJSON<{ ok: boolean; case: QualityCase; qualityCases: QualityCase[]; config: AdminConfig }>('/quality-cases', {
+    method: 'POST',
+    body: JSON.stringify({ recordId, label, note })
   }),
   alerts: () => requestJSON<{ alerts: AlertsConfig }>('/alerts'),
   saveAlerts: (alerts: AlertsConfig) => requestJSON<{ ok: boolean; alerts: AlertsConfig; config: AdminConfig }>('/alerts', {

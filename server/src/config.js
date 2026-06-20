@@ -27,6 +27,7 @@ export const DEFAULT_CONFIG = {
   upstreams: [],
   models: [],
   qualityPresets: [],
+  qualityCases: [],
   alerts: {},
   security: {},
 };
@@ -317,6 +318,27 @@ function normalizeQualityPreset(raw = {}, index = 0, previous = {}) {
   };
 }
 
+function normalizeQualityCase(raw = {}, index = 0, previous = {}) {
+  const label = raw.label === "excellent" ? "excellent" : "poor";
+  const recordId = String(raw.recordId || previous.recordId || "").trim();
+  const fallbackId = recordId ? `case-${recordId}-${label}` : `quality-case-${index + 1}`;
+  return {
+    id: normalizeId(raw.id || previous.id, fallbackId),
+    recordId,
+    label,
+    note: String(raw.note ?? previous.note ?? "").trim(),
+    createdAt: String(raw.createdAt || previous.createdAt || "").trim(),
+    username: String(raw.username || previous.username || "admin").trim(),
+    endpoint: String(raw.endpoint || previous.endpoint || "").trim(),
+    interfaceId: String(raw.interfaceId || previous.interfaceId || "").trim(),
+    upstreamId: String(raw.upstreamId || previous.upstreamId || "").trim(),
+    model: String(raw.model || previous.model || "").trim(),
+    durationMs: positiveInteger(raw.durationMs ?? previous.durationMs, 0, 0, 3_600_000),
+    status: String(raw.status ?? previous.status ?? "").trim(),
+    errorSummary: String(raw.errorSummary || previous.errorSummary || "").trim(),
+  };
+}
+
 function isMaskedSecretPlaceholder(value) {
   const text = String(value ?? "").trim().toLowerCase();
   if (!text) return false;
@@ -499,6 +521,11 @@ export function normalizeConfig(input = {}, previous = {}) {
   if (!qualityPresets.length) {
     qualityPresets.push(...DEFAULT_QUALITY_PRESETS.map((preset, index) => normalizeQualityPreset(preset, index)));
   }
+  const qualityCases = normalizeCollection(
+    Array.isArray(input.qualityCases) ? input.qualityCases : (Array.isArray(previous.qualityCases) ? previous.qualityCases : []),
+    previous.qualityCases,
+    normalizeQualityCase,
+  );
   const primaryInterface = interfaces[0];
   const upstreamById = byId(upstreams);
   const primaryUpstream = upstreamById.get(primaryInterface.upstreamIds[0]) || upstreams[0];
@@ -520,6 +547,7 @@ export function normalizeConfig(input = {}, previous = {}) {
     upstreams,
     models,
     qualityPresets,
+    qualityCases,
     alerts: normalizeAlerts(merged.alerts),
     security: normalizeSecurity(merged.security),
   };
@@ -570,6 +598,7 @@ export function publicConfig(config) {
     })),
     models: normalized.models,
     qualityPresets: normalized.qualityPresets,
+    qualityCases: normalized.qualityCases,
     alerts: {
       ...normalized.alerts,
       webhookURLSet: !!normalized.alerts.webhookURL,
@@ -593,6 +622,9 @@ export function mergeConfigUpdate(current, patch) {
     qualityPresets: Array.isArray(patch.qualityPresets)
       ? normalizeCollection(patch.qualityPresets, normalizedCurrent.qualityPresets, normalizeQualityPreset)
       : normalizedCurrent.qualityPresets,
+    qualityCases: Array.isArray(patch.qualityCases)
+      ? normalizeCollection(patch.qualityCases, normalizedCurrent.qualityCases, normalizeQualityCase)
+      : normalizedCurrent.qualityCases,
     alerts: patch.alerts ? normalizeAlerts({
       ...normalizedCurrent.alerts,
       ...patch.alerts,

@@ -23,6 +23,7 @@ export interface AdminConfig {
   upstreams: StudioUpstream[]
   models: StudioModel[]
   qualityPresets: QualityPreset[]
+  qualityCases: QualityCase[]
   alerts: AlertsConfig
   security: SecurityConfig
 }
@@ -81,6 +82,22 @@ export interface QualityPreset {
   useCase: string
 }
 
+export interface QualityCase {
+  id: string
+  recordId: string
+  label: 'poor' | 'excellent'
+  note: string
+  createdAt: string
+  username: string
+  endpoint: string
+  interfaceId: string
+  upstreamId: string
+  model: string
+  durationMs: number
+  status: string
+  errorSummary: string
+}
+
 export interface AlertsConfig {
   webhookEnabled: boolean
   webhookURL?: string
@@ -122,6 +139,23 @@ export interface MetricsResponse {
       lastFailure: string
     }>
     activeRequests?: number
+  }
+}
+
+export interface UpstreamHealthRecord {
+  id: string
+  name: string
+  enabled: boolean
+  healthCheckEnabled: boolean
+  priority: number
+  weight: number
+  metrics: {
+    total: number
+    success: number
+    failed: number
+    successRate: number
+    p95DurationMs: number
+    lastFailure: string
   }
 }
 

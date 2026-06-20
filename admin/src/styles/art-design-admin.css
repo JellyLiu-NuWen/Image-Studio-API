@@ -402,6 +402,47 @@ button,
   font-size: 13px;
 }
 
+.health-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.health-inline span,
+.muted-text {
+  color: var(--art-muted);
+  font-size: 12px;
+}
+
+.detail-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.detail-status {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-text {
+  margin: 0;
+  color: #334155;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.curl-block {
+  margin: 0;
+  padding: 14px;
+  overflow-x: auto;
+  border: 1px solid var(--art-border);
+  border-radius: 10px;
+  background: #0f172a;
+  color: #dbeafe;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
 .hidden-file {
   display: none;
 }
