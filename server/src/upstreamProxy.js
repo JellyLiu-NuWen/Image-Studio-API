@@ -7,12 +7,16 @@ import {
 } from "../../shared/kernel/requestModel.js";
 import { json } from "./http.js";
 
-function copyPassthroughHeaders(request, upstreamApiKey) {
+function copyPassthroughHeaders(request, upstreamApiKey, overrides = {}) {
   const headers = new Headers();
   const passThrough = ["content-type", "accept", "user-agent", "openai-beta"];
   for (const name of passThrough) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
+  }
+  for (const [name, value] of Object.entries(overrides)) {
+    if (value === undefined || value === null || value === "") headers.delete(name);
+    else headers.set(name, value);
   }
   headers.set("authorization", `Bearer ${upstreamApiKey}`);
   return headers;
@@ -162,9 +166,12 @@ async function forwardRawAsSSE({
 }) {
   const upstreamBaseURL = normalizeBaseURL(upstream.baseURL);
   const upstreamURL = `${upstreamBaseURL}${pathname}${search}`;
-  const headers = copyPassthroughHeaders(request, upstream.apiKey);
+  const headers = copyPassthroughHeaders(request, upstream.apiKey, {
+    accept: "text/event-stream",
+  });
   const encoder = new TextEncoder();
   const heartbeatMs = streamHeartbeatMs();
+  const timeoutSignal = createTimeoutSignal(streamTimeoutSeconds(timeoutSeconds));
 
   const body = new ReadableStream({
     async start(controller) {
@@ -187,7 +194,7 @@ async function forwardRawAsSSE({
           method,
           headers,
           body: bodyBuffer,
-          signal: createTimeoutSignal(timeoutSeconds),
+          signal: timeoutSignal,
         });
         const contentType = response.headers.get("content-type") || "";
         if (contentType.toLowerCase().includes("text/event-stream")) {
@@ -252,6 +259,14 @@ function streamHeartbeatMs() {
     return Math.max(1, Math.min(60_000, Math.floor(configured)));
   }
   return 15_000;
+}
+
+function streamTimeoutSeconds(configuredSeconds) {
+  const configured = Number(configuredSeconds);
+  const minimum = Number(process.env.IMAGE_STUDIO_STREAM_TIMEOUT_SECONDS || 300);
+  const resolvedMinimum = Number.isFinite(minimum) && minimum > 0 ? minimum : 300;
+  if (!Number.isFinite(configured) || configured <= 0) return resolvedMinimum;
+  return Math.max(configured, resolvedMinimum);
 }
 
 export async function forwardOpenAIPath({ request, config, fetchImpl }) {

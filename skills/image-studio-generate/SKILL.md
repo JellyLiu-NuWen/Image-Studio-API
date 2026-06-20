@@ -106,6 +106,7 @@ python skills/image-studio-generate/scripts/generate_image.py \
 ```
 
 When `--image` is present, the script uses `/v1/images/edits` and sends multipart/form-data. Without `--image`, it uses `/v1/images/generations` and sends JSON.
+Do not override `--model` or `IMAGE_STUDIO_DEFAULT_MODEL` just because the request is an edit; the self-hosted service is expected to route GPT Image 2 edits when configured.
 
 Disable streaming for a compatibility-only upstream:
 

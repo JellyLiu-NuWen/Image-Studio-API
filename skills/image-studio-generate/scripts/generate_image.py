@@ -134,19 +134,12 @@ def build_payload(args):
     return payload
 
 
-def resolve_model(args, is_edit=False):
-    model = args.model or env("IMAGE_STUDIO_DEFAULT_MODEL")
-    if is_edit and not args.model and model == "gpt-image-2":
-        return "gpt-image-1"
-    return model
-
-
 def build_form_fields(args):
     fields = {
         "prompt": args.prompt,
         "n": str(args.n),
     }
-    model = resolve_model(args, is_edit=True)
+    model = args.model or env("IMAGE_STUDIO_DEFAULT_MODEL")
     size = args.size or env("IMAGE_STUDIO_DEFAULT_SIZE")
     quality = args.quality or env("IMAGE_STUDIO_DEFAULT_QUALITY", DEFAULT_QUALITY)
     output_format = args.output_format

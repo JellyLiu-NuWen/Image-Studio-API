@@ -280,7 +280,7 @@ test("image streaming responses are returned before the upstream stream closes",
 });
 
 test("image stream proxy sends a heartbeat before upstream responds", async () => {
-  let releaseFetch = null;
+  let capturedAccept = "";
   const app = createSelfHostedApp({
     store: memoryStore({
       imageApiToken: "client-token",
@@ -288,10 +288,8 @@ test("image stream proxy sends a heartbeat before upstream responds", async () =
       upstreamApiKey: "upstream-key",
     }),
     ...ADMIN_OPTIONS,
-    fetchImpl: async () => {
-      await new Promise((resolve) => {
-        releaseFetch = resolve;
-      });
+    fetchImpl: async (_url, init) => {
+      capturedAccept = init.headers.get("accept");
       return new Response(JSON.stringify({ data: [{ b64_json: "streamed-json" }] }), {
         status: 200,
         headers: { "content-type": "application/json" },
@@ -308,13 +306,15 @@ test("image stream proxy sends a heartbeat before upstream responds", async () =
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("content-type"), "text/event-stream; charset=utf-8");
   assert.equal(response.headers.get("x-accel-buffering"), "no");
+  assert.equal(capturedAccept, "text/event-stream");
   const reader = response.body.getReader();
   const firstChunk = await reader.read();
   assert.equal(new TextDecoder().decode(firstChunk.value), ": image-studio keepalive\n\n");
-  releaseFetch();
   const secondChunk = await reader.read();
   assert.match(new TextDecoder().decode(secondChunk.value), /streamed-json/);
-  await reader.cancel();
+  const doneChunk = await reader.read();
+  assert.match(new TextDecoder().decode(doneChunk.value), /data: \[DONE\]/);
+  assert.equal((await reader.read()).done, true);
 });
 
 test("image stream proxy keeps heartbeating while upstream is silent", async () => {
@@ -357,6 +357,42 @@ test("image stream proxy keeps heartbeating while upstream is silent", async () 
     } else {
       process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = previousHeartbeat;
     }
+  }
+});
+
+test("image stream proxy extends upstream timeout for long running image work", async () => {
+  const originalTimeout = AbortSignal.timeout;
+  let capturedTimeoutMs = 0;
+  AbortSignal.timeout = (ms) => {
+    capturedTimeoutMs = ms;
+    return new AbortController().signal;
+  };
+  try {
+    const app = createSelfHostedApp({
+      store: memoryStore({
+        imageApiToken: "client-token",
+        upstreamBaseURL: "https://upstream.example/v1",
+        upstreamApiKey: "upstream-key",
+        requestTimeoutSeconds: 120,
+      }),
+      ...ADMIN_OPTIONS,
+      fetchImpl: async () => new Response(JSON.stringify({ data: [{ b64_json: "slow-json" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    });
+
+    const response = await app.handle(jsonRequest("/v1/images/edits", {
+      prompt: "slow streaming edit",
+      stream: true,
+    }, {
+      authorization: "Bearer client-token",
+    }));
+    assert.equal(response.status, 200);
+    await response.text();
+    assert.equal(capturedTimeoutMs, 300_000);
+  } finally {
+    AbortSignal.timeout = originalTimeout;
   }
 });
 

@@ -305,7 +305,7 @@ class GenerateImageScriptTest(TestCase):
             server.shutdown()
             server.server_close()
 
-    def test_edit_mode_defaults_gpt_image_2_to_gpt_image_1(self):
+    def test_edit_mode_preserves_gpt_image_2_default_model(self):
         server = HTTPServer(("127.0.0.1", 0), Handler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -337,8 +337,7 @@ class GenerateImageScriptTest(TestCase):
                     check=False,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertIn("gpt-image-1", Handler.seen["body_text"])
-                self.assertNotIn("gpt-image-2", Handler.seen["body_text"])
+                self.assertIn("gpt-image-2", Handler.seen["body_text"])
         finally:
             server.shutdown()
             server.server_close()
