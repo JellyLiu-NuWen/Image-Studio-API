@@ -479,11 +479,15 @@ test("Vue management tables use the ArtTableHeader card pattern", async () => {
     assert.match(section, /table-header-tools/, "Art table header should include the tool cluster");
     assert.match(section, /table-tool-button/, "Art table header should render compact tool buttons");
     assert.match(section, /tableHeaderTools/, "Art table header should render the shared tool list");
+    assert.match(section, /art-toolbar-actions/, "Art table header should use the shared Art toolbar action cluster");
+    assert.doesNotMatch(section, /class="toolbar-actions"/, "Art table header should not keep the legacy toolbar actions class");
   }
   assert.match(styleSource, /\.art-table-card/, "Styles should include Art table card shell");
   assert.match(styleSource, /\.art-table-header/, "Styles should include ArtTableHeader layout");
   assert.match(styleSource, /\.table-header-tools/, "Styles should include table header tool cluster");
   assert.match(styleSource, /\.table-tool-button/, "Styles should include compact table tool buttons");
+  assert.match(styleSource, /\.art-toolbar-actions/, "Styles should include the shared Art toolbar actions class");
+  assert.doesNotMatch(styleSource, /(^|\n)\.toolbar-actions\b/, "Styles should not keep the standalone legacy toolbar actions selector");
 });
 
 test("Vue management table titles use ArtTableHeader title blocks", async () => {

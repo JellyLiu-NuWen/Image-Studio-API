@@ -2174,7 +2174,7 @@ window.addEventListener('beforeunload', (event) => {
               <div class="art-table-meta">共 {{ activeInterfaces.length }} 个接口，当前显示 {{ filteredInterfaces.length }} 个</div>
               <el-input v-show="isTableSearchVisible('interfaces')" v-model="tableSearch.interfaces" class="table-search-input" clearable placeholder="搜索接口、模型、上游" />
             </div>
-            <div class="toolbar-actions">
+            <div class="art-toolbar-actions">
               <div class="table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
                   <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
@@ -2280,7 +2280,7 @@ window.addEventListener('beforeunload', (event) => {
               <div class="art-table-meta">共 {{ activeUpstreams.length }} 个上游，当前显示 {{ filteredUpstreams.length }} 个</div>
               <el-input v-show="isTableSearchVisible('upstreams')" v-model="tableSearch.upstreams" class="table-search-input" clearable placeholder="搜索上游、URL、失败原因" />
             </div>
-            <div class="toolbar-actions">
+            <div class="art-toolbar-actions">
               <div class="table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
                   <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
@@ -2385,7 +2385,7 @@ window.addEventListener('beforeunload', (event) => {
               <div class="art-table-meta">共 {{ activeModels.length }} 个模型，当前显示 {{ filteredModels.length }} 个</div>
               <el-input v-show="isTableSearchVisible('models')" v-model="tableSearch.models" class="table-search-input" clearable placeholder="搜索模型、能力、用途" />
             </div>
-            <div class="toolbar-actions">
+            <div class="art-toolbar-actions">
               <div class="table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
                   <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
@@ -2492,7 +2492,7 @@ window.addEventListener('beforeunload', (event) => {
               <div class="art-table-meta">共 {{ activePresets.length }} 个预设，当前显示 {{ filteredPresets.length }} 个</div>
               <el-input v-show="isTableSearchVisible('quality')" v-model="tableSearch.quality" class="table-search-input" clearable placeholder="搜索预设、用途、模板" />
             </div>
-            <div class="toolbar-actions">
+            <div class="art-toolbar-actions">
               <div class="table-header-tools">
                 <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
                   <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
@@ -2713,7 +2713,7 @@ window.addEventListener('beforeunload', (event) => {
                 <h4><DataAnalysis />日志结果</h4>
                 <p>查看调用明细、质量标记、导出文件和脱敏重放命令。</p>
               </div>
-              <div class="log-panel-meta toolbar-actions">
+              <div class="log-panel-meta art-toolbar-actions">
                 <span>生图 {{ filteredGenerationLogs.length }} / API {{ filteredApiLogs.length }}</span>
                 <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
                 <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
@@ -2870,7 +2870,7 @@ window.addEventListener('beforeunload', (event) => {
                 <h4><DataAnalysis />用量明细</h4>
                 <p>按日期、接口、模型和上游拆分调用量、成功率、耗时与估算成本。</p>
               </div>
-              <div class="usage-panel-meta toolbar-actions">
+              <div class="usage-panel-meta art-toolbar-actions">
                 <el-segmented v-model="tableDensity" :options="[
                   { label: '默认', value: 'default' },
                   { label: '舒适', value: 'comfortable' },

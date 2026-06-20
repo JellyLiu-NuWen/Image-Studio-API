@@ -1892,7 +1892,7 @@ button,
   font-weight: 800;
 }
 
-.toolbar-actions {
+.art-toolbar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -1900,7 +1900,7 @@ button,
   gap: 9px;
 }
 
-.toolbar-actions .el-input {
+.art-toolbar-actions .el-input {
   width: 240px;
 }
 
@@ -4179,7 +4179,7 @@ button,
   }
 
   .table-toolbar,
-  .toolbar-actions,
+  .art-toolbar-actions,
   .query-panel-heading,
   .result-toolbar,
   .query-actions {
@@ -4187,9 +4187,9 @@ button,
     flex-direction: column;
   }
 
-  .toolbar-actions .el-input,
-  .toolbar-actions .el-button,
-  .toolbar-actions .el-segmented,
+  .art-toolbar-actions .el-input,
+  .art-toolbar-actions .el-button,
+  .art-toolbar-actions .el-segmented,
   .query-actions .el-button {
     width: 100%;
   }
