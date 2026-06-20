@@ -5,6 +5,7 @@ import type {
   AlertSummary,
   AlertsConfig,
   AuditRecord,
+  BackupRecord,
   ConfigVersion,
   LogRecord,
   MetricsResponse,
@@ -117,11 +118,12 @@ export const adminApi = {
     method: 'POST',
     body: '{}'
   }),
-  backup: () => requestJSON<{ ok: boolean; backup: { createdAt: string; config: AdminConfig } }>('/backup', {
+  backups: () => requestJSON<{ backups: BackupRecord[] }>('/backup'),
+  backup: () => requestJSON<{ ok: boolean; backup: BackupRecord }>('/backup', {
     method: 'POST',
     body: '{}'
   }),
-  restore: (backup: { config: AdminConfig } | { backup: { config: AdminConfig } }) => requestJSON<{ ok: boolean; config: AdminConfig }>('/restore', {
+  restore: (backup: { backupId: string } | { config: AdminConfig } | { backup: BackupRecord }) => requestJSON<{ ok: boolean; config: AdminConfig }>('/restore', {
     method: 'POST',
     body: JSON.stringify(backup)
   }),

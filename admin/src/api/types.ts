@@ -225,6 +225,15 @@ export interface ConfigVersion {
   summary: string
 }
 
+export interface BackupRecord {
+  id: string
+  createdAt: string
+  username: string
+  summary: string
+  config: AdminConfig
+  rawConfig?: AdminConfig
+}
+
 export interface AuditRecord {
   id: string
   createdAt: string

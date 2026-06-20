@@ -1216,6 +1216,68 @@ test("admin usage summarizes estimated cost and daily buckets", async () => {
   assert.equal(body.usage.byDate["2026-06-20"].estimatedCostUSD, 0.1234);
 });
 
+test("admin backups retain raw secrets and keep the latest ten snapshots", async () => {
+  let tick = 0;
+  const store = memoryStore({
+    interfaces: [{
+      id: "codex",
+      name: "Codex",
+      apiToken: "client-token",
+      upstreamIds: ["primary"],
+    }],
+    upstreams: [{
+      id: "primary",
+      name: "Primary",
+      baseURL: "https://primary.example/v1",
+      apiKey: "upstream-key",
+    }],
+  });
+  const app = createSelfHostedApp({
+    store,
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+    now: () => Date.UTC(2026, 5, 20, 1, 0, tick++),
+  });
+  const headers = await loginHeaders(app);
+  let firstBackup = null;
+  for (let index = 0; index < 11; index += 1) {
+    const response = await app.handle(jsonRequest("/api/backup", {}, headers));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    if (index === 0) firstBackup = body.backup;
+  }
+
+  assert.equal(firstBackup.rawConfig.interfaces[0].apiToken, "client-token");
+  assert.equal(firstBackup.rawConfig.upstreams[0].apiKey, "upstream-key");
+  const list = await app.handle(new Request("http://localhost/api/backup", { headers }));
+  assert.equal(list.status, 200);
+  const listBody = await list.json();
+  assert.equal(listBody.backups.length, 10);
+  assert.equal(listBody.backups.some((item) => item.id === firstBackup.id), false);
+
+  await store.save({
+    interfaces: [{
+      id: "codex",
+      name: "Codex",
+      apiToken: "changed-client-token",
+      upstreamIds: ["primary"],
+    }],
+    upstreams: [{
+      id: "primary",
+      name: "Primary",
+      baseURL: "https://primary.example/v1",
+      apiKey: "changed-upstream-key",
+    }],
+  });
+  const restore = await app.handle(jsonRequest("/api/restore", { backup: firstBackup }, headers));
+  assert.equal(restore.status, 200);
+  assert.equal(store.current().interfaces[0].apiToken, "client-token");
+  assert.equal(store.current().upstreams[0].apiKey, "upstream-key");
+});
+
 test("admin can review and acknowledge active alerts", async () => {
   const generationLogStore = createMemoryLogStore();
   await generationLogStore.append({

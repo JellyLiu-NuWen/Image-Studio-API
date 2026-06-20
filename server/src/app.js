@@ -189,6 +189,27 @@ function appendAudit(auditRecords, action, details, username, now) {
   auditRecords.splice(200);
 }
 
+function publicBackup(backup) {
+  return {
+    id: backup.id,
+    createdAt: backup.createdAt,
+    username: backup.username,
+    summary: backup.summary,
+    config: backup.config,
+  };
+}
+
+function createConfigBackup(config, username, now, summary = "手动配置备份") {
+  return {
+    id: createRequestId(),
+    createdAt: nowISO(now),
+    username: username || config.adminUsername || "admin",
+    summary,
+    config: publicConfig(config),
+    rawConfig: config,
+  };
+}
+
 const DEFAULT_IMAGE_COST_USD = {
   "gpt-image-2": 0.02,
 };
@@ -641,6 +662,30 @@ async function handleConfigVersions({ request, store, configVersions, versionId,
   return json({ ok: true, config: publicConfig(saved) });
 }
 
+async function handleBackup({ request, store, backups, auditRecords, username, now }) {
+  if (request.method === "GET") {
+    return json({ backups: backups.map(publicBackup) });
+  }
+  if (request.method !== "POST") return methodNotAllowed();
+  const config = normalizeConfig(await store.load());
+  const backup = createConfigBackup(config, username, now);
+  backups.unshift(backup);
+  backups.splice(10);
+  appendAudit(auditRecords, "backup.create", { backupId: backup.id }, username, now);
+  return json({ ok: true, backup });
+}
+
+async function handleRestore({ request, store, backups, auditRecords, username, now }) {
+  if (request.method !== "POST") return methodNotAllowed();
+  const body = await request.json().catch(() => ({}));
+  const backupId = String(body.backupId || "").trim();
+  const matched = backupId ? backups.find((item) => item.id === backupId) : null;
+  const rawConfig = matched?.rawConfig || body.rawConfig || body.backup?.rawConfig || body.config || body.backup?.config || {};
+  const restored = await store.save(rawConfig);
+  appendAudit(auditRecords, "backup.restore", { backupId: backupId || body.backup?.id || "" }, username, now);
+  return json({ ok: true, config: publicConfig(restored) });
+}
+
 async function handleModels({ request, store }) {
   const current = normalizeConfig(await store.load());
   if (request.method === "GET") return json({ models: current.models });
@@ -777,6 +822,7 @@ export function createSelfHostedApp({
   const sessions = new Map();
   const auditRecords = [];
   const configVersions = [];
+  const backups = [];
   let activeRequests = 0;
 
   async function handle(request) {
@@ -1211,17 +1257,14 @@ export function createSelfHostedApp({
           response = authError;
           return response;
         }
-        if (request.method !== "POST") {
-          response = methodNotAllowed();
-          return response;
-        }
-        const config = normalizeConfig(await store.load());
-        response = json({
-          ok: true,
-          backup: {
-            createdAt: nowISO(now),
-            config: publicConfig(config),
-          },
+        const token = parseCookies(request).image_studio_session || "";
+        response = await handleBackup({
+          request,
+          store,
+          backups,
+          auditRecords,
+          username: sessions.get(token)?.username,
+          now,
         });
         return response;
       }
@@ -1233,13 +1276,15 @@ export function createSelfHostedApp({
           response = authError;
           return response;
         }
-        if (request.method !== "POST") {
-          response = methodNotAllowed();
-          return response;
-        }
-        const body = await request.json().catch(() => ({}));
-        const restored = await store.save(body.config || body.backup?.config || {});
-        response = json({ ok: true, config: publicConfig(restored) });
+        const token = parseCookies(request).image_studio_session || "";
+        response = await handleRestore({
+          request,
+          store,
+          backups,
+          auditRecords,
+          username: sessions.get(token)?.username,
+          now,
+        });
         return response;
       }
 

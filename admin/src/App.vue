@@ -34,6 +34,7 @@ import type {
   AlertSummary,
   AlertsConfig,
   AuditRecord,
+  BackupRecord,
   ConfigVersion,
   LogRecord,
   MetricsResponse,
@@ -89,6 +90,7 @@ const qualityCases = ref<QualityCase[]>([])
 const upstreamHealth = ref<UpstreamHealthRecord[]>([])
 const usage = ref<UsageResponse['usage'] | null>(null)
 const versions = ref<ConfigVersion[]>([])
+const backups = ref<BackupRecord[]>([])
 const auditLogs = ref<AuditRecord[]>([])
 const sessions = ref<SessionRecord[]>([])
 const updateInfo = ref<Record<string, string>>({})
@@ -308,13 +310,14 @@ async function bootstrap() {
 async function refreshAll() {
   loading.value = true
   try {
-    const [configData, metricData, generationData, apiData, usageData, versionData, auditData, sessionData, updateData, qualityCaseData, upstreamHealthData, activeAlertData] = await Promise.all([
+    const [configData, metricData, generationData, apiData, usageData, versionData, backupData, auditData, sessionData, updateData, qualityCaseData, upstreamHealthData, activeAlertData] = await Promise.all([
       adminApi.config(),
       adminApi.metrics(),
       adminApi.logs('generations', logQuery()),
       adminApi.logs('api', logQuery()),
       adminApi.usage().catch(() => ({ usage: null })),
       adminApi.versions().catch(() => ({ versions: [] })),
+      adminApi.backups().catch(() => ({ backups: [] })),
       adminApi.auditLogs().catch(() => ({ records: [] })),
       adminApi.sessions().catch(() => ({ sessions: [] })),
       adminApi.updateCheck().catch(() => ({ update: {} })),
@@ -328,6 +331,7 @@ async function refreshAll() {
     apiLogs.value = apiData.records
     usage.value = usageData.usage
     versions.value = versionData.versions
+    backups.value = backupData.backups
     auditLogs.value = auditData.records
     sessions.value = sessionData.sessions
     updateInfo.value = updateData.update
@@ -504,8 +508,21 @@ async function restoreVersion(id: string) {
 async function createBackup() {
   const result = await adminApi.backup()
   backupStatus.value = `已生成备份：${formatTime(result.backup.createdAt)}`
+  backups.value = [result.backup, ...backups.value.filter((item) => item.id !== result.backup.id)].slice(0, 10)
   downloadJSON(`image-studio-backup-${Date.now()}.json`, result.backup)
   ElMessage.success('备份已生成')
+}
+
+async function restoreBackup(id: string) {
+  await ElMessageBox.confirm('恢复后当前配置会被覆盖，确定继续吗？', '恢复备份', { type: 'warning' })
+  const result = await adminApi.restore({ backupId: id })
+  setConfig(result.config)
+  markSaved()
+  ElMessage.success('备份已恢复')
+}
+
+function downloadBackup(record: BackupRecord) {
+  downloadJSON(`image-studio-backup-${record.createdAt.slice(0, 10)}-${record.id}.json`, record)
 }
 
 function downloadJSON(filename: string, data: unknown) {
@@ -1137,7 +1154,20 @@ window.addEventListener('beforeunload', (event) => {
               <input ref="backupFileInput" class="hidden-file" type="file" accept="application/json,.json" @change="restoreFromFile" />
               <span>{{ backupStatus || '自动保留最近配置快照，恢复前请确认版本。' }}</span>
             </div>
-            <el-table :data="versions" height="360">
+            <el-table :data="backups" height="260" empty-text="暂无备份">
+              <el-table-column prop="createdAt" label="备份时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+              <el-table-column prop="username" label="操作者" width="120" />
+              <el-table-column prop="summary" label="摘要" min-width="180" />
+              <el-table-column label="操作" width="180">
+                <template #default="{ row }">
+                  <el-button size="small" @click="downloadBackup(row)">下载</el-button>
+                  <el-button size="small" type="warning" plain @click="restoreBackup(row.id)">恢复</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-divider />
+            <div class="card-title version-title"><Document />配置版本历史</div>
+            <el-table :data="versions" height="240">
               <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="username" label="操作者" width="120" />
               <el-table-column prop="summary" label="摘要" min-width="200" />
