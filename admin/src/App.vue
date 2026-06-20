@@ -3520,7 +3520,7 @@ window.addEventListener('beforeunload', (event) => {
             <div class="drawer-section-title"><Key /><span>密钥与路由</span></div>
             <div class="drawer-form-grid">
               <el-form-item label="Skill 调用 Key" class="drawer-form-wide">
-                <div class="secret-line">
+                <div class="art-secret-line">
                   <el-input v-model="config.interfaces[drawerIndex].apiToken" :placeholder="config.interfaces[drawerIndex].apiTokenSet ? '已保存，留空保持不变' : '请输入 Key'" />
                   <el-button :icon="secretValues[`interface:${config.interfaces[drawerIndex].id}`] ? Hide : View" @click="revealSecret('interface', config.interfaces[drawerIndex].id)">显示</el-button>
                   <el-button :icon="Key" @click="copySecret('interface', config.interfaces[drawerIndex].id)">复制</el-button>
@@ -3564,7 +3564,7 @@ window.addEventListener('beforeunload', (event) => {
           <section class="drawer-section">
             <div class="drawer-section-title"><Key /><span>认证密钥</span></div>
             <el-form-item label="上游 API Key">
-              <div class="secret-line">
+              <div class="art-secret-line">
                 <el-input v-model="config.upstreams[drawerIndex].apiKey" :placeholder="config.upstreams[drawerIndex].apiKeySet ? '已保存，留空保持不变' : '请输入 Key'" />
                 <el-button :icon="secretValues[`upstream:${config.upstreams[drawerIndex].id}`] ? Hide : View" @click="revealSecret('upstream', config.upstreams[drawerIndex].id)">显示</el-button>
                 <el-button :icon="Key" @click="copySecret('upstream', config.upstreams[drawerIndex].id)">复制</el-button>
