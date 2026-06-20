@@ -3325,18 +3325,18 @@ button,
   color: var(--art-primary);
 }
 
-.drawer-form-grid {
+.art-drawer-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 12px;
 }
 
-.drawer-form-wide {
+.art-drawer-form-wide {
   grid-column: 1 / -1;
 }
 
-.drawer-form-grid .el-select,
-.drawer-form-grid .el-input-number {
+.art-drawer-form-grid .el-select,
+.art-drawer-form-grid .el-input-number {
   width: 100%;
 }
 
@@ -4148,7 +4148,7 @@ button,
   }
 
   .drawer-status-grid,
-  .drawer-form-grid,
+  .art-drawer-form-grid,
   .detail-summary-grid,
   .detail-route-steps div {
     grid-template-columns: 1fr;
