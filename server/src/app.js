@@ -12,7 +12,7 @@ import { json, methodNotAllowed, notFound, tooManyRequests, unauthorized } from 
 import { mergeConfigUpdate, normalizeConfig, publicConfig } from "./config.js";
 import { forwardOpenAIPath } from "./upstreamProxy.js";
 import { summarizeMetrics } from "./metrics.js";
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 
 function requireClientAuth(request, config) {
   if (!config.interfaces.some((item) => item.enabled && item.apiToken)) {
@@ -78,6 +78,52 @@ function classifyAuthKind(request, sessions, config = null) {
 
 function createApiToken() {
   return `img_${randomBytes(24).toString("base64url")}`;
+}
+
+const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+function base32Encode(buffer) {
+  let bits = "";
+  for (const byte of buffer) bits += byte.toString(2).padStart(8, "0");
+  let output = "";
+  for (let index = 0; index < bits.length; index += 5) {
+    const chunk = bits.slice(index, index + 5).padEnd(5, "0");
+    output += BASE32_ALPHABET[parseInt(chunk, 2)];
+  }
+  return output;
+}
+
+function base32Decode(value) {
+  let bits = "";
+  for (const char of String(value || "").replace(/=+$/g, "").toUpperCase()) {
+    const index = BASE32_ALPHABET.indexOf(char);
+    if (index >= 0) bits += index.toString(2).padStart(5, "0");
+  }
+  const bytes = [];
+  for (let index = 0; index + 8 <= bits.length; index += 8) {
+    bytes.push(parseInt(bits.slice(index, index + 8), 2));
+  }
+  return Buffer.from(bytes);
+}
+
+function totpCode(secret, timestamp) {
+  const counter = Math.floor(timestamp / 1000 / 30);
+  const buffer = Buffer.alloc(8);
+  buffer.writeBigUInt64BE(BigInt(counter));
+  const digest = createHmac("sha1", base32Decode(secret)).update(buffer).digest();
+  const offset = digest[digest.length - 1] & 0x0f;
+  const binary = ((digest[offset] & 0x7f) << 24)
+    | ((digest[offset + 1] & 0xff) << 16)
+    | ((digest[offset + 2] & 0xff) << 8)
+    | (digest[offset + 3] & 0xff);
+  return String(binary % 1_000_000).padStart(6, "0");
+}
+
+function verifyTOTP(secret, code, now) {
+  const normalized = String(code || "").trim();
+  if (!/^\d{6}$/.test(normalized) || !secret) return false;
+  const current = now();
+  return [-30_000, 0, 30_000].some((offset) => totpCode(secret, current + offset) === normalized);
 }
 
 function nowISO(now) {
@@ -560,6 +606,11 @@ async function handleLogin({ request, store, sessions, fallbackUsername, fallbac
     appendAudit(auditRecords, "auth.login-failed", { username, ip: clientIP(request) }, username || "admin", now);
     return unauthorized("账号或密码错误");
   }
+  if (account.security.totpEnabled && !verifyTOTP(account.security.totpSecret, body.totpCode, now)) {
+    loginGuard.recordFailure(request, username, lockoutEnabled);
+    appendAudit(auditRecords, "auth.login-failed", { username, ip: clientIP(request), reason: "totp" }, username || "admin", now);
+    return unauthorized("TOTP 验证码错误");
+  }
   loginGuard.clear(request, username);
   const sessionToken = createSessionToken();
   sessions.set(sessionToken, { id: createRequestId(), username: account.adminUsername, createdAt: now() });
@@ -623,6 +674,59 @@ async function handleAccountUpdate({ request, store }) {
     adminPasswordHash: await hashPassword(newPassword),
   });
   return json({ ok: true, account: { username: saved.adminUsername } });
+}
+
+async function handleTOTP({ request, store, action, auditRecords, username, now }) {
+  const current = normalizeConfig(await store.load());
+  if (request.method !== "POST") return methodNotAllowed();
+  if (action === "setup") {
+    const secret = base32Encode(randomBytes(20));
+    const label = encodeURIComponent(`Image Studio:${current.adminUsername}`);
+    const issuer = encodeURIComponent("Image Studio");
+    const otpauthURL = `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+    const saved = await store.save({
+      ...current,
+      security: {
+        ...current.security,
+        totpSecret: secret,
+        totpEnabled: false,
+      },
+    });
+    appendAudit(auditRecords, "security.totp.setup", {}, username, now);
+    return json({ ok: true, totp: { secret, otpauthURL }, security: publicConfig(saved).security });
+  }
+  if (action === "enable") {
+    const body = await request.json().catch(() => ({}));
+    if (!verifyTOTP(current.security.totpSecret, body.code, now)) {
+      return unauthorized("TOTP 验证码错误");
+    }
+    const saved = await store.save({
+      ...current,
+      security: {
+        ...current.security,
+        totpEnabled: true,
+      },
+    });
+    appendAudit(auditRecords, "security.totp.enable", {}, username, now);
+    return json({ ok: true, security: publicConfig(saved).security });
+  }
+  if (action === "disable") {
+    const body = await request.json().catch(() => ({}));
+    if (current.security.totpEnabled && !verifyTOTP(current.security.totpSecret, body.code, now)) {
+      return unauthorized("TOTP 验证码错误");
+    }
+    const saved = await store.save({
+      ...current,
+      security: {
+        ...current.security,
+        totpEnabled: false,
+        totpSecret: "",
+      },
+    });
+    appendAudit(auditRecords, "security.totp.disable", {}, username, now);
+    return json({ ok: true, security: publicConfig(saved).security });
+  }
+  return notFound();
 }
 
 async function handleRotateInterfaceKey({ request, store, interfaceId, auditRecords, username, now }) {
@@ -1116,6 +1220,26 @@ export function createSelfHostedApp({
           return response;
         }
         response = await handleAccountUpdate({ request, store });
+        return response;
+      }
+
+      const totpAction = routeIdFromPath(url.pathname, "/api/security/totp/");
+      if (totpAction) {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        const token = parseCookies(request).image_studio_session || "";
+        response = await handleTOTP({
+          request,
+          store,
+          action: totpAction,
+          auditRecords,
+          username: sessions.get(token)?.username,
+          now,
+        });
         return response;
       }
 

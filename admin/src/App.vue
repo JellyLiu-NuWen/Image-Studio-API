@@ -80,8 +80,10 @@ const loading = ref(false)
 const authenticated = ref(false)
 const username = ref('admin')
 const activeView = ref<ViewKey>('dashboard')
-const loginForm = reactive({ username: 'admin', password: '' })
+const loginForm = reactive({ username: 'admin', password: '', totpCode: '' })
 const accountForm = reactive({ username: '', currentPassword: '', newPassword: '' })
+const totpSetup = ref<{ secret: string; otpauthURL: string } | null>(null)
+const totpCode = ref('')
 const config = ref<AdminConfig | null>(null)
 const lastSavedConfig = ref('')
 const metrics = ref<MetricsResponse['metrics'] | null>(null)
@@ -137,6 +139,7 @@ const alertsForm = computed<AlertsConfig>(() => config.value?.alerts || {
 const securityForm = computed(() => config.value?.security || {
   ipAllowlist: [],
   totpEnabled: false,
+  totpConfigured: false,
   failedLoginLockoutEnabled: true
 })
 const filteredGenerationLogs = computed(() => filterLogs(generationLogs.value))
@@ -233,6 +236,8 @@ function setConfig(next: AdminConfig) {
   config.value = structuredClone(next)
   lastSavedConfig.value = JSON.stringify(config.value)
   accountForm.username = next.adminUsername || username.value
+  totpSetup.value = null
+  totpCode.value = ''
 }
 
 function markSaved() {
@@ -358,10 +363,11 @@ async function refreshAll() {
 async function login() {
   loading.value = true
   try {
-    const result = await adminApi.login(loginForm.username, loginForm.password)
+    const result = await adminApi.login(loginForm.username, loginForm.password, loginForm.totpCode)
     authenticated.value = true
     username.value = result.account.username
     loginForm.password = ''
+    loginForm.totpCode = ''
     await refreshAll()
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '登录失败')
@@ -643,6 +649,41 @@ async function saveAccount() {
   ElMessage.success('账号密码已更新')
 }
 
+function updateSecurity(security: AdminConfig['security']) {
+  if (!config.value) return
+  config.value.security = security
+  markSaved()
+}
+
+async function setupTOTP() {
+  const result = await adminApi.totpSetup()
+  totpSetup.value = result.totp
+  totpCode.value = ''
+  updateSecurity(result.security)
+  ElMessage.success('TOTP 密钥已生成')
+}
+
+async function enableTOTP() {
+  if (!totpCode.value.trim()) {
+    ElMessage.warning('请输入验证器中的 6 位验证码')
+    return
+  }
+  const result = await adminApi.totpEnable(totpCode.value)
+  updateSecurity(result.security)
+  totpSetup.value = null
+  totpCode.value = ''
+  ElMessage.success('TOTP 二次验证已启用')
+}
+
+async function disableTOTP() {
+  await ElMessageBox.confirm('禁用后登录将不再要求动态验证码，确定继续吗？', '禁用 TOTP', { type: 'warning' })
+  const result = await adminApi.totpDisable(totpCode.value)
+  updateSecurity(result.security)
+  totpSetup.value = null
+  totpCode.value = ''
+  ElMessage.success('TOTP 二次验证已禁用')
+}
+
 async function revokeSession(id: string) {
   const data = await adminApi.revokeSession({ id })
   sessions.value = data.sessions
@@ -708,6 +749,9 @@ window.addEventListener('beforeunload', (event) => {
         </el-form-item>
         <el-form-item label="密码">
           <el-input v-model="loginForm.password" type="password" autocomplete="current-password" show-password @keyup.enter="login" />
+        </el-form-item>
+        <el-form-item label="TOTP 验证码">
+          <el-input v-model="loginForm.totpCode" autocomplete="one-time-code" maxlength="6" placeholder="未启用时可留空" @keyup.enter="login" />
         </el-form-item>
         <el-button type="primary" size="large" class="full-button" :loading="loading" @click="login">登录</el-button>
       </el-form>
@@ -1122,9 +1166,33 @@ window.addEventListener('beforeunload', (event) => {
               <el-alert title="启用 IP 白名单后，后台登录会按 x-forwarded-for / x-real-ip 校验来源；失败登录锁定会在同一 IP 与账号连续失败后临时拒绝登录。" type="info" show-icon :closable="false" />
               <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP，例如 203.0.113.10" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
               <el-form-item label="失败登录锁定"><el-switch v-model="config.security.failedLoginLockoutEnabled" /></el-form-item>
-              <el-form-item label="TOTP 二次验证"><el-switch v-model="config.security.totpEnabled" /></el-form-item>
               <el-form-item><el-button type="primary" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
             </el-form>
+          </el-card>
+          <el-card shadow="never">
+            <template #header><div class="card-title"><Key />TOTP 二次验证</div></template>
+            <div class="totp-panel">
+              <div class="status-row">
+                <span>当前状态</span>
+                <el-tag :type="securityForm.totpEnabled ? 'success' : 'info'">{{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
+                <el-tag v-if="securityForm.totpConfigured && !securityForm.totpEnabled" type="warning">待验证</el-tag>
+              </div>
+              <el-alert v-if="!securityForm.totpEnabled" title="生成密钥后，用认证器添加 otpauth URI 或手动输入密钥，再提交 6 位验证码完成启用。" type="info" show-icon :closable="false" />
+              <el-form label-width="120px" class="narrow-form">
+                <template v-if="totpSetup">
+                  <el-form-item label="手动密钥"><el-input :model-value="totpSetup.secret" readonly /></el-form-item>
+                  <el-form-item label="otpauth URI"><el-input :model-value="totpSetup.otpauthURL" type="textarea" :rows="3" readonly /></el-form-item>
+                </template>
+                <el-form-item label="验证码">
+                  <el-input v-model="totpCode" maxlength="6" placeholder="认证器中的 6 位验证码" />
+                </el-form-item>
+                <el-form-item>
+                  <el-button v-if="!securityForm.totpEnabled" @click="setupTOTP">生成 TOTP 密钥</el-button>
+                  <el-button v-if="!securityForm.totpEnabled" type="primary" :disabled="!securityForm.totpConfigured && !totpSetup" @click="enableTOTP">启用 TOTP</el-button>
+                  <el-button v-else type="danger" plain @click="disableTOTP">禁用 TOTP</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
           </el-card>
           <el-card shadow="never">
             <template #header><div class="card-title"><Key />修改账号密码</div></template>

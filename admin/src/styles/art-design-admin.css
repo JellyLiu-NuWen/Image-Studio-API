@@ -423,6 +423,19 @@ button,
   font-size: 13px;
 }
 
+.totp-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-size: 13px;
+}
+
 .health-inline {
   display: inline-flex;
   align-items: center;

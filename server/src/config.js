@@ -285,6 +285,7 @@ function normalizeSecurity(raw = {}) {
     ...raw,
     ipAllowlist: normalizeStringArray(raw.ipAllowlist, DEFAULT_SECURITY.ipAllowlist),
     totpEnabled: raw.totpEnabled === true,
+    totpSecret: String(raw.totpSecret || "").trim(),
     failedLoginLockoutEnabled: raw.failedLoginLockoutEnabled !== false,
   };
 }
@@ -650,7 +651,11 @@ export function publicConfig(config) {
       webhookURLSet: !!normalized.alerts.webhookURL,
       webhookURL: normalized.alerts.webhookURL ? "[redacted]" : "",
     },
-    security: normalized.security,
+    security: {
+      ...normalized.security,
+      totpConfigured: !!normalized.security.totpSecret,
+      totpSecret: undefined,
+    },
   };
 }
 

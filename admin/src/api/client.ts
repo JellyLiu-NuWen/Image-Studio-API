@@ -50,9 +50,9 @@ async function requestJSON<T>(path: string, init: RequestInit = {}): Promise<T> 
 
 export const adminApi = {
   session: () => requestJSON<AdminSession>('/session'),
-  login: (username: string, password: string) => requestJSON<{ ok: boolean; account: { username: string } }>('/login', {
+  login: (username: string, password: string, totpCode = '') => requestJSON<{ ok: boolean; account: { username: string } }>('/login', {
     method: 'POST',
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username, password, totpCode })
   }),
   logout: () => requestJSON<{ ok: boolean }>('/logout', { method: 'POST', body: '{}' }),
   config: () => requestJSON<{ config: AdminConfig }>('/config'),
@@ -74,6 +74,18 @@ export const adminApi = {
   account: (body: { username: string; currentPassword: string; newPassword: string }) => requestJSON<{ ok: boolean; account: { username: string } }>('/account', {
     method: 'POST',
     body: JSON.stringify(body)
+  }),
+  totpSetup: () => requestJSON<{ ok: boolean; totp: { secret: string; otpauthURL: string }; security: AdminConfig['security'] }>('/security/totp/setup', {
+    method: 'POST',
+    body: '{}'
+  }),
+  totpEnable: (code: string) => requestJSON<{ ok: boolean; security: AdminConfig['security'] }>('/security/totp/enable', {
+    method: 'POST',
+    body: JSON.stringify({ code })
+  }),
+  totpDisable: (code: string) => requestJSON<{ ok: boolean; security: AdminConfig['security'] }>('/security/totp/disable', {
+    method: 'POST',
+    body: JSON.stringify({ code })
   }),
   revokeSession: (payload: { id?: string; others?: boolean }) => requestJSON<{ ok: boolean; revoked: number; sessions: SessionRecord[] }>('/sessions/revoke', {
     method: 'POST',

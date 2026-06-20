@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { createSelfHostedApp } from "../src/app.js";
 import { createMemoryLogStore } from "../src/logStore.js";
 import { parseDotEnv } from "../src/config.js";
@@ -42,6 +43,33 @@ async function loginHeaders(app, username = "admin", password = "admin-pass") {
   const cookie = response.headers.get("set-cookie") || "";
   assert.match(cookie, /image_studio_session=/);
   return { cookie: cookie.split(";")[0] };
+}
+
+function base32Decode(value) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const char of String(value || "").replace(/=+$/g, "").toUpperCase()) {
+    const index = alphabet.indexOf(char);
+    if (index >= 0) bits += index.toString(2).padStart(5, "0");
+  }
+  const bytes = [];
+  for (let index = 0; index + 8 <= bits.length; index += 8) {
+    bytes.push(parseInt(bits.slice(index, index + 8), 2));
+  }
+  return Buffer.from(bytes);
+}
+
+function totpCode(secret, timestamp) {
+  const counter = Math.floor(timestamp / 1000 / 30);
+  const buffer = Buffer.alloc(8);
+  buffer.writeBigUInt64BE(BigInt(counter));
+  const digest = createHmac("sha1", base32Decode(secret)).update(buffer).digest();
+  const offset = digest[digest.length - 1] & 0x0f;
+  const binary = ((digest[offset] & 0x7f) << 24)
+    | ((digest[offset + 1] & 0xff) << 16)
+    | ((digest[offset + 2] & 0xff) << 8)
+    | (digest[offset + 3] & 0xff);
+  return String(binary % 1_000_000).padStart(6, "0");
 }
 
 test("health check is public", async () => {
@@ -935,6 +963,54 @@ test("admin security enforces ip allowlist and failed login lockout", async () =
   }));
   assert.equal(locked.status, 429);
   assert.match((await locked.json()).error.message, /locked/i);
+});
+
+test("admin can enable totp and login requires a valid code", async () => {
+  const now = Date.parse("2026-06-20T00:00:00.000Z");
+  const store = memoryStore();
+  const app = createSelfHostedApp({
+    store,
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      throw new Error("totp operations must not call upstream");
+    },
+    now: () => now,
+  });
+  const headers = await loginHeaders(app);
+
+  const setup = await app.handle(new Request("http://localhost/api/security/totp/setup", {
+    method: "POST",
+    headers,
+  }));
+  assert.equal(setup.status, 200);
+  const setupBody = await setup.json();
+  assert.match(setupBody.totp.secret, /^[A-Z2-7]+=*$/);
+  assert.match(setupBody.totp.otpauthURL, /^otpauth:\/\/totp\//);
+
+  const enable = await app.handle(jsonRequest("/api/security/totp/enable", {
+    code: totpCode(setupBody.totp.secret, now),
+  }, headers));
+  assert.equal(enable.status, 200);
+  assert.equal((await enable.json()).security.totpEnabled, true);
+  assert.equal(store.current().security.totpSecret, setupBody.totp.secret);
+
+  const missingCode = await app.handle(jsonRequest("/api/login", {
+    username: "admin",
+    password: "admin-pass",
+  }));
+  assert.equal(missingCode.status, 401);
+  const wrongCode = await app.handle(jsonRequest("/api/login", {
+    username: "admin",
+    password: "admin-pass",
+    totpCode: "000000",
+  }));
+  assert.equal(wrongCode.status, 401);
+  const validCode = await app.handle(jsonRequest("/api/login", {
+    username: "admin",
+    password: "admin-pass",
+    totpCode: totpCode(setupBody.totp.secret, now),
+  }));
+  assert.equal(validCode.status, 200);
 });
 
 test("admin can rotate interface keys and clone interfaces", async () => {

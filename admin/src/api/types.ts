@@ -137,6 +137,7 @@ export interface AlertNotification {
 export interface SecurityConfig {
   ipAllowlist: string[]
   totpEnabled: boolean
+  totpConfigured?: boolean
   failedLoginLockoutEnabled: boolean
 }
 
