@@ -2981,7 +2981,7 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </template>
               <div class="alert-panel-body">
-                <div class="status-list">
+                <div class="art-alert-status-list">
                   <div><span>Webhook</span><strong>{{ config?.alerts.webhookEnabled ? '已启用' : '未启用' }}</strong></div>
                   <div><span>最近发送</span><strong>{{ notificationLabel(alertNotification.status) }}</strong></div>
                   <div><span>HTTP 状态</span><strong>{{ alertNotification.webhookStatus || '-' }}</strong></div>
@@ -3268,7 +3268,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="system-panel-body">
-              <div class="status-list">
+              <div class="art-system-status-list">
                 <div><span>当前版本</span><strong>{{ updateInfo.currentVersion || 'dev' }}</strong></div>
                 <div><span>当前 Commit</span><strong>{{ updateInfo.currentCommit || '未知' }}</strong></div>
                 <div><span>Docker Tag</span><strong>{{ updateInfo.dockerImageTag || 'latest' }}</strong></div>

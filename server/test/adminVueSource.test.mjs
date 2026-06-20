@@ -1079,10 +1079,13 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.match(systemSection, /system-panel-body/g, "System panels should wrap body content consistently");
   assert.match(systemSection, /system-panel-actions/g, "System panels should group compact actions");
   assert.match(systemSection, /system-panel-action/, "System panel buttons should use compact action styling");
+  assert.match(systemSection, /art-system-status-list/, "System update status should use a dedicated Art status list");
+  assert.doesNotMatch(systemSection, /class="status-list"/, "System panels should not keep the legacy status-list class");
   assert.match(styleSource, /\.art-system-panel/, "Styles should include system panel shell");
   assert.match(styleSource, /\.system-panel-header/, "Styles should include system panel header");
   assert.match(styleSource, /\.system-panel-body/, "Styles should include system panel body layout");
   assert.match(styleSource, /\.system-panel-action/, "Styles should include system panel actions");
+  assert.match(styleSource, /\.art-system-status-list/, "Styles should include system status list styling");
 });
 
 test("Vue alerts page uses an Art Design Pro alert center workspace", async () => {
@@ -1126,8 +1129,11 @@ test("Vue alerts cards use Art Design Pro panels", async () => {
   assert.match(alertsSection, /alert-panel-body/g, "Alert panels should wrap body content consistently");
   assert.match(alertsSection, /alert-panel-actions/g, "Alert panels should group compact actions");
   assert.match(alertsSection, /alert-panel-action/, "Alert panel buttons should use compact action styling");
+  assert.match(alertsSection, /art-alert-status-list/, "Alert notification status should use a dedicated Art status list");
+  assert.doesNotMatch(alertsSection, /class="status-list"/, "Alert panels should not keep the legacy status-list class");
   assert.match(styleSource, /\.art-alert-panel/, "Styles should include alert panel shell");
   assert.match(styleSource, /\.alert-panel-header/, "Styles should include alert panel header");
   assert.match(styleSource, /\.alert-panel-body/, "Styles should include alert panel body layout");
   assert.match(styleSource, /\.alert-panel-action/, "Styles should include alert panel actions");
+  assert.match(styleSource, /\.art-alert-status-list/, "Styles should include alert status list styling");
 });
