@@ -3263,6 +3263,61 @@ button,
   font-weight: 800;
 }
 
+.audit-log-panel {
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.audit-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.audit-panel-title {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.audit-panel-title h4 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--art-text);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.audit-panel-title h4 svg {
+  width: 18px;
+  height: 18px;
+  color: var(--art-primary);
+}
+
+.audit-panel-title p {
+  margin: 0;
+  color: var(--art-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.audit-panel-body {
+  display: grid;
+  gap: 12px;
+}
+
+.audit-panel-body .el-table {
+  border-radius: 10px;
+}
+
+.audit-panel-action {
+  font-weight: 800;
+}
+
 .session-workspace :deep(.el-card__body),
 .audit-workspace :deep(.el-card__body) {
   display: grid;

@@ -338,7 +338,7 @@ class GenerateImageScriptTest(TestCase):
                 self.assertEqual(Handler.seen["authorization"], "Bearer client-token")
                 self.assertIn("multipart/form-data; boundary=", Handler.seen["content_type"])
                 body = Handler.seen["body_text"]
-                self.assertEqual(body.count('name="image"'), 2)
+                self.assertEqual(body.count('name="image[]"'), 2)
                 self.assertIn('filename="first.png"', body)
                 self.assertIn('filename="second.jpg"', body)
                 self.assertIn('name="mask"; filename="mask.png"', body)

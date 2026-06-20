@@ -3087,22 +3087,32 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
-        <el-card shadow="never" class="audit-workspace">
-          <template #header><div class="card-title"><Document />审计日志</div></template>
-          <el-table :data="auditLogs" :size="tableSize" height="360">
-            <template #empty>
-              <div class="art-empty-state">
-                <Document />
-                <strong>{{ emptyState('audit').title }}</strong>
-                <span>{{ emptyState('audit').description }}</span>
-                <el-button :icon="Refresh" @click="refreshAll">刷新审计</el-button>
+        <el-card shadow="never" class="audit-workspace art-security-panel audit-log-panel">
+          <template #header>
+            <div class="audit-panel-header">
+              <div class="audit-panel-title">
+                <h4><Document />审计日志</h4>
+                <p>记录登录、配置保存、密钥查看、恢复配置等关键操作。</p>
               </div>
-            </template>
-            <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
-            <el-table-column prop="username" label="操作者" width="120" />
-            <el-table-column prop="action" label="动作" min-width="160" />
-            <el-table-column prop="details" label="详情" min-width="260"><template #default="{ row }">{{ JSON.stringify(row.details || {}) }}</template></el-table-column>
-          </el-table>
+              <el-button size="small" class="audit-panel-action" :icon="Refresh" @click="refreshAll">刷新审计</el-button>
+            </div>
+          </template>
+          <div class="audit-panel-body">
+            <el-table :data="auditLogs" :size="tableSize" height="360">
+              <template #empty>
+                <div class="art-empty-state">
+                  <Document />
+                  <strong>{{ emptyState('audit').title }}</strong>
+                  <span>{{ emptyState('audit').description }}</span>
+                  <el-button :icon="Refresh" @click="refreshAll">刷新审计</el-button>
+                </div>
+              </template>
+              <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+              <el-table-column prop="username" label="操作者" width="120" />
+              <el-table-column prop="action" label="动作" min-width="160" />
+              <el-table-column prop="details" label="详情" min-width="260"><template #default="{ row }">{{ JSON.stringify(row.details || {}) }}</template></el-table-column>
+            </el-table>
+          </div>
         </el-card>
       </section>
 

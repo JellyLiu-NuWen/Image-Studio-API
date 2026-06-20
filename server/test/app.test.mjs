@@ -473,6 +473,129 @@ test("image edits apply missing defaults from the interface quality preset", asy
   assert.match(captured, /name="prompt"\r\n\r\n裁成透明素材/);
 });
 
+test("image edits preserve image array fields while applying defaults", async () => {
+  let captured = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+        defaultImageModel: "gpt-image-2",
+        defaultSize: "1024x1024",
+        defaultQuality: "high",
+        defaultOutputFormat: "png",
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://upstream.example/v1",
+        apiKey: "upstream-key",
+        enabled: true,
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (_url, init) => {
+      captured = await new Response(init.body).text();
+      return new Response(JSON.stringify({ data: [{ b64_json: "edited" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+  const body = [
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="prompt"',
+    "",
+    "combine references",
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="image[]"; filename="first.png"',
+    "Content-Type: image/png",
+    "",
+    "first-image-bytes",
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="image[]"; filename="second.png"',
+    "Content-Type: image/png",
+    "",
+    "second-image-bytes",
+    "--edit-boundary--",
+    "",
+  ].join("\r\n");
+
+  const response = await app.handle(new Request("http://localhost/v1/images/edits", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer client-token",
+      "content-type": "multipart/form-data; boundary=edit-boundary",
+    },
+    body,
+  }));
+
+  assert.equal(response.status, 200);
+  assert.equal((captured.match(/name="image\[\]"/g) || []).length, 2);
+  assert.match(captured, /name="model"\r\n\r\ngpt-image-2/);
+  assert.match(captured, /name="quality"\r\n\r\nhigh/);
+  assert.match(captured, /name="output_format"\r\n\r\npng/);
+});
+
+test("image edits normalize legacy image multipart fields to image array fields", async () => {
+  let captured = null;
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+      defaultImageModel: "gpt-image-2",
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (_url, init) => {
+      captured = Buffer.from(await new Response(init.body).arrayBuffer());
+      return new Response(JSON.stringify({ data: [{ b64_json: "edited" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+  const head = [
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="prompt"',
+    "",
+    "edit legacy upload",
+    "--edit-boundary",
+    'Content-Disposition: form-data; name="image"; filename="input.png"',
+    "Content-Type: image/png",
+    "",
+    "",
+  ].join("\r\n");
+  const binaryImage = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff, 0x80, 0x41, 0x42]);
+  const tail = [
+    "",
+    "--edit-boundary--",
+    "",
+  ].join("\r\n");
+  const body = Buffer.concat([
+    Buffer.from(head, "utf8"),
+    binaryImage,
+    Buffer.from(tail, "utf8"),
+  ]);
+
+  const response = await app.handle(new Request("http://localhost/v1/images/edits", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer client-token",
+      "content-type": "multipart/form-data; boundary=edit-boundary",
+    },
+    body,
+  }));
+
+  assert.equal(response.status, 200);
+  const capturedText = captured.toString("latin1");
+  assert.match(capturedText, /name="image\[\]"; filename="input\.png"/);
+  assert.doesNotMatch(capturedText, /name="image"; filename="input\.png"/);
+  assert.notEqual(captured.indexOf(binaryImage), -1);
+});
+
 test("image edits keep explicit multipart image options over preset defaults", async () => {
   let captured = null;
   const app = createSelfHostedApp({

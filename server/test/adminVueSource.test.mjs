@@ -891,6 +891,25 @@ test("Vue security policy and session cards use Art Design Pro panels", async ()
   assert.match(styleSource, /\.security-panel-action/, "Styles should include security panel actions");
 });
 
+test("Vue audit log uses an Art Design Pro security panel", async () => {
+  const source = await readAppSource();
+  const securitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'security'\"",
+    "<section v-if=\"activeView === 'system'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(securitySection, /audit-log-panel/, "Audit logs should use a dedicated Art security panel");
+  assert.match(securitySection, /audit-panel-header/, "Audit log panel should use a structured header");
+  assert.match(securitySection, /audit-panel-title/, "Audit log panel should expose title and helper copy");
+  assert.match(securitySection, /audit-panel-body/, "Audit log panel should wrap table content");
+  assert.match(securitySection, /audit-panel-action/, "Audit log panel should expose a compact refresh action");
+  assert.match(styleSource, /\.audit-log-panel/, "Styles should include audit log panel shell");
+  assert.match(styleSource, /\.audit-panel-header/, "Styles should include audit panel header");
+  assert.match(styleSource, /\.audit-panel-body/, "Styles should include audit panel body layout");
+});
+
 test("Vue system page uses an Art Design Pro backup and update workspace", async () => {
   const source = await readAppSource();
   const systemSection = sourceBetween(

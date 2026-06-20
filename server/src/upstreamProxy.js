@@ -74,7 +74,8 @@ async function readBodyBuffer(request, config, pathname) {
 function withMultipartEditDefaults(raw, contentType, config) {
   const boundary = multipartBoundary(contentType);
   if (!boundary) return raw;
-  const text = new TextDecoder().decode(raw);
+  const normalizedRaw = normalizeMultipartImageFields(raw, boundary);
+  const text = new TextDecoder().decode(normalizedRaw);
   const preset = config.qualityPreset || {};
   const fields = {
     model: config.defaultImageModel,
@@ -88,8 +89,52 @@ function withMultipartEditDefaults(raw, contentType, config) {
       additions.push(multipartTextPart(boundary, name, value));
     }
   }
-  if (!additions.length) return raw;
-  return insertBeforeMultipartClose(raw, boundary, additions.join(""));
+  if (!additions.length) return normalizedRaw;
+  return insertBeforeMultipartClose(normalizedRaw, boundary, additions.join(""));
+}
+
+function normalizeMultipartImageFields(raw, boundary) {
+  const buffer = Buffer.from(raw);
+  const marker = Buffer.from(`--${boundary}`);
+  const chunks = [];
+  let changed = false;
+  let offset = 0;
+  while (offset < buffer.length) {
+    const markerIndex = buffer.indexOf(marker, offset);
+    if (markerIndex < 0) {
+      chunks.push(buffer.subarray(offset));
+      break;
+    }
+    chunks.push(buffer.subarray(offset, markerIndex));
+    const nextMarkerIndex = buffer.indexOf(marker, markerIndex + marker.length);
+    const partEnd = nextMarkerIndex < 0 ? buffer.length : nextMarkerIndex;
+    const part = buffer.subarray(markerIndex, partEnd);
+    const normalizedPart = normalizeMultipartImageFieldPart(part);
+    if (normalizedPart !== part) changed = true;
+    chunks.push(normalizedPart);
+    offset = partEnd;
+  }
+  if (!changed) return raw;
+  return exactArrayBuffer(Buffer.concat(chunks));
+}
+
+function normalizeMultipartImageFieldPart(part) {
+  const headerEnd = part.indexOf(Buffer.from("\r\n\r\n"));
+  if (headerEnd < 0) return part;
+  const header = part.subarray(0, headerEnd).toString("latin1");
+  const normalizedHeader = header.replace(
+    /(^|\r\n)(Content-Disposition:\s*form-data;\s*name=")image(";\s*filename=")/i,
+    "$1$2image[]$3",
+  );
+  if (normalizedHeader === header) return part;
+  return Buffer.concat([
+    Buffer.from(normalizedHeader, "latin1"),
+    part.subarray(headerEnd),
+  ]);
+}
+
+function exactArrayBuffer(buffer) {
+  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
 }
 
 function multipartBoundary(contentType) {

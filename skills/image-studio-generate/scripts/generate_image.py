@@ -381,7 +381,7 @@ def main(argv):
     edit_files = []
     try:
         for image in args.image:
-            edit_files.append(("image", validate_file(image, "Input image")))
+            edit_files.append(("image[]", validate_file(image, "Input image")))
         if args.mask:
             edit_files.append(("mask", validate_file(args.mask, "Mask")))
     except FileNotFoundError as error:
