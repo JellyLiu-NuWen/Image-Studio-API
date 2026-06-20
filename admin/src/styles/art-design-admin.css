@@ -1357,6 +1357,69 @@ button,
   line-height: 1.05;
 }
 
+.art-console-card-list {
+  gap: 20px;
+}
+
+.console-stat-card {
+  min-height: 140px;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.console-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(68, 93, 255, 0.2);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.console-stat-card :deep(.el-card__body) {
+  height: 100%;
+  min-height: 138px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+}
+
+.console-stat-meta {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.console-stat-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(68, 93, 255, 0.1);
+  color: var(--art-primary);
+}
+
+.console-stat-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.console-stat-card.tone-danger .console-stat-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--art-danger);
+}
+
+.console-stat-card.tone-warning .console-stat-icon {
+  background: rgba(245, 158, 11, 0.13);
+  color: #b45309;
+}
+
+.console-stat-card.tone-success .console-stat-icon {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.72fr);

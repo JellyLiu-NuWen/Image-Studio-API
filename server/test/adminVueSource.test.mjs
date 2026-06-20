@@ -114,6 +114,26 @@ test("Vue dashboard exposes trend and status distribution visualizations", async
   assert.match(styleSource, /\.status-distribution/, "Styles should include status distribution layout");
 });
 
+test("Vue dashboard uses an Art Design Pro console card list", async () => {
+  const source = await readAppSource();
+  const dashboardSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'dashboard'\"",
+    "<section v-if=\"activeView === 'interfaces'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /dashboardSummaryCards/, "Dashboard should compute console summary cards");
+  assert.match(dashboardSection, /art-console-card-list/, "Dashboard metric row should use the console card-list shell");
+  assert.match(dashboardSection, /v-for="item in dashboardSummaryCards"/, "Dashboard should render summary cards from metadata");
+  assert.match(dashboardSection, /console-stat-card/, "Dashboard should render Art Design stat cards");
+  assert.match(dashboardSection, /console-stat-icon/, "Dashboard cards should include the right-side icon block");
+  assert.match(dashboardSection, /<component :is="item.icon"/, "Dashboard card icons should be data-driven");
+  assert.match(styleSource, /\.art-console-card-list/, "Styles should include the console card-list grid");
+  assert.match(styleSource, /\.console-stat-card/, "Styles should include console stat card styling");
+  assert.match(styleSource, /\.console-stat-icon/, "Styles should include console stat icon blocks");
+});
+
 test("Vue shell exposes Art Design Pro workspace navigation and quick actions", async () => {
   const source = await readAppSource();
   const shellSection = sourceBetween(

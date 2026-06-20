@@ -738,6 +738,36 @@ const missingKeyCount = computed(() => {
   const upstreamMissing = activeUpstreams.value.filter((item) => item.enabled && !item.apiKeySet && !item.apiKey).length
   return interfaceMissing + upstreamMissing
 })
+const dashboardSummaryCards = computed(() => [
+  {
+    label: '今日生图',
+    value: metricValue(metrics.value?.generations.today),
+    hint: `成功率 ${metricValue(metrics.value?.generations.successRate)}%`,
+    icon: MagicStick,
+    tone: 'primary'
+  },
+  {
+    label: '错误率',
+    value: `${metricValue(metrics.value?.generations.errorRate)}%`,
+    hint: `失败 ${metricValue(metrics.value?.generations.failed)}`,
+    icon: WarningFilled,
+    tone: 'danger'
+  },
+  {
+    label: 'P95',
+    value: formatDuration(metrics.value?.generations.p95DurationMs),
+    hint: `P99 ${formatDuration(metrics.value?.generations.p99DurationMs)}`,
+    icon: Timer,
+    tone: 'warning'
+  },
+  {
+    label: '当前并发',
+    value: metricValue(metrics.value?.activeRequests),
+    hint: `接口上限 ${config.value?.maxConcurrentRequests || 0}`,
+    icon: Monitor,
+    tone: 'success'
+  }
+])
 const quickActions = computed(() => [
   { label: '保存配置', icon: Finished, type: 'primary', action: () => saveConfig() },
   { label: '测试上游', icon: Aim, type: 'default', action: () => navigateTo('upstreams') },
@@ -1986,26 +2016,22 @@ window.addEventListener('beforeunload', (event) => {
         <Transition :name="pageTransitionName" mode="out-in" appear>
           <div v-if="pageContentRefreshing" :key="activeView" class="art-page-view">
             <section v-if="activeView === 'dashboard'" class="view-stack">
-        <div class="metric-grid">
-          <el-card shadow="never" class="metric-card">
-            <span>今日生图</span>
-            <strong>{{ metricValue(metrics?.generations.today) }}</strong>
-            <small>成功率 {{ metricValue(metrics?.generations.successRate) }}%</small>
-          </el-card>
-          <el-card shadow="never" class="metric-card">
-            <span>错误率</span>
-            <strong>{{ metricValue(metrics?.generations.errorRate) }}%</strong>
-            <small>失败 {{ metricValue(metrics?.generations.failed) }}</small>
-          </el-card>
-          <el-card shadow="never" class="metric-card">
-            <span>P95</span>
-            <strong>{{ formatDuration(metrics?.generations.p95DurationMs) }}</strong>
-            <small>P99 {{ formatDuration(metrics?.generations.p99DurationMs) }}</small>
-          </el-card>
-          <el-card shadow="never" class="metric-card">
-            <span>当前并发</span>
-            <strong>{{ metricValue(metrics?.activeRequests) }}</strong>
-            <small>接口上限 {{ config?.maxConcurrentRequests || 0 }}</small>
+        <div class="metric-grid art-console-card-list">
+          <el-card
+            v-for="item in dashboardSummaryCards"
+            :key="item.label"
+            shadow="never"
+            class="metric-card console-stat-card"
+            :class="`tone-${item.tone}`"
+          >
+            <div class="console-stat-meta">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+              <small>{{ item.hint }}</small>
+            </div>
+            <div class="console-stat-icon">
+              <component :is="item.icon" />
+            </div>
           </el-card>
         </div>
         <div class="content-grid dashboard-visual-grid">
