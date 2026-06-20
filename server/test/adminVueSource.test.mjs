@@ -76,6 +76,27 @@ test("Vue admin shell exposes an Art Design Pro style theme switch", async () =>
   assert.match(styleSource, /\.admin-shell\[data-theme="dark"\]/, "Styles should define dark theme variables");
 });
 
+test("Vue login page uses an Art Design Pro access workspace", async () => {
+  const source = await readAppSource();
+  const loginSection = sourceBetween(
+    source,
+    "<div v-if=\"!authenticated\"",
+    "<div v-else class=\"admin-shell\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(loginSection, /login-workspace/, "Login page should render a template-style workspace wrapper");
+  assert.match(loginSection, /login-status-panel/, "Login page should render an operational status panel");
+  assert.match(loginSection, /login-signal-grid/, "Login page should render compact system signal cards");
+  assert.match(loginSection, /login-access-panel/, "Login page should render a dedicated access panel");
+  assert.match(loginSection, /login-security-strip/, "Login page should render login security affordances");
+  assert.match(styleSource, /\.login-workspace/, "Styles should include login workspace layout");
+  assert.match(styleSource, /\.login-status-panel/, "Styles should include login status panel styling");
+  assert.match(styleSource, /\.login-signal-grid/, "Styles should include login signal cards");
+  assert.match(styleSource, /\.login-access-panel/, "Styles should include login access panel styling");
+  assert.match(styleSource, /\.login-security-strip/, "Styles should include login security strip styling");
+});
+
 test("Vue dashboard exposes trend and status distribution visualizations", async () => {
   const source = await readAppSource();
   const dashboardSection = sourceBetween(

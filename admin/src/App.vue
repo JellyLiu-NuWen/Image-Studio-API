@@ -1191,8 +1191,8 @@ window.addEventListener('beforeunload', (event) => {
 </script>
 
 <template>
-  <div v-if="!authenticated" class="login-page" v-loading="loading">
-    <section class="login-visual">
+  <div v-if="!authenticated" class="login-page login-workspace" v-loading="loading">
+    <section class="login-status-panel">
       <div class="brand-orbit">
         <div class="brand-logo">IS</div>
         <div>
@@ -1200,19 +1200,29 @@ window.addEventListener('beforeunload', (event) => {
           <span>Self-hosted operations console</span>
         </div>
       </div>
-      <h1>用 Art Design Pro 重构的运维后台</h1>
-      <p>集中管理接口、上游、模型、质量预设、日志、成本、安全和版本更新。</p>
-      <div class="login-metrics">
-        <span>GPT Image 2</span>
-        <span>Upstream failover</span>
-        <span>Audit ready</span>
+      <div class="login-headline">
+        <span>Art Design Pro Console</span>
+        <h1>Image Studio 运维控制台</h1>
+        <p>集中管理接口、上游、模型、质量预设、日志、成本、安全和版本更新。</p>
+      </div>
+      <div class="login-signal-grid">
+        <div><span>模型</span><strong>GPT Image 2</strong><small>生成 / 编辑</small></div>
+        <div><span>路由</span><strong>Failover</strong><small>上游故障转移</small></div>
+        <div><span>安全</span><strong>Audit</strong><small>会话与审计</small></div>
+        <div><span>运维</span><strong>Backup</strong><small>备份与回滚</small></div>
+      </div>
+      <div class="login-pipeline">
+        <div><i></i><span>Client Key</span></div>
+        <div><i></i><span>Interface Policy</span></div>
+        <div><i></i><span>Upstream Route</span></div>
+        <div><i></i><span>Logs & Usage</span></div>
       </div>
     </section>
-    <el-card class="login-card" shadow="never">
+    <el-card class="login-card login-access-panel" shadow="never">
       <template #header>
         <div>
           <h2>账号密码登录</h2>
-          <p>登录后进入管理后台</p>
+          <p>登录后进入管理后台，继续管理你的自托管 Image Studio API。</p>
         </div>
       </template>
       <el-form :model="loginForm" label-position="top" @submit.prevent="login">
@@ -1227,6 +1237,11 @@ window.addEventListener('beforeunload', (event) => {
         </el-form-item>
         <el-button type="primary" size="large" class="full-button" :loading="loading" @click="login">登录</el-button>
       </el-form>
+      <div class="login-security-strip">
+        <span><Lock /> Cookie Session</span>
+        <span><Key /> Optional TOTP</span>
+        <span><Document /> Audit Trail</span>
+      </div>
     </el-card>
   </div>
 
