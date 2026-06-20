@@ -16,6 +16,17 @@ import type {
 
 const API_PREFIX = '/api'
 
+export type LogQuery = Record<string, string | number | undefined>
+
+function queryString(params: LogQuery = {}) {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') search.set(key, String(value))
+  }
+  const text = search.toString()
+  return text ? `?${text}` : ''
+}
+
 async function requestJSON<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_PREFIX}${path}`, {
     credentials: 'same-origin',
@@ -47,7 +58,7 @@ export const adminApi = {
   }),
   secret: (kind: 'interface' | 'upstream', id: string) => requestJSON<{ secret: { value: string } }>(`/config/secrets?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}`),
   metrics: () => requestJSON<MetricsResponse>('/metrics'),
-  logs: (type: 'generations' | 'api') => requestJSON<{ records: LogRecord[] }>(`/logs?type=${type}`),
+  logs: (type: 'generations' | 'api', filters: LogQuery = {}) => requestJSON<{ records: LogRecord[] }>(`/logs${queryString({ type, ...filters })}`),
   usage: () => requestJSON<UsageResponse>('/usage'),
   versions: () => requestJSON<{ versions: ConfigVersion[] }>('/config/versions'),
   restoreVersion: (id: string) => requestJSON<{ ok: boolean; config: AdminConfig }>(`/config/versions/${encodeURIComponent(id)}/restore`, {

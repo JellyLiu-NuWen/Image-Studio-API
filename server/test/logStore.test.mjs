@@ -133,6 +133,11 @@ test("createJsonlLogStore filters recent records by query fields", async () => {
       status: "failed",
       minDurationMs: 5000,
     })).map((record) => record.id), ["two"]);
+
+    assert.deepEqual((await store.readRecent(50, {
+      statusMin: 500,
+      statusMax: 599,
+    })).map((record) => record.id), ["two"]);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

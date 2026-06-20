@@ -97,7 +97,21 @@ const drawerIndex = ref(-1)
 const logDetailVisible = ref(false)
 const selectedLog = ref<LogRecord | null>(null)
 const secretValues = reactive<Record<string, string>>({})
-const logFilter = reactive({ keyword: '', status: '', interfaceId: '', upstreamId: '', model: '' })
+const logFilter = reactive({
+  keyword: '',
+  status: '',
+  interfaceId: '',
+  upstreamId: '',
+  model: '',
+  endpoint: '',
+  requestId: '',
+  from: '',
+  to: '',
+  statusMin: undefined as number | undefined,
+  statusMax: undefined as number | undefined,
+  minDurationMs: undefined as number | undefined,
+  maxDurationMs: undefined as number | undefined
+})
 
 const currentTitle = computed(() => navGroups.flatMap((group) => group.items).find((item) => item.key === activeView.value)?.label || '仪表盘')
 const activeInterfaces = computed(() => config.value?.interfaces || [])
@@ -157,12 +171,25 @@ function filterLogs(records: LogRecord[]) {
   const keyword = logFilter.keyword.trim().toLowerCase()
   return records.filter((record) => {
     const matchesKeyword = !keyword || JSON.stringify(record).toLowerCase().includes(keyword)
-    const matchesStatus = !logFilter.status || String(record.status) === logFilter.status
-    const matchesInterface = !logFilter.interfaceId || record.interfaceId === logFilter.interfaceId
-    const matchesUpstream = !logFilter.upstreamId || record.upstreamId === logFilter.upstreamId
-    const matchesModel = !logFilter.model || record.model === logFilter.model
-    return matchesKeyword && matchesStatus && matchesInterface && matchesUpstream && matchesModel
+    return matchesKeyword
   })
+}
+
+function logQuery() {
+  return {
+    status: logFilter.status,
+    interfaceId: logFilter.interfaceId,
+    upstreamId: logFilter.upstreamId,
+    model: logFilter.model,
+    endpoint: logFilter.endpoint,
+    requestId: logFilter.requestId,
+    from: logFilter.from,
+    to: logFilter.to,
+    statusMin: logFilter.statusMin,
+    statusMax: logFilter.statusMax,
+    minDurationMs: logFilter.minDurationMs,
+    maxDurationMs: logFilter.maxDurationMs
+  }
 }
 
 function setConfig(next: AdminConfig) {
@@ -257,8 +284,8 @@ async function refreshAll() {
     const [configData, metricData, generationData, apiData, usageData, versionData, auditData, sessionData, updateData, qualityCaseData, upstreamHealthData] = await Promise.all([
       adminApi.config(),
       adminApi.metrics(),
-      adminApi.logs('generations'),
-      adminApi.logs('api'),
+      adminApi.logs('generations', logQuery()),
+      adminApi.logs('api', logQuery()),
       adminApi.usage().catch(() => ({ usage: null })),
       adminApi.versions().catch(() => ({ versions: [] })),
       adminApi.auditLogs().catch(() => ({ records: [] })),
@@ -452,7 +479,43 @@ function downloadJSON(filename: string, data: unknown) {
 }
 
 function exportLogs(format: 'jsonl' | 'csv') {
-  window.location.href = `/api/logs/export?type=generations&format=${format}`
+  const params = new URLSearchParams({ type: 'generations', format })
+  for (const [key, value] of Object.entries(logQuery())) {
+    if (value !== undefined && value !== '') params.set(key, String(value))
+  }
+  window.location.href = `/api/logs/export?${params.toString()}`
+}
+
+async function refreshLogsOnly() {
+  loading.value = true
+  try {
+    const [generationData, apiData] = await Promise.all([
+      adminApi.logs('generations', logQuery()),
+      adminApi.logs('api', logQuery())
+    ])
+    generationLogs.value = generationData.records
+    apiLogs.value = apiData.records
+  } finally {
+    loading.value = false
+  }
+}
+
+function resetLogFilters() {
+  Object.assign(logFilter, {
+    keyword: '',
+    status: '',
+    interfaceId: '',
+    upstreamId: '',
+    model: '',
+    endpoint: '',
+    requestId: '',
+    from: '',
+    to: '',
+    statusMin: undefined,
+    statusMax: undefined,
+    minDurationMs: undefined,
+    maxDurationMs: undefined
+  })
 }
 
 function openLogDetail(record: LogRecord) {
@@ -821,6 +884,19 @@ window.addEventListener('beforeunload', (event) => {
             <el-select v-model="logFilter.upstreamId" placeholder="上游" clearable>
               <el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
+          </div>
+          <div class="filter-bar advanced-filter">
+            <el-input v-model="logFilter.model" placeholder="模型" clearable />
+            <el-input v-model="logFilter.endpoint" placeholder="Endpoint" clearable />
+            <el-input v-model="logFilter.requestId" placeholder="请求 ID" clearable />
+            <el-date-picker v-model="logFilter.from" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="开始时间" />
+            <el-date-picker v-model="logFilter.to" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="结束时间" />
+            <el-input-number v-model="logFilter.statusMin" :min="100" :max="599" placeholder="状态≥" controls-position="right" />
+            <el-input-number v-model="logFilter.statusMax" :min="100" :max="599" placeholder="状态≤" controls-position="right" />
+            <el-input-number v-model="logFilter.minDurationMs" :min="0" placeholder="耗时≥ms" controls-position="right" />
+            <el-input-number v-model="logFilter.maxDurationMs" :min="0" placeholder="耗时≤ms" controls-position="right" />
+            <el-button :icon="Refresh" @click="refreshLogsOnly">应用筛选</el-button>
+            <el-button @click="resetLogFilters">重置</el-button>
           </div>
           <el-tabs>
             <el-tab-pane label="生图日志">

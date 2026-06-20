@@ -385,6 +385,17 @@ button,
   margin-bottom: 14px;
 }
 
+.advanced-filter {
+  grid-template-columns: repeat(3, minmax(150px, 1fr)) repeat(2, minmax(190px, 1fr)) repeat(4, minmax(120px, 0.7fr)) auto auto;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.advanced-filter .el-input-number {
+  width: 100%;
+}
+
 .narrow-form {
   max-width: 720px;
 }

@@ -112,7 +112,7 @@ function logFiltersFromURL(url) {
     const value = url.searchParams.get(key);
     if (value) filters[key] = value;
   }
-  for (const key of ["minDurationMs", "maxDurationMs"]) {
+  for (const key of ["minDurationMs", "maxDurationMs", "statusMin", "statusMax"]) {
     const value = url.searchParams.get(key);
     if (value !== null && value !== "") filters[key] = Number(value);
   }

@@ -44,6 +44,9 @@ function matchesFilters(record, filters = {}) {
     if (filters.status === "failed" && !isFailedStatus(record?.status)) return false;
     if (!["success", "failed", "all"].includes(filters.status) && String(record?.status) !== String(filters.status)) return false;
   }
+  const numericStatus = Number(record?.upstreamStatus ?? record?.status);
+  if (filters.statusMin !== undefined && Number.isFinite(numericStatus) && numericStatus < Number(filters.statusMin)) return false;
+  if (filters.statusMax !== undefined && Number.isFinite(numericStatus) && numericStatus > Number(filters.statusMax)) return false;
   const createdAt = record?.createdAt ? Date.parse(record.createdAt) : Number.NaN;
   if (filters.from && Number.isFinite(createdAt) && createdAt < Date.parse(filters.from)) return false;
   if (filters.to && Number.isFinite(createdAt) && createdAt > Date.parse(filters.to)) return false;
