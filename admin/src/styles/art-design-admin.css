@@ -1522,7 +1522,7 @@ button,
   outline-offset: 2px;
 }
 
-.content-grid {
+.art-console-section-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.72fr);
   gap: 16px;
@@ -1941,6 +1941,32 @@ button,
 }
 
 .status-list strong {
+  overflow-wrap: anywhere;
+  color: var(--art-text);
+}
+
+.art-console-status-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.art-console-status-list div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--art-border);
+  border-radius: 8px;
+  background: var(--art-soft);
+}
+
+.art-console-status-list span {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.art-console-status-list strong {
   overflow-wrap: anywhere;
   color: var(--art-text);
 }
@@ -4012,7 +4038,7 @@ button,
 @media (max-width: 1120px) {
   .login-page,
   .admin-shell,
-  .content-grid,
+  .art-console-section-grid,
   .alerts-workspace-grid,
   .security-overview,
   .security-policy-grid,

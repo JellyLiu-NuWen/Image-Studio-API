@@ -2068,7 +2068,7 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
-        <div class="content-grid dashboard-visual-grid">
+        <div class="art-console-section-grid dashboard-visual-grid">
           <el-card shadow="never" class="art-console-panel">
             <template #header>
               <div class="console-panel-header">
@@ -2116,7 +2116,7 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
-        <div class="content-grid">
+        <div class="art-console-section-grid">
           <el-card shadow="never" class="art-console-panel">
             <template #header>
               <div class="console-panel-header">
@@ -2130,7 +2130,7 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </div>
             </template>
-            <div class="status-list">
+            <div class="art-console-status-list">
               <div><span>接口数量</span><strong>{{ activeInterfaces.length }}</strong></div>
               <div><span>上游数量</span><strong>{{ activeUpstreams.length }}</strong></div>
               <div><span>默认模型</span><strong>{{ config?.defaultImageModel }}</strong></div>

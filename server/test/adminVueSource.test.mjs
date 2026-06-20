@@ -150,6 +150,10 @@ test("Vue dashboard chart modules use Art Design Pro console panels", async () =
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(dashboardSection, /art-console-panel/g, "Dashboard modules should use the console panel card shell");
+  assert.match(dashboardSection, /art-console-section-grid/g, "Dashboard modules should use Art console section grids");
+  assert.match(dashboardSection, /art-console-status-list/, "Dashboard status summary should use an Art console status list");
+  assert.doesNotMatch(dashboardSection, /content-grid/, "Dashboard modules should not keep the legacy content-grid class");
+  assert.doesNotMatch(dashboardSection, /class="status-list"/, "Dashboard modules should not keep the legacy status-list class");
   assert.match(dashboardSection, /console-panel-header/g, "Dashboard modules should render template-style panel headers");
   assert.match(dashboardSection, /console-panel-title/g, "Dashboard modules should render compact title blocks");
   assert.match(dashboardSection, /console-panel-badge/g, "Dashboard module headers should include status badges");
@@ -157,6 +161,9 @@ test("Vue dashboard chart modules use Art Design Pro console panels", async () =
   assert.match(dashboardSection, /@click="navigateTo\('usage'\)"/, "Usage trend panel should link to usage details");
   assert.match(dashboardSection, /@click="navigateTo\('logs'\)"/, "Failure panel should link to logs");
   assert.match(styleSource, /\.art-console-panel/, "Styles should include console panel shell");
+  assert.match(styleSource, /\.art-console-section-grid/, "Styles should include Art console section grid layout");
+  assert.match(styleSource, /\.art-console-status-list/, "Styles should include Art console status list styling");
+  assert.doesNotMatch(styleSource, /\.content-grid\b/, "Styles should remove the legacy content grid selector");
   assert.match(styleSource, /\.console-panel-header/, "Styles should include console panel header");
   assert.match(styleSource, /\.console-panel-badge/, "Styles should include console panel status badges");
   assert.match(styleSource, /\.console-panel-action/, "Styles should include console panel action buttons");
