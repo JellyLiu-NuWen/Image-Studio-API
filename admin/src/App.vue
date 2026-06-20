@@ -2046,21 +2046,25 @@ window.addEventListener('beforeunload', (event) => {
         <Transition :name="pageTransitionName" mode="out-in" appear>
           <div v-if="pageContentRefreshing" :key="activeView" class="art-page-view">
             <section v-if="activeView === 'dashboard'" class="view-stack">
-        <div class="metric-grid art-console-card-list">
+        <div class="art-console-card-list">
           <el-card
             v-for="item in dashboardSummaryCards"
             :key="item.label"
             shadow="never"
-            class="metric-card console-stat-card"
+            class="art-console-stat-card"
             :class="`tone-${item.tone}`"
           >
-            <div class="console-stat-meta">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
-              <small>{{ item.hint }}</small>
-            </div>
-            <div class="console-stat-icon">
-              <component :is="item.icon" />
+            <div class="console-stat-body">
+              <div class="console-stat-meta">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <div class="console-stat-trend">
+                  <span>{{ item.hint }}</span>
+                </div>
+              </div>
+              <div class="console-stat-icon">
+                <component :is="item.icon" />
+              </div>
             </div>
           </el-card>
         </div>
