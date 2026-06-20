@@ -562,6 +562,47 @@ test("Vue management tables expose ArtTable style pagination", async () => {
   assert.match(styleSource, /\.custom-pagination/, "Styles should include custom pagination controls");
 });
 
+test("Vue management table operations use ArtButtonTable style icon actions", async () => {
+  const source = await readAppSource();
+  const interfaceSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'upstreams'\"",
+  );
+  const upstreamSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'upstreams'\"",
+    "<section v-if=\"activeView === 'models'\"",
+  );
+  const modelSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'models'\"",
+    "<section v-if=\"activeView === 'quality'\"",
+  );
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
+    assert.match(section, /art-table-actions/, "Operation cells should use a compact ArtButtonTable-style action group");
+    assert.match(section, /art-table-action-button/, "Operation cells should render icon action buttons");
+    assert.match(section, /aria-label=/, "Icon action buttons should keep accessible labels");
+    assert.match(section, /<el-tooltip/, "Icon action buttons should keep hover labels");
+  }
+  assert.match(interfaceSection, /action-key/, "Interface operations should expose a key action button");
+  assert.match(interfaceSection, /action-more/, "Interface operations should keep secondary actions in a compact more menu");
+  assert.match(interfaceSection, /copySnippet\(row\)/, "Interface operations should preserve Skill/Codex snippet copy");
+  assert.match(upstreamSection, /action-test/, "Upstream operations should expose a test action button");
+  assert.match(modelSection, /action-danger/, "Model operations should keep destructive delete affordance");
+  assert.match(qualitySection, /action-danger/, "Quality operations should keep destructive delete affordance");
+  assert.match(styleSource, /\.art-table-actions/, "Styles should define the compact table action group");
+  assert.match(styleSource, /\.art-table-action-button/, "Styles should define ArtButtonTable-style buttons");
+  assert.match(styleSource, /\.art-table-action-button\.action-danger/, "Styles should define destructive action styling");
+});
+
 test("Vue tables expose Art Design Pro empty states", async () => {
   const source = await readAppSource();
   const managementSection = sourceBetween(

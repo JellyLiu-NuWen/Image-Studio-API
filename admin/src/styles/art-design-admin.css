@@ -1569,6 +1569,66 @@ button,
   border-color: var(--art-primary);
 }
 
+.art-table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.art-table-action-button {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: rgba(68, 93, 255, 0.1);
+  color: var(--art-primary);
+  cursor: pointer;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.art-table-action-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.art-table-action-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(68, 93, 255, 0.24);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.09);
+}
+
+.art-table-action-button:focus-visible {
+  outline: 2px solid rgba(68, 93, 255, 0.38);
+  outline-offset: 2px;
+}
+
+.art-table-action-button.action-edit {
+  background: rgba(68, 93, 255, 0.1);
+  color: var(--art-primary);
+}
+
+.art-table-action-button.action-key,
+.art-table-action-button.action-test {
+  background: rgba(20, 184, 166, 0.12);
+  color: #0f766e;
+}
+
+.art-table-action-button.action-more {
+  background: var(--art-soft);
+  color: var(--art-muted);
+}
+
+.art-table-action-button.action-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--art-danger);
+}
+
+.art-table-action-button.action-danger:hover {
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
 .column-settings-anchor {
   position: fixed;
   top: 76px;

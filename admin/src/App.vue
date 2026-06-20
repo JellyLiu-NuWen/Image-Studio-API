@@ -12,6 +12,7 @@ import {
   Connection,
   Cpu,
   DataAnalysis,
+  Delete,
   Document,
   Download,
   Edit,
@@ -2111,22 +2112,38 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column v-if="isTableColumnVisible('interfaces', 'lastUsedAt')" prop="lastUsedAt" label="最后使用" min-width="160">
               <template #default="{ row }">{{ formatTime(row.lastUsedAt) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="360" fixed="right">
+            <el-table-column label="操作" width="190" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" :icon="Edit" @click="openDrawer('interface', rowIndex(activeInterfaces, row))">编辑</el-button>
-                <el-button size="small" :icon="Key" @click="rotateKey(row)">重置 Key</el-button>
-                <el-dropdown>
-                  <el-button size="small" :icon="More">更多</el-button>
+                <div class="art-table-actions">
+                  <el-tooltip content="编辑接口" placement="top">
+                    <button type="button" class="art-table-action-button action-edit" aria-label="编辑接口" @click="openDrawer('interface', rowIndex(activeInterfaces, row))">
+                      <Edit />
+                    </button>
+                  </el-tooltip>
+                  <el-tooltip content="重置 Key" placement="top">
+                    <button type="button" class="art-table-action-button action-key" aria-label="重置接口 Key" @click="rotateKey(row)">
+                      <Key />
+                    </button>
+                  </el-tooltip>
+                  <el-dropdown trigger="click">
+                    <button type="button" class="art-table-action-button action-more" aria-label="更多接口操作">
+                      <More />
+                    </button>
                   <template #dropdown>
                     <el-dropdown-menu>
                       <el-dropdown-item @click="testInterface(row)">测试接口</el-dropdown-item>
                       <el-dropdown-item @click="copySecret('interface', row.id)">复制 Key</el-dropdown-item>
                       <el-dropdown-item @click="cloneInterface(row)">克隆</el-dropdown-item>
                       <el-dropdown-item @click="copySnippet(row)">复制 Skill/Codex 配置</el-dropdown-item>
-                      <el-dropdown-item divided @click="removeItem('interface', rowIndex(activeInterfaces, row))">删除</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
-                </el-dropdown>
+                  </el-dropdown>
+                  <el-tooltip content="删除接口" placement="top">
+                    <button type="button" class="art-table-action-button action-danger" aria-label="删除接口" @click="removeItem('interface', rowIndex(activeInterfaces, row))">
+                      <Delete />
+                    </button>
+                  </el-tooltip>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -2210,11 +2227,25 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column v-if="isTableColumnVisible('upstreams', 'enabled')" prop="enabled" label="状态" width="100">
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
-            <el-table-column label="操作" width="260" fixed="right">
+            <el-table-column label="操作" width="150" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" :icon="Edit" @click="openDrawer('upstream', rowIndex(activeUpstreams, row))">编辑</el-button>
-                <el-button size="small" :icon="Aim" @click="testUpstream(row)">测试</el-button>
-                <el-button size="small" type="danger" plain @click="removeItem('upstream', rowIndex(activeUpstreams, row))">删除</el-button>
+                <div class="art-table-actions">
+                  <el-tooltip content="编辑上游" placement="top">
+                    <button type="button" class="art-table-action-button action-edit" aria-label="编辑上游" @click="openDrawer('upstream', rowIndex(activeUpstreams, row))">
+                      <Edit />
+                    </button>
+                  </el-tooltip>
+                  <el-tooltip content="测试上游" placement="top">
+                    <button type="button" class="art-table-action-button action-test" aria-label="测试上游" @click="testUpstream(row)">
+                      <Aim />
+                    </button>
+                  </el-tooltip>
+                  <el-tooltip content="删除上游" placement="top">
+                    <button type="button" class="art-table-action-button action-danger" aria-label="删除上游" @click="removeItem('upstream', rowIndex(activeUpstreams, row))">
+                      <Delete />
+                    </button>
+                  </el-tooltip>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -2290,10 +2321,20 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column v-if="isTableColumnVisible('models', 'enabled')" prop="enabled" label="启用" width="90">
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
-            <el-table-column label="操作" width="170" fixed="right">
+            <el-table-column label="操作" width="110" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" :icon="Edit" @click="openDrawer('model', rowIndex(activeModels, row))">编辑</el-button>
-                <el-button size="small" type="danger" plain @click="removeItem('model', rowIndex(activeModels, row))">删除</el-button>
+                <div class="art-table-actions">
+                  <el-tooltip content="编辑模型" placement="top">
+                    <button type="button" class="art-table-action-button action-edit" aria-label="编辑模型" @click="openDrawer('model', rowIndex(activeModels, row))">
+                      <Edit />
+                    </button>
+                  </el-tooltip>
+                  <el-tooltip content="删除模型" placement="top">
+                    <button type="button" class="art-table-action-button action-danger" aria-label="删除模型" @click="removeItem('model', rowIndex(activeModels, row))">
+                      <Delete />
+                    </button>
+                  </el-tooltip>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -2370,8 +2411,18 @@ window.addEventListener('beforeunload', (event) => {
                 <el-tag :type="preset.promptEnhance ? 'success' : 'info'">{{ preset.promptEnhance ? '增强开启' : '增强关闭' }}</el-tag>
               </div>
               <div class="card-actions">
-                <el-button size="small" :icon="Edit" @click="openDrawer('quality', rowIndex(activePresets, preset))">编辑</el-button>
-                <el-button size="small" type="danger" plain @click="removeItem('quality', rowIndex(activePresets, preset))">删除</el-button>
+                <div class="art-table-actions">
+                  <el-tooltip content="编辑预设" placement="top">
+                    <button type="button" class="art-table-action-button action-edit" aria-label="编辑质量预设" @click="openDrawer('quality', rowIndex(activePresets, preset))">
+                      <Edit />
+                    </button>
+                  </el-tooltip>
+                  <el-tooltip content="删除预设" placement="top">
+                    <button type="button" class="art-table-action-button action-danger" aria-label="删除质量预设" @click="removeItem('quality', rowIndex(activePresets, preset))">
+                      <Delete />
+                    </button>
+                  </el-tooltip>
+                </div>
               </div>
             </el-card>
           </div>
@@ -2393,10 +2444,20 @@ window.addEventListener('beforeunload', (event) => {
               <template #default="{ row }"><el-tag :type="row.promptEnhance ? 'success' : 'info'">{{ row.promptEnhance ? '开启' : '关闭' }}</el-tag></template>
             </el-table-column>
             <el-table-column v-if="isTableColumnVisible('quality', 'useCase')" prop="useCase" label="用途" min-width="220" show-overflow-tooltip />
-            <el-table-column label="操作" width="170" fixed="right">
+            <el-table-column label="操作" width="110" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" :icon="Edit" @click="openDrawer('quality', rowIndex(activePresets, row))">编辑</el-button>
-                <el-button size="small" type="danger" plain @click="removeItem('quality', rowIndex(activePresets, row))">删除</el-button>
+                <div class="art-table-actions">
+                  <el-tooltip content="编辑预设" placement="top">
+                    <button type="button" class="art-table-action-button action-edit" aria-label="编辑质量预设" @click="openDrawer('quality', rowIndex(activePresets, row))">
+                      <Edit />
+                    </button>
+                  </el-tooltip>
+                  <el-tooltip content="删除预设" placement="top">
+                    <button type="button" class="art-table-action-button action-danger" aria-label="删除质量预设" @click="removeItem('quality', rowIndex(activePresets, row))">
+                      <Delete />
+                    </button>
+                  </el-tooltip>
+                </div>
               </template>
             </el-table-column>
           </el-table>
