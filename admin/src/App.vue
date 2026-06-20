@@ -2199,7 +2199,7 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column v-if="isTableColumnVisible('interfaces', 'name')" prop="name" label="名称" min-width="150" />
             <el-table-column v-if="isTableColumnVisible('interfaces', 'apiToken')" prop="apiTokenSet" label="API Key" width="150">
               <template #default="{ row }">
-                <div class="key-preview">
+                <div class="art-key-preview">
                   <el-tag :type="row.apiTokenSet ? 'success' : 'danger'">{{ row.apiTokenSet ? '已配置' : '未配置' }}</el-tag>
                   <span v-if="row.apiTokenPreview">{{ row.apiTokenPreview }}</span>
                 </div>
@@ -2306,7 +2306,7 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column v-if="isTableColumnVisible('upstreams', 'baseURL')" prop="baseURL" label="Base URL" min-width="260" show-overflow-tooltip />
             <el-table-column v-if="isTableColumnVisible('upstreams', 'apiKey')" prop="apiKeySet" label="API Key" width="150">
               <template #default="{ row }">
-                <div class="key-preview">
+                <div class="art-key-preview">
                   <el-tag :type="row.apiKeySet ? 'success' : 'danger'">{{ row.apiKeySet ? '已配置' : '未配置' }}</el-tag>
                   <span v-if="row.apiKeyPreview">{{ row.apiKeyPreview }}</span>
                 </div>
@@ -2316,7 +2316,7 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column v-if="isTableColumnVisible('upstreams', 'weight')" prop="weight" label="权重" width="80" />
             <el-table-column v-if="isTableColumnVisible('upstreams', 'health')" label="健康" min-width="210">
               <template #default="{ row }">
-                <div class="health-inline">
+                <div class="art-health-inline">
                   <el-tag :type="(upstreamHealthFor(row.id)?.metrics.successRate || 0) >= 90 ? 'success' : 'warning'">
                     {{ upstreamHealthFor(row.id)?.metrics.successRate || 0 }}%
                   </el-tag>
@@ -2411,7 +2411,7 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column v-if="isTableColumnVisible('models', 'name')" prop="name" label="名称" min-width="140" />
             <el-table-column v-if="isTableColumnVisible('models', 'capabilities')" prop="capabilities" label="能力" min-width="160">
               <template #default="{ row }">
-                <div class="compact-tags">
+                <div class="art-compact-tags">
                   <el-tag v-for="item in row.capabilities" :key="item" size="small">{{ item }}</el-tag>
                 </div>
               </template>
@@ -2421,7 +2421,7 @@ window.addEventListener('beforeunload', (event) => {
             </el-table-column>
             <el-table-column v-if="isTableColumnVisible('models', 'qualities')" prop="qualities" label="质量" min-width="150">
               <template #default="{ row }">
-                <div class="compact-tags">
+                <div class="art-compact-tags">
                   <el-tag v-for="item in row.qualities" :key="item" size="small" type="info">{{ item }}</el-tag>
                 </div>
               </template>

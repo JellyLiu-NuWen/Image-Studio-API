@@ -28,14 +28,19 @@ test("Vue model catalog exposes the complete model capability fields", async () 
     "drawerMode === 'model'",
     "drawerMode === 'quality'",
   );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   for (const label of ["模型 ID", "能力", "尺寸", "质量", "默认格式", "推荐用途", "绑定上游", "启用"]) {
     assert.match(modelSection, new RegExp(label), `Model table should expose ${label}`);
   }
+  assert.match(modelSection, /art-compact-tags/, "Model table tag groups should use an Art compact tag renderer");
+  assert.doesNotMatch(modelSection, /(?<![A-Za-z0-9_-])compact-tags(?![A-Za-z0-9_-])/, "Model table should not keep the generic compact-tags class");
 
   assert.match(modelDrawer, /defaultOutputFormat/, "Model drawer should edit the default output format");
   assert.match(modelDrawer, /upstreamIds/, "Model drawer should edit upstream bindings");
   assert.match(modelDrawer, /activeUpstreams/, "Model drawer should use configured upstream choices");
+  assert.match(styleSource, /\.art-compact-tags/, "Styles should include Art compact tag groups");
+  assert.doesNotMatch(styleSource, /\.compact-tags(?![A-Za-z0-9_-])/, "Styles should remove the generic compact-tags selector");
 });
 
 test("Vue interface and upstream tables expose masked key previews", async () => {
@@ -50,9 +55,20 @@ test("Vue interface and upstream tables expose masked key previews", async () =>
     "<section v-if=\"activeView === 'upstreams'\"",
     "<section v-if=\"activeView === 'models'\"",
   );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(interfaceSection, /apiTokenPreview/, "Interface table should show the masked client key suffix");
   assert.match(upstreamSection, /apiKeyPreview/, "Upstream table should show the masked upstream key suffix");
+  assert.match(interfaceSection, /art-key-preview/, "Interface key cells should use an Art key preview renderer");
+  assert.match(upstreamSection, /art-key-preview/, "Upstream key cells should use an Art key preview renderer");
+  assert.match(upstreamSection, /art-health-inline/, "Upstream health cells should use an Art inline health renderer");
+  assert.doesNotMatch(interfaceSection, /(?<![A-Za-z0-9_-])key-preview(?![A-Za-z0-9_-])/, "Interface table should not keep the generic key-preview class");
+  assert.doesNotMatch(upstreamSection, /(?<![A-Za-z0-9_-])key-preview(?![A-Za-z0-9_-])/, "Upstream table should not keep the generic key-preview class");
+  assert.doesNotMatch(upstreamSection, /(?<![A-Za-z0-9_-])health-inline(?![A-Za-z0-9_-])/, "Upstream table should not keep the generic health-inline class");
+  assert.match(styleSource, /\.art-key-preview/, "Styles should include Art key preview cells");
+  assert.match(styleSource, /\.art-health-inline/, "Styles should include Art health inline cells");
+  assert.doesNotMatch(styleSource, /\.key-preview(?![A-Za-z0-9_-])/, "Styles should remove the generic key-preview selector");
+  assert.doesNotMatch(styleSource, /\.health-inline(?![A-Za-z0-9_-])/, "Styles should remove the generic health-inline selector");
 });
 
 test("Vue admin shell exposes an Art Design Pro style theme switch", async () => {
