@@ -844,6 +844,78 @@ button,
   margin-bottom: 14px;
 }
 
+.system-workspace {
+  gap: 14px;
+}
+
+.system-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.system-summary-grid button {
+  min-height: 104px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  border: 1px solid var(--art-border);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--art-soft);
+  color: var(--art-text);
+  font: inherit;
+  text-align: left;
+  transition: 180ms ease;
+}
+
+.system-summary-grid button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
+.system-summary-grid span,
+.system-summary-grid small {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.system-summary-grid strong {
+  color: var(--art-text);
+  font-size: 24px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.system-summary-grid button.success {
+  border-color: rgba(22, 163, 74, 0.22);
+  background: rgba(22, 163, 74, 0.07);
+}
+
+.system-summary-grid button.warning {
+  border-color: rgba(217, 119, 6, 0.28);
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.system-summary-grid button.info {
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
+.system-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr) minmax(360px, 0.88fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.backup-workspace :deep(.el-card__body),
+.version-workspace :deep(.el-card__body),
+.update-workspace :deep(.el-card__body) {
+  display: grid;
+  gap: 12px;
+}
+
 .log-actions {
   margin-bottom: 14px;
 }
@@ -1144,6 +1216,7 @@ button,
   .security-overview,
   .security-policy-grid,
   .session-workspace,
+  .system-workspace-grid,
   .operations-panel {
     grid-template-columns: 1fr;
   }
@@ -1157,6 +1230,7 @@ button,
   .preset-grid,
   .log-summary-grid,
   .security-summary-grid,
+  .system-summary-grid,
   .risk-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1184,6 +1258,7 @@ button,
   .preset-grid,
   .log-summary-grid,
   .security-summary-grid,
+  .system-summary-grid,
   .query-grid,
   .risk-board,
   .filter-bar,

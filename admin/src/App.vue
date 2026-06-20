@@ -215,6 +215,33 @@ const securitySummaryCards = computed(() => [
     type: securityForm.value.failedLoginLockoutEnabled ? 'success' : 'warning'
   }
 ])
+const latestBackup = computed(() => backups.value[0] || null)
+const systemSummaryCards = computed(() => [
+  {
+    label: '配置备份',
+    value: backups.value.length,
+    hint: latestBackup.value ? `最近 ${formatTime(latestBackup.value.createdAt)}` : '暂无保留备份',
+    type: backups.value.length ? 'success' : 'warning'
+  },
+  {
+    label: '版本快照',
+    value: versions.value.length,
+    hint: versions.value[0]?.summary || '等待配置变更',
+    type: versions.value.length ? 'info' : 'warning'
+  },
+  {
+    label: '更新状态',
+    value: updateInfo.value.status || 'unknown',
+    hint: updateInfo.value.latestVersion ? `最新 ${updateInfo.value.latestVersion}` : '等待更新检查',
+    type: updateInfo.value.status === 'outdated' ? 'warning' : 'info'
+  },
+  {
+    label: '回滚入口',
+    value: updateInfo.value.rollbackCommand ? '可用' : '未配置',
+    hint: updateInfo.value.dockerImageTag || updateInfo.value.currentCommit || '等待版本元数据',
+    type: updateInfo.value.rollbackCommand ? 'success' : 'info'
+  }
+])
 const filteredGenerationLogs = computed(() => filterLogs(generationLogs.value))
 const filteredApiLogs = computed(() => filterLogs(apiLogs.value))
 const logSummaryCards = computed(() => {
@@ -1759,17 +1786,30 @@ window.addEventListener('beforeunload', (event) => {
         </el-card>
       </section>
 
-      <section v-if="activeView === 'system'" class="view-stack">
-        <div class="content-grid">
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Download />备份恢复</div></template>
+      <section v-if="activeView === 'system'" class="view-stack system-workspace">
+        <div class="system-summary-grid">
+          <button v-for="item in systemSummaryCards" :key="item.label" :class="item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'info'" type="button">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.hint }}</small>
+          </button>
+        </div>
+        <div class="system-workspace-grid">
+          <el-card shadow="never" class="backup-workspace">
+            <template #header>
+              <div class="section-actions">
+                <div class="card-title"><Download />备份恢复</div>
+                <div class="card-actions">
+                  <el-button type="primary" :icon="Download" @click="createBackup">一键备份</el-button>
+                  <el-button :icon="Upload" @click="openRestorePicker">上传恢复</el-button>
+                </div>
+              </div>
+            </template>
             <div class="system-actions">
-              <el-button type="primary" :icon="Download" @click="createBackup">一键备份</el-button>
-              <el-button :icon="Upload" @click="openRestorePicker">上传恢复</el-button>
               <input ref="backupFileInput" class="hidden-file" type="file" accept="application/json,.json" @change="restoreFromFile" />
               <span>{{ backupStatus || '自动保留最近配置快照，恢复前请确认版本。' }}</span>
             </div>
-            <el-table :data="backups" height="260" empty-text="暂无备份">
+            <el-table :data="backups" :size="tableSize" height="320" empty-text="暂无备份">
               <el-table-column prop="createdAt" label="备份时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="username" label="操作者" width="120" />
               <el-table-column prop="summary" label="摘要" min-width="180" />
@@ -1780,17 +1820,23 @@ window.addEventListener('beforeunload', (event) => {
                 </template>
               </el-table-column>
             </el-table>
-            <el-divider />
-            <div class="card-title version-title"><Document />配置版本历史</div>
-            <el-table :data="versions" height="240">
+          </el-card>
+          <el-card shadow="never" class="version-workspace">
+            <template #header><div class="card-title"><Document />配置版本历史</div></template>
+            <el-table :data="versions" :size="tableSize" height="320" empty-text="暂无配置版本">
               <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="username" label="操作者" width="120" />
               <el-table-column prop="summary" label="摘要" min-width="200" />
               <el-table-column label="操作" width="120"><template #default="{ row }"><el-button size="small" @click="restoreVersion(row.id)">恢复</el-button></template></el-table-column>
             </el-table>
           </el-card>
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Cpu />版本更新</div></template>
+          <el-card shadow="never" class="update-workspace">
+            <template #header>
+              <div class="section-actions">
+                <div class="card-title"><Cpu />版本更新</div>
+                <el-tag :type="updateInfo.status === 'outdated' ? 'warning' : updateInfo.status === 'current' ? 'success' : 'info'">{{ updateInfo.status || 'unknown' }}</el-tag>
+              </div>
+            </template>
             <div class="status-list">
               <div><span>当前版本</span><strong>{{ updateInfo.currentVersion || 'dev' }}</strong></div>
               <div><span>当前 Commit</span><strong>{{ updateInfo.currentCommit || '未知' }}</strong></div>

@@ -219,3 +219,26 @@ test("Vue security page uses an Art Design Pro security workspace", async () => 
   assert.match(styleSource, /\.security-policy-grid/, "Styles should include security policy grid layout");
   assert.match(styleSource, /\.session-workspace/, "Styles should include session workspace styling");
 });
+
+test("Vue system page uses an Art Design Pro backup and update workspace", async () => {
+  const source = await readAppSource();
+  const systemSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'system'\"",
+    "</main>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /systemSummaryCards/, "System page should compute backup and update summary cards");
+  assert.match(source, /latestBackup/, "System page should compute the latest retained backup");
+  assert.match(systemSection, /system-workspace/, "System page should render a workspace wrapper");
+  assert.match(systemSection, /system-summary-grid/, "System page should render compact system summary cards");
+  assert.match(systemSection, /backup-workspace/, "System page should render a backup workspace");
+  assert.match(systemSection, /version-workspace/, "System page should render a config version workspace");
+  assert.match(systemSection, /update-workspace/, "System page should render an update workspace");
+  assert.match(systemSection, /:size="tableSize"/, "System tables should respect shared density size");
+  assert.match(styleSource, /\.system-workspace/, "Styles should include system workspace layout");
+  assert.match(styleSource, /\.system-summary-grid/, "Styles should include system summary grid layout");
+  assert.match(styleSource, /\.backup-workspace/, "Styles should include backup workspace styling");
+  assert.match(styleSource, /\.update-workspace/, "Styles should include update workspace styling");
+});
