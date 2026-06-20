@@ -866,6 +866,31 @@ test("Vue security page uses an Art Design Pro security workspace", async () => 
   assert.match(styleSource, /\.session-workspace/, "Styles should include session workspace styling");
 });
 
+test("Vue security policy and session cards use Art Design Pro panels", async () => {
+  const source = await readAppSource();
+  const securitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'security'\"",
+    "<section v-if=\"activeView === 'system'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(securitySection, /art-security-panel/g, "Security cards should use a reusable Art panel shell");
+  assert.match(securitySection, /security-account-panel/, "Security page should style the account policy card");
+  assert.match(securitySection, /security-totp-panel/, "Security page should style the TOTP card");
+  assert.match(securitySection, /security-password-panel/, "Security page should style the password card");
+  assert.match(securitySection, /session-list-panel/, "Security page should style the session card");
+  assert.match(securitySection, /login-history-panel/, "Security page should style the login history card");
+  assert.match(securitySection, /security-panel-header/g, "Security panels should use structured headers");
+  assert.match(securitySection, /security-panel-title/g, "Security panels should expose title and helper copy");
+  assert.match(securitySection, /security-panel-body/g, "Security panels should wrap body content consistently");
+  assert.match(securitySection, /security-panel-action/, "Security panels should use compact action affordances");
+  assert.match(styleSource, /\.art-security-panel/, "Styles should include security panel shell");
+  assert.match(styleSource, /\.security-panel-header/, "Styles should include security panel header");
+  assert.match(styleSource, /\.security-panel-body/, "Styles should include security panel body layout");
+  assert.match(styleSource, /\.security-panel-action/, "Styles should include security panel actions");
+});
+
 test("Vue system page uses an Art Design Pro backup and update workspace", async () => {
   const source = await readAppSource();
   const systemSection = sourceBetween(

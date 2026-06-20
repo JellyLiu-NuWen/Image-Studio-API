@@ -2949,17 +2949,34 @@ window.addEventListener('beforeunload', (event) => {
           </div>
         </div>
         <div class="security-policy-grid">
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Lock />账号与安全</div></template>
-            <el-form v-if="config" label-width="140px" class="narrow-form">
-              <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP，例如 203.0.113.10" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
-              <el-form-item label="失败登录锁定"><el-switch v-model="config.security.failedLoginLockoutEnabled" /></el-form-item>
-              <el-form-item><el-button type="primary" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
-            </el-form>
+          <el-card shadow="never" class="art-security-panel security-account-panel">
+            <template #header>
+              <div class="security-panel-header">
+                <div class="security-panel-title">
+                  <h4><Lock />账号与安全</h4>
+                  <p>限制后台入口来源，并保持失败登录自动锁定。</p>
+                </div>
+              </div>
+            </template>
+            <div class="security-panel-body">
+              <el-form v-if="config" label-width="140px" class="narrow-form">
+                <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP，例如 203.0.113.10" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
+                <el-form-item label="失败登录锁定"><el-switch v-model="config.security.failedLoginLockoutEnabled" /></el-form-item>
+                <el-form-item><el-button type="primary" class="security-panel-action" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
+              </el-form>
+            </div>
           </el-card>
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Key />TOTP 二次验证</div></template>
-            <div class="totp-panel">
+          <el-card shadow="never" class="art-security-panel security-totp-panel">
+            <template #header>
+              <div class="security-panel-header">
+                <div class="security-panel-title">
+                  <h4><Key />TOTP 二次验证</h4>
+                  <p>用认证器验证码保护后台登录。</p>
+                </div>
+                <el-tag :type="securityForm.totpEnabled ? 'success' : 'info'">{{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
+              </div>
+            </template>
+            <div class="security-panel-body totp-panel">
               <div class="status-row">
                 <span>当前状态</span>
                 <el-tag :type="securityForm.totpEnabled ? 'success' : 'info'">{{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
@@ -2975,53 +2992,76 @@ window.addEventListener('beforeunload', (event) => {
                   <el-input v-model="totpCode" maxlength="6" placeholder="认证器中的 6 位验证码" />
                 </el-form-item>
                 <el-form-item>
-                  <el-button v-if="!securityForm.totpEnabled" @click="setupTOTP">生成 TOTP 密钥</el-button>
-                  <el-button v-if="!securityForm.totpEnabled" type="primary" :disabled="!securityForm.totpConfigured && !totpSetup" @click="enableTOTP">启用 TOTP</el-button>
-                  <el-button v-else type="danger" plain @click="disableTOTP">禁用 TOTP</el-button>
+                  <el-button v-if="!securityForm.totpEnabled" class="security-panel-action" @click="setupTOTP">生成 TOTP 密钥</el-button>
+                  <el-button v-if="!securityForm.totpEnabled" type="primary" class="security-panel-action" :disabled="!securityForm.totpConfigured && !totpSetup" @click="enableTOTP">启用 TOTP</el-button>
+                  <el-button v-else type="danger" plain class="security-panel-action" @click="disableTOTP">禁用 TOTP</el-button>
                 </el-form-item>
               </el-form>
             </div>
           </el-card>
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Key />修改账号密码</div></template>
-            <el-form :model="accountForm" label-width="120px" class="narrow-form">
-              <el-form-item label="账号"><el-input v-model="accountForm.username" /></el-form-item>
-              <el-form-item label="当前密码"><el-input v-model="accountForm.currentPassword" type="password" show-password /></el-form-item>
-              <el-form-item label="新密码"><el-input v-model="accountForm.newPassword" type="password" show-password /></el-form-item>
-              <el-form-item><el-button type="primary" @click="saveAccount">保存账号</el-button></el-form-item>
-            </el-form>
+          <el-card shadow="never" class="art-security-panel security-password-panel">
+            <template #header>
+              <div class="security-panel-header">
+                <div class="security-panel-title">
+                  <h4><Key />修改账号密码</h4>
+                  <p>更新管理员账号和后台登录密码。</p>
+                </div>
+              </div>
+            </template>
+            <div class="security-panel-body">
+              <el-form :model="accountForm" label-width="120px" class="narrow-form">
+                <el-form-item label="账号"><el-input v-model="accountForm.username" /></el-form-item>
+                <el-form-item label="当前密码"><el-input v-model="accountForm.currentPassword" type="password" show-password /></el-form-item>
+                <el-form-item label="新密码"><el-input v-model="accountForm.newPassword" type="password" show-password /></el-form-item>
+                <el-form-item><el-button type="primary" class="security-panel-action" @click="saveAccount">保存账号</el-button></el-form-item>
+              </el-form>
+            </div>
           </el-card>
         </div>
         <div class="session-workspace">
-          <el-card shadow="never">
+          <el-card shadow="never" class="art-security-panel session-list-panel">
             <template #header>
-              <div class="section-actions">
-                <div class="card-title"><Collection />当前会话</div>
-                <el-button size="small" type="warning" plain @click="revokeOtherSessions">退出其他会话</el-button>
+              <div class="security-panel-header">
+                <div class="security-panel-title">
+                  <h4><Collection />当前会话</h4>
+                  <p>查看当前登录会话并清理其他设备。</p>
+                </div>
+                <el-button size="small" type="warning" plain class="security-panel-action" @click="revokeOtherSessions">退出其他会话</el-button>
               </div>
             </template>
-            <el-table :data="sessions" :size="tableSize">
-              <template #empty>
-                <div class="art-empty-state">
-                  <Collection />
-                  <strong>{{ emptyState('sessions').title }}</strong>
-                  <span>{{ emptyState('sessions').description }}</span>
-                  <el-button :icon="Refresh" @click="refreshAll">刷新会话</el-button>
-                </div>
-              </template>
-              <el-table-column prop="username" label="账号" />
-              <el-table-column prop="createdAt" label="登录时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
-              <el-table-column prop="current" label="当前" width="90"><template #default="{ row }"><el-tag v-if="row.current" type="success">当前</el-tag></template></el-table-column>
-              <el-table-column label="操作" width="100"><template #default="{ row }"><el-button v-if="!row.current" size="small" @click="revokeSession(row.id)">退出</el-button></template></el-table-column>
-            </el-table>
+            <div class="security-panel-body">
+              <el-table :data="sessions" :size="tableSize">
+                <template #empty>
+                  <div class="art-empty-state">
+                    <Collection />
+                    <strong>{{ emptyState('sessions').title }}</strong>
+                    <span>{{ emptyState('sessions').description }}</span>
+                    <el-button :icon="Refresh" @click="refreshAll">刷新会话</el-button>
+                  </div>
+                </template>
+                <el-table-column prop="username" label="账号" />
+                <el-table-column prop="createdAt" label="登录时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+                <el-table-column prop="current" label="当前" width="90"><template #default="{ row }"><el-tag v-if="row.current" type="success">当前</el-tag></template></el-table-column>
+                <el-table-column label="操作" width="100"><template #default="{ row }"><el-button v-if="!row.current" size="small" @click="revokeSession(row.id)">退出</el-button></template></el-table-column>
+              </el-table>
+            </div>
           </el-card>
-          <el-card shadow="never">
-            <template #header><div class="card-title"><Document />登录历史</div></template>
-            <el-table :data="loginHistoryRows" :size="tableSize" height="280">
-              <el-table-column prop="createdAt" label="时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
-              <el-table-column prop="username" label="账号" />
-              <el-table-column prop="action" label="动作" />
-            </el-table>
+          <el-card shadow="never" class="art-security-panel login-history-panel">
+            <template #header>
+              <div class="security-panel-header">
+                <div class="security-panel-title">
+                  <h4><Document />登录历史</h4>
+                  <p>最近后台认证事件，用于排查异常登录。</p>
+                </div>
+              </div>
+            </template>
+            <div class="security-panel-body">
+              <el-table :data="loginHistoryRows" :size="tableSize" height="280">
+                <el-table-column prop="createdAt" label="时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
+                <el-table-column prop="username" label="账号" />
+                <el-table-column prop="action" label="动作" />
+              </el-table>
+            </div>
           </el-card>
         </div>
         <el-card shadow="never" class="audit-workspace">
