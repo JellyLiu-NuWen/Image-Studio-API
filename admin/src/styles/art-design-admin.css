@@ -716,6 +716,102 @@ button,
   line-height: 1.6;
 }
 
+.log-workspace :deep(.el-card__body) {
+  display: grid;
+  gap: 14px;
+}
+
+.log-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.log-summary-grid button {
+  min-height: 88px;
+  display: grid;
+  gap: 5px;
+  align-content: start;
+  border: 1px solid var(--art-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--art-soft);
+  color: var(--art-text);
+  font: inherit;
+  text-align: left;
+  transition: 180ms ease;
+}
+
+.log-summary-grid button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
+.log-summary-grid span,
+.log-summary-grid small,
+.query-panel-heading span {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.log-summary-grid strong {
+  color: var(--art-text);
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.log-summary-grid button.warning {
+  border-color: rgba(217, 119, 6, 0.28);
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.log-summary-grid button.success {
+  border-color: rgba(22, 163, 74, 0.22);
+  background: rgba(22, 163, 74, 0.07);
+}
+
+.query-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  background: var(--art-soft);
+}
+
+.query-panel-heading,
+.result-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.query-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.query-grid .el-input-number,
+.query-grid .el-date-editor {
+  width: 100%;
+}
+
+.query-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.result-toolbar {
+  padding: 12px 0 2px;
+  border-top: 1px solid var(--art-border);
+}
+
 .filter-bar {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 140px 180px 180px;
@@ -931,7 +1027,12 @@ button,
 
   .metric-grid,
   .preset-grid,
+  .log-summary-grid,
   .risk-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .query-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -952,6 +1053,8 @@ button,
 
   .metric-grid,
   .preset-grid,
+  .log-summary-grid,
+  .query-grid,
   .risk-board,
   .filter-bar,
   .status-list {
@@ -959,14 +1062,18 @@ button,
   }
 
   .table-toolbar,
-  .toolbar-actions {
+  .toolbar-actions,
+  .query-panel-heading,
+  .result-toolbar,
+  .query-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
   .toolbar-actions .el-input,
   .toolbar-actions .el-button,
-  .toolbar-actions .el-segmented {
+  .toolbar-actions .el-segmented,
+  .query-actions .el-button {
     width: 100%;
   }
 

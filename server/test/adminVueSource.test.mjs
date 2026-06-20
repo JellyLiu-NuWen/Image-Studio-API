@@ -167,3 +167,28 @@ test("Vue management tables use an Art Design Pro style table workspace", async 
   assert.match(styleSource, /\.table-toolbar/, "Styles should include table toolbar layout");
   assert.match(styleSource, /\.toolbar-meta/, "Styles should include compact table meta styling");
 });
+
+test("Vue logs page uses an Art Design Pro query and results workspace", async () => {
+  const source = await readAppSource();
+  const logSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'logs'\"",
+    "<section v-if=\"activeView === 'usage'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /logSummaryCards/, "Logs page should compute summary cards for generation and API logs");
+  assert.match(source, /activeLogTab/, "Logs page should keep the active log tab state");
+  assert.match(logSection, /log-workspace/, "Logs page should render a workspace wrapper");
+  assert.match(logSection, /log-summary-grid/, "Logs page should render compact summary cards");
+  assert.match(logSection, /query-panel/, "Logs page should render a query panel");
+  assert.match(logSection, /query-grid/, "Query panel should use a structured grid layout");
+  assert.match(logSection, /result-toolbar/, "Logs page should render a result toolbar above tables");
+  assert.match(logSection, /v-model="activeLogTab"/, "Logs tabs should bind the active tab");
+  assert.match(logSection, /:size="tableSize"/, "Logs tables should respect shared density size");
+  assert.match(logSection, /刷新日志/, "Result toolbar should include a clear refresh action");
+  assert.match(styleSource, /\.log-workspace/, "Styles should include log workspace layout");
+  assert.match(styleSource, /\.log-summary-grid/, "Styles should include log summary layout");
+  assert.match(styleSource, /\.query-panel/, "Styles should include query panel layout");
+  assert.match(styleSource, /\.result-toolbar/, "Styles should include result toolbar layout");
+});

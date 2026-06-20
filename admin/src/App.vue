@@ -116,6 +116,7 @@ const drawerMode = ref<DrawerMode>(null)
 const drawerIndex = ref(-1)
 const logDetailVisible = ref(false)
 const selectedLog = ref<LogRecord | null>(null)
+const activeLogTab = ref<'generations' | 'api'>('generations')
 const secretValues = reactive<Record<string, string>>({})
 const tableSearch = reactive<Record<'interfaces' | 'upstreams' | 'models' | 'quality', string>>({
   interfaces: '',
@@ -179,6 +180,16 @@ const securityForm = computed(() => config.value?.security || {
 })
 const filteredGenerationLogs = computed(() => filterLogs(generationLogs.value))
 const filteredApiLogs = computed(() => filterLogs(apiLogs.value))
+const logSummaryCards = computed(() => {
+  const failedGenerations = generationLogs.value.filter((item) => item.status === 'failed' || Number(item.status) >= 400).length
+  const failedApis = apiLogs.value.filter((item) => item.status === 'failed' || Number(item.status) >= 400).length
+  return [
+    { label: '生图日志', value: generationLogs.value.length, hint: `失败 ${failedGenerations}`, type: failedGenerations ? 'warning' : 'success' },
+    { label: '后台 API', value: apiLogs.value.length, hint: `失败 ${failedApis}`, type: failedApis ? 'warning' : 'success' },
+    { label: '筛选命中', value: filteredGenerationLogs.value.length + filteredApiLogs.value.length, hint: '当前查询结果', type: 'info' },
+    { label: '质量案例', value: qualityCases.value.length, hint: '差评与优秀沉淀', type: 'info' }
+  ]
+})
 const usageInterfaceRows = computed(() => usageRows(usage.value?.byInterface))
 const usageModelRows = computed(() => usageRows(usage.value?.byModel))
 const usageUpstreamRows = computed(() => usageRows(usage.value?.byUpstream))
@@ -1414,40 +1425,61 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'logs'" class="view-stack">
-        <el-card shadow="never">
-          <div class="section-actions log-actions">
-            <el-button :icon="Download" @click="exportLogs('jsonl')">导出 JSONL</el-button>
-            <el-button :icon="Download" @click="exportLogs('csv')">导出 CSV</el-button>
+        <el-card shadow="never" class="log-workspace">
+          <div class="log-summary-grid">
+            <button v-for="item in logSummaryCards" :key="item.label" :class="item.type">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+              <small>{{ item.hint }}</small>
+            </button>
           </div>
-          <div class="filter-bar">
-            <el-input v-model="logFilter.keyword" placeholder="搜索请求 ID、模型、错误摘要" clearable />
-            <el-select v-model="logFilter.status" placeholder="状态" clearable>
-              <el-option label="success" value="success" />
-              <el-option label="failed" value="failed" />
-            </el-select>
-            <el-select v-model="logFilter.interfaceId" placeholder="接口" clearable>
-              <el-option v-for="item in activeInterfaces" :key="item.id" :label="item.name" :value="item.id" />
-            </el-select>
-            <el-select v-model="logFilter.upstreamId" placeholder="上游" clearable>
-              <el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" />
-            </el-select>
+          <div class="query-panel">
+            <div class="query-panel-heading">
+              <div class="card-title"><Document />日志查询</div>
+              <span>按接口、上游、模型、状态、耗时和请求 ID 组合筛选</span>
+            </div>
+            <div class="query-grid">
+              <el-input v-model="logFilter.keyword" placeholder="搜索请求 ID、模型、错误摘要" clearable />
+              <el-select v-model="logFilter.status" placeholder="状态" clearable>
+                <el-option label="success" value="success" />
+                <el-option label="failed" value="failed" />
+              </el-select>
+              <el-select v-model="logFilter.interfaceId" placeholder="接口" clearable>
+                <el-option v-for="item in activeInterfaces" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+              <el-select v-model="logFilter.upstreamId" placeholder="上游" clearable>
+                <el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" />
+              </el-select>
+              <el-input v-model="logFilter.model" placeholder="模型" clearable />
+              <el-input v-model="logFilter.endpoint" placeholder="Endpoint" clearable />
+              <el-input v-model="logFilter.requestId" placeholder="请求 ID" clearable />
+              <el-date-picker v-model="logFilter.from" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="开始时间" />
+              <el-date-picker v-model="logFilter.to" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="结束时间" />
+              <el-input-number v-model="logFilter.statusMin" :min="100" :max="599" placeholder="状态≥" controls-position="right" />
+              <el-input-number v-model="logFilter.statusMax" :min="100" :max="599" placeholder="状态≤" controls-position="right" />
+              <el-input-number v-model="logFilter.minDurationMs" :min="0" placeholder="耗时≥ms" controls-position="right" />
+              <el-input-number v-model="logFilter.maxDurationMs" :min="0" placeholder="耗时≤ms" controls-position="right" />
+            </div>
+            <div class="query-actions">
+              <el-button type="primary" :icon="Refresh" @click="refreshLogsOnly">应用筛选</el-button>
+              <el-button @click="resetLogFilters">重置</el-button>
+            </div>
           </div>
-          <div class="filter-bar advanced-filter">
-            <el-input v-model="logFilter.model" placeholder="模型" clearable />
-            <el-input v-model="logFilter.endpoint" placeholder="Endpoint" clearable />
-            <el-input v-model="logFilter.requestId" placeholder="请求 ID" clearable />
-            <el-date-picker v-model="logFilter.from" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="开始时间" />
-            <el-date-picker v-model="logFilter.to" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="结束时间" />
-            <el-input-number v-model="logFilter.statusMin" :min="100" :max="599" placeholder="状态≥" controls-position="right" />
-            <el-input-number v-model="logFilter.statusMax" :min="100" :max="599" placeholder="状态≤" controls-position="right" />
-            <el-input-number v-model="logFilter.minDurationMs" :min="0" placeholder="耗时≥ms" controls-position="right" />
-            <el-input-number v-model="logFilter.maxDurationMs" :min="0" placeholder="耗时≤ms" controls-position="right" />
-            <el-button :icon="Refresh" @click="refreshLogsOnly">应用筛选</el-button>
-            <el-button @click="resetLogFilters">重置</el-button>
+          <div class="result-toolbar">
+            <div>
+              <div class="card-title"><DataAnalysis />日志结果</div>
+              <div class="toolbar-meta">生图 {{ filteredGenerationLogs.length }} 条 / API {{ filteredApiLogs.length }} 条</div>
+            </div>
+            <div class="toolbar-actions">
+              <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
+              <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
+              <el-button :icon="Download" @click="exportLogs('jsonl')">导出 JSONL</el-button>
+              <el-button :icon="Download" @click="exportLogs('csv')">导出 CSV</el-button>
+            </div>
           </div>
-          <el-tabs>
-            <el-tab-pane label="生图日志">
-              <el-table :data="filteredGenerationLogs" height="520">
+          <el-tabs v-model="activeLogTab">
+            <el-tab-pane label="生图日志" name="generations">
+              <el-table :data="filteredGenerationLogs" :size="tableSize" height="520">
                 <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
                 <el-table-column prop="id" label="请求 ID" min-width="220" show-overflow-tooltip />
                 <el-table-column prop="interfaceId" label="接口" min-width="120" />
@@ -1469,8 +1501,8 @@ window.addEventListener('beforeunload', (event) => {
                 </el-table-column>
               </el-table>
             </el-tab-pane>
-            <el-tab-pane label="后台 API">
-              <el-table :data="filteredApiLogs" height="520">
+            <el-tab-pane label="后台 API" name="api">
+              <el-table :data="filteredApiLogs" :size="tableSize" height="520">
                 <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
                 <el-table-column prop="method" label="方法" width="90" />
                 <el-table-column prop="path" label="路径" min-width="220" />
