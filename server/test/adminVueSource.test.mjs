@@ -217,6 +217,29 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(styleSource, /\.result-toolbar/, "Styles should include result toolbar layout");
 });
 
+test("Vue log detail drawer uses an Art Design Pro detail workspace", async () => {
+  const source = await readAppSource();
+  const detailDrawer = sourceBetween(
+    source,
+    "<el-drawer v-model=\"logDetailVisible\"",
+    "</el-drawer>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /logDetailSummaryCards/, "Log detail drawer should compute compact summary cards");
+  assert.match(source, /logDetailRouteSteps/, "Log detail drawer should compute route step data");
+  assert.match(detailDrawer, /log-detail-drawer/, "Log detail drawer should apply a dedicated workspace class");
+  assert.match(detailDrawer, /detail-overview/, "Log detail drawer should render an overview header");
+  assert.match(detailDrawer, /detail-summary-grid/, "Log detail drawer should render summary cards");
+  assert.match(detailDrawer, /detail-route-steps/, "Log detail drawer should render route steps");
+  assert.match(detailDrawer, /detail-action-bar/, "Log detail drawer should render an action bar");
+  assert.match(styleSource, /\.log-detail-drawer/, "Styles should include log detail drawer styling");
+  assert.match(styleSource, /\.detail-overview/, "Styles should include detail overview styling");
+  assert.match(styleSource, /\.detail-summary-grid/, "Styles should include detail summary styling");
+  assert.match(styleSource, /\.detail-route-steps/, "Styles should include route step styling");
+  assert.match(styleSource, /\.detail-action-bar/, "Styles should include detail action bar styling");
+});
+
 test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
   const source = await readAppSource();
   const usageSection = sourceBetween(

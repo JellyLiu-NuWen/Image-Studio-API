@@ -436,6 +436,31 @@ const statusDistribution = computed(() => {
     { label: '失败', count: failed, percent: Math.round((failed / total) * 100), className: 'failed' }
   ]
 })
+const logDetailSummaryCards = computed(() => {
+  const record = selectedLog.value
+  if (!record) return []
+  const statusText = String(record.status || '-')
+  const failed = statusText === 'failed' || Number(statusText) >= 400
+  return [
+    { label: '请求状态', value: statusText, hint: record.upstreamStatus ? `上游 ${record.upstreamStatus}` : '等待上游记录', type: failed ? 'critical' : 'success' },
+    { label: '耗时', value: formatDuration(record.durationMs), hint: `${record.retryCount || 0} 次重试`, type: Number(record.durationMs || 0) > 60000 ? 'warning' : 'info' },
+    { label: '接口', value: record.interfaceId || '-', hint: record.model || '未记录模型', type: 'info' },
+    { label: '上游', value: record.upstreamId || '-', hint: record.endpoint || record.path || '-', type: record.upstreamId ? 'info' : 'warning' }
+  ]
+})
+const logDetailRouteSteps = computed(() => {
+  const record = selectedLog.value
+  if (!record) return []
+  const chain = Array.isArray(record.failoverChain) && record.failoverChain.length
+    ? record.failoverChain
+    : [record.upstreamId || '未记录上游']
+  return chain.map((item, index) => ({
+    name: item,
+    index: index + 1,
+    active: item === record.upstreamId || index === chain.length - 1,
+    hint: index === 0 ? '首选路由' : '故障转移'
+  }))
+})
 const unhealthyUpstreams = computed(() => upstreamHealth.value.filter((item) => {
   if (!item.enabled) return false
   const rate = Number(item.metrics?.successRate || 0)
@@ -2244,40 +2269,56 @@ window.addEventListener('beforeunload', (event) => {
       </template>
     </el-drawer>
 
-    <el-drawer v-model="logDetailVisible" title="请求详情" size="560px" destroy-on-close>
+    <el-drawer v-model="logDetailVisible" title="请求详情" size="620px" destroy-on-close class="log-detail-drawer">
       <template v-if="selectedLog">
         <div class="detail-stack">
-          <div class="status-list detail-status">
-            <div><span>请求 ID</span><strong>{{ selectedLog.id }}</strong></div>
-            <div><span>状态</span><strong>{{ selectedLog.status }}</strong></div>
-            <div><span>接口</span><strong>{{ selectedLog.interfaceId || '-' }}</strong></div>
-            <div><span>上游</span><strong>{{ selectedLog.upstreamId || '-' }}</strong></div>
-            <div><span>模型</span><strong>{{ selectedLog.model || '-' }}</strong></div>
-            <div><span>耗时</span><strong>{{ formatDuration(selectedLog.durationMs) }}</strong></div>
-            <div><span>上游状态</span><strong>{{ selectedLog.upstreamStatus || '-' }}</strong></div>
-            <div><span>重试次数</span><strong>{{ selectedLog.retryCount || 0 }}</strong></div>
+          <div class="detail-overview">
+            <div>
+              <span>{{ selectedLog.endpoint || selectedLog.path || '请求详情' }}</span>
+              <h3>{{ selectedLog.id }}</h3>
+              <p>{{ formatTime(selectedLog.createdAt) }} · {{ selectedLog.method || 'POST' }}</p>
+            </div>
+            <el-tag :type="selectedLog.status === 'failed' || Number(selectedLog.status) >= 400 ? 'danger' : 'success'">{{ selectedLog.status }}</el-tag>
           </div>
-          <el-card shadow="never">
+          <div class="detail-summary-grid">
+            <div v-for="item in logDetailSummaryCards" :key="item.label" :class="item.type">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+              <small>{{ item.hint }}</small>
+            </div>
+          </div>
+          <el-card shadow="never" class="detail-route-card">
             <template #header><div class="card-title"><Connection />故障转移链路</div></template>
-            <div class="tag-row">
-              <el-tag v-for="item in selectedLog.failoverChain || []" :key="item">{{ item }}</el-tag>
-              <span v-if="!(selectedLog.failoverChain || []).length" class="muted-text">没有记录故障转移链路</span>
+            <div class="detail-route-steps">
+              <div v-for="item in logDetailRouteSteps" :key="item.index + item.name" :class="{ active: item.active }">
+                <i>{{ item.index }}</i>
+                <span>{{ item.name }}</span>
+                <small>{{ item.hint }}</small>
+              </div>
             </div>
           </el-card>
-          <el-card shadow="never">
+          <el-card shadow="never" class="detail-diagnostic-card">
             <template #header><div class="card-title"><Document />错误摘要</div></template>
             <p class="detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
           </el-card>
-          <el-card shadow="never">
+          <el-card shadow="never" class="detail-curl-card">
             <template #header><div class="card-title"><Document />脱敏 curl</div></template>
             <pre class="curl-block">{{ sanitizedCurl(selectedLog) }}</pre>
           </el-card>
         </div>
       </template>
       <template #footer>
-        <el-button v-if="selectedLog" @click="copySanitizedCurl(selectedLog)">复制脱敏 curl</el-button>
-        <el-button v-if="selectedLog" type="danger" plain @click="markQualityCase(selectedLog, 'poor')">标记为质量差案例</el-button>
-        <el-button v-if="selectedLog" type="success" plain @click="markQualityCase(selectedLog, 'excellent')">保存为优秀案例</el-button>
+        <div class="detail-action-bar">
+          <div>
+            <strong>{{ selectedLog?.id || '请求详情' }}</strong>
+            <span>{{ selectedLog?.model || '未记录模型' }} · {{ formatDuration(selectedLog?.durationMs) }}</span>
+          </div>
+          <div>
+            <el-button v-if="selectedLog" @click="copySanitizedCurl(selectedLog)">复制脱敏 curl</el-button>
+            <el-button v-if="selectedLog" type="danger" plain @click="markQualityCase(selectedLog, 'poor')">质量差案例</el-button>
+            <el-button v-if="selectedLog" type="success" plain @click="markQualityCase(selectedLog, 'excellent')">优秀案例</el-button>
+          </div>
+        </div>
       </template>
     </el-drawer>
   </div>
