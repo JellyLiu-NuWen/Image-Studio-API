@@ -1155,6 +1155,41 @@ test("admin can manage models quality presets alerts sessions usage and backup",
   assert.equal(backupBody.backup.config.interfaces[0].id, "codex");
 });
 
+test("admin can revoke other sessions and audit the action", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore(),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+  const firstHeaders = await loginHeaders(app);
+  const secondHeaders = await loginHeaders(app);
+  const before = await app.handle(new Request("http://localhost/api/sessions", { headers: secondHeaders }));
+  const beforeBody = await before.json();
+  assert.equal(beforeBody.sessions.length, 2);
+
+  const revoke = await app.handle(new Request("http://localhost/api/sessions/revoke", {
+    method: "POST",
+    headers: { ...secondHeaders, "content-type": "application/json" },
+    body: JSON.stringify({ others: true }),
+  }));
+
+  assert.equal(revoke.status, 200);
+  const revokeBody = await revoke.json();
+  assert.equal(revokeBody.revoked, 1);
+  const after = await app.handle(new Request("http://localhost/api/sessions", { headers: secondHeaders }));
+  const afterBody = await after.json();
+  assert.equal(afterBody.sessions.length, 1);
+  assert.equal(afterBody.sessions[0].current, true);
+  const revokedSession = await app.handle(new Request("http://localhost/api/sessions", { headers: firstHeaders }));
+  assert.equal(revokedSession.status, 401);
+  const audit = await app.handle(new Request("http://localhost/api/audit-logs", { headers: secondHeaders }));
+  const auditBody = await audit.json();
+  assert.equal(auditBody.records.some((record) => record.action === "session.revoke" && record.details.revoked === 1), true);
+});
+
 test("admin usage summarizes estimated cost and daily buckets", async () => {
   const generationLogStore = createMemoryLogStore();
   await generationLogStore.append({

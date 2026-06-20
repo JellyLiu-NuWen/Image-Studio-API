@@ -1263,10 +1263,22 @@ export function createSelfHostedApp({
           return response;
         }
         const body = await request.json().catch(() => ({}));
+        const currentToken = parseCookies(request).image_studio_session || "";
+        let revoked = 0;
         for (const [token, session] of sessions.entries()) {
-          if (session.id === body.id) sessions.delete(token);
+          const shouldRevoke = body.others === true
+            ? token !== currentToken
+            : session.id === body.id && token !== currentToken;
+          if (shouldRevoke) {
+            sessions.delete(token);
+            revoked += 1;
+          }
         }
-        response = json({ ok: true });
+        appendAudit(auditRecords, "session.revoke", {
+          target: body.others === true ? "others" : String(body.id || ""),
+          revoked,
+        }, sessions.get(currentToken)?.username || "admin", now);
+        response = json({ ok: true, revoked, sessions: publicSessions(sessions, currentToken) });
         return response;
       }
 

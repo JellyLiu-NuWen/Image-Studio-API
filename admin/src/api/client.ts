@@ -75,9 +75,9 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify(body)
   }),
-  revokeSession: (id: string) => requestJSON<{ ok: boolean }>('/sessions/revoke', {
+  revokeSession: (payload: { id?: string; others?: boolean }) => requestJSON<{ ok: boolean; revoked: number; sessions: SessionRecord[] }>('/sessions/revoke', {
     method: 'POST',
-    body: JSON.stringify({ id })
+    body: JSON.stringify(payload)
   }),
   rotateInterfaceKey: (id: string) => requestJSON<{ ok: boolean; apiToken: string; config: AdminConfig }>(`/interfaces/${encodeURIComponent(id)}/rotate-key`, {
     method: 'POST',

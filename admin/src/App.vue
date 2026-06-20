@@ -644,9 +644,16 @@ async function saveAccount() {
 }
 
 async function revokeSession(id: string) {
-  await adminApi.revokeSession(id)
-  sessions.value = (await adminApi.sessions()).sessions
+  const data = await adminApi.revokeSession({ id })
+  sessions.value = data.sessions
   ElMessage.success('会话已退出')
+}
+
+async function revokeOtherSessions() {
+  await ElMessageBox.confirm('这会退出除当前浏览器外的所有后台会话，确定继续吗？', '退出其他会话', { type: 'warning' })
+  const data = await adminApi.revokeSession({ others: true })
+  sessions.value = data.sessions
+  ElMessage.success(`已退出 ${data.revoked} 个会话`)
 }
 
 function copySnippet(item: StudioInterface) {
@@ -1131,7 +1138,12 @@ window.addEventListener('beforeunload', (event) => {
         </div>
         <div class="content-grid">
           <el-card shadow="never">
-            <template #header><div class="card-title"><Collection />当前会话</div></template>
+            <template #header>
+              <div class="section-actions">
+                <div class="card-title"><Collection />当前会话</div>
+                <el-button size="small" type="warning" plain @click="revokeOtherSessions">退出其他会话</el-button>
+              </div>
+            </template>
             <el-table :data="sessions">
               <el-table-column prop="username" label="账号" />
               <el-table-column prop="createdAt" label="登录时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
