@@ -113,6 +113,30 @@ test("Vue login page uses an Art Design Pro access workspace", async () => {
   assert.match(styleSource, /\.login-security-strip/, "Styles should include login security strip styling");
 });
 
+test("Vue shell utility controls use Art Design Pro tokens", async () => {
+  const source = await readAppSource();
+  const loginSection = sourceBetween(
+    source,
+    "<div v-if=\"!authenticated\"",
+    "<div v-else class=\"admin-shell\"",
+  );
+  const shellHeader = sourceBetween(
+    source,
+    "<header class=\"admin-topbar\">",
+    "</header>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(loginSection, /art-full-button/, "Login submit should use an Art full-width button utility");
+  assert.match(shellHeader, /art-dirty-hint/, "Topbar dirty state should use an Art utility hint token");
+  assert.doesNotMatch(loginSection, /(?<![A-Za-z0-9_-])full-button(?![A-Za-z0-9_-])/, "Login page should not keep the generic full-button class");
+  assert.doesNotMatch(shellHeader, /(?<![A-Za-z0-9_-])dirty-hint(?![A-Za-z0-9_-])/, "Topbar should not keep the generic dirty-hint class");
+  assert.match(styleSource, /\.art-full-button/, "Styles should include the Art full button utility");
+  assert.match(styleSource, /\.art-dirty-hint/, "Styles should include the Art dirty hint utility");
+  assert.doesNotMatch(styleSource, /\.full-button(?![A-Za-z0-9_-])/, "Styles should remove the generic full-button selector");
+  assert.doesNotMatch(styleSource, /\.dirty-hint(?![A-Za-z0-9_-])/, "Styles should remove the generic dirty-hint selector");
+});
+
 test("Vue dashboard exposes trend and status distribution visualizations", async () => {
   const source = await readAppSource();
   const dashboardSection = sourceBetween(

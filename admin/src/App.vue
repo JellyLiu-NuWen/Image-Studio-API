@@ -1882,7 +1882,7 @@ window.addEventListener('beforeunload', (event) => {
         <el-form-item label="TOTP 验证码">
           <el-input v-model="loginForm.totpCode" autocomplete="one-time-code" maxlength="6" placeholder="未启用时可留空" @keyup.enter="login" />
         </el-form-item>
-        <el-button type="primary" size="large" class="full-button" :loading="loading" @click="login">登录</el-button>
+        <el-button type="primary" size="large" class="art-full-button" :loading="loading" @click="login">登录</el-button>
       </el-form>
       <div class="login-security-strip">
         <span><Lock /> Cookie Session</span>
@@ -1934,7 +1934,7 @@ window.addEventListener('beforeunload', (event) => {
             </span>
           </nav>
           <h1>{{ currentTitle }}</h1>
-          <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
+          <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="art-dirty-hint">有未保存的配置变更</small>
         </div>
         <div class="art-header-actions header-tools">
           <button type="button" class="header-tool header-menu-trigger" @click="toggleMenuVisibility" aria-label="切换菜单">

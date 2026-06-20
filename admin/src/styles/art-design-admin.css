@@ -247,7 +247,7 @@ button,
   color: var(--art-primary);
 }
 
-.full-button {
+.art-full-button {
   width: 100%;
 }
 
@@ -1295,7 +1295,7 @@ button,
   border-color: rgba(37, 99, 235, 0.16);
 }
 
-.dirty-hint {
+.art-dirty-hint {
   display: inline-block;
   margin-top: 6px;
   color: var(--art-warning);
