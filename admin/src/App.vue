@@ -4,6 +4,7 @@ import {
   Aim,
   Bell,
   Box,
+  Close,
   Collection,
   Connection,
   Cpu,
@@ -13,6 +14,7 @@ import {
   Edit,
   Finished,
   Hide,
+  House,
   Key,
   Link,
   Lock,
@@ -20,13 +22,15 @@ import {
   Monitor,
   More,
   Moon,
+  Operation,
   Plus,
   Refresh,
   Sunny,
   SwitchButton,
   Timer,
   Upload,
-  View
+  View,
+  WarningFilled
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { adminApi } from '@/api/client'
@@ -83,6 +87,7 @@ const loading = ref(false)
 const authenticated = ref(false)
 const username = ref('admin')
 const activeView = ref<ViewKey>('dashboard')
+const pageTabs = ref<ViewKey[]>(['dashboard'])
 const themeMode = ref<'light' | 'dark'>('light')
 const loginForm = reactive({ username: 'admin', password: '', totpCode: '' })
 const accountForm = reactive({ username: '', currentPassword: '', newPassword: '' })
@@ -128,7 +133,17 @@ const logFilter = reactive({
   maxDurationMs: undefined as number | undefined
 })
 
-const currentTitle = computed(() => navGroups.flatMap((group) => group.items).find((item) => item.key === activeView.value)?.label || '仪表盘')
+const flatNavItems = computed(() => navGroups.flatMap((group) => group.items.map((item) => ({ ...item, group: group.title }))))
+const currentNavItem = computed(() => flatNavItems.value.find((item) => item.key === activeView.value) || flatNavItems.value[0])
+const currentTitle = computed(() => currentNavItem.value?.label || '仪表盘')
+const breadcrumbItems = computed(() => [
+  { label: '工作台', icon: House },
+  { label: currentNavItem.value?.group || '监控' },
+  { label: currentTitle.value }
+])
+const openedPageTabs = computed(() => pageTabs.value
+  .map((key) => flatNavItems.value.find((item) => item.key === key))
+  .filter(Boolean) as Array<{ key: ViewKey; label: string; icon: unknown; group: string }>)
 const activeInterfaces = computed(() => config.value?.interfaces || [])
 const activeUpstreams = computed(() => config.value?.upstreams || [])
 const activeModels = computed(() => config.value?.models || [])
@@ -170,6 +185,52 @@ const statusDistribution = computed(() => {
     { label: '失败', count: failed, percent: Math.round((failed / total) * 100), className: 'failed' }
   ]
 })
+const unhealthyUpstreams = computed(() => upstreamHealth.value.filter((item) => {
+  if (!item.enabled) return false
+  const rate = Number(item.metrics?.successRate || 0)
+  return rate < 90 || Boolean(item.metrics?.lastFailureReason)
+}))
+const missingKeyCount = computed(() => {
+  const interfaceMissing = activeInterfaces.value.filter((item) => item.enabled && !item.apiTokenSet && !item.apiToken).length
+  const upstreamMissing = activeUpstreams.value.filter((item) => item.enabled && !item.apiKeySet && !item.apiKey).length
+  return interfaceMissing + upstreamMissing
+})
+const quickActions = computed(() => [
+  { label: '保存配置', icon: Finished, type: 'primary', action: () => saveConfig() },
+  { label: '测试上游', icon: Aim, type: 'default', action: () => navigateTo('upstreams') },
+  { label: '查看日志', icon: Document, type: 'default', action: () => navigateTo('logs') },
+  { label: '创建备份', icon: Download, type: 'default', action: () => createBackup() }
+])
+const riskItems = computed(() => [
+  {
+    label: '活跃告警',
+    value: alertSummary.value.total,
+    severity: alertSummary.value.critical ? 'critical' : alertSummary.value.warning ? 'warning' : 'info',
+    hint: `${alertSummary.value.critical} 个严重 / ${alertSummary.value.warning} 个警告`,
+    target: 'alerts' as ViewKey
+  },
+  {
+    label: '上游风险',
+    value: unhealthyUpstreams.value.length,
+    severity: unhealthyUpstreams.value.length ? 'warning' : 'info',
+    hint: unhealthyUpstreams.value[0]?.metrics.lastFailureReason || '健康检查正常',
+    target: 'upstreams' as ViewKey
+  },
+  {
+    label: 'Key 缺失',
+    value: missingKeyCount.value,
+    severity: missingKeyCount.value ? 'critical' : 'info',
+    hint: missingKeyCount.value ? '存在启用项未配置 Key' : '接口与上游 Key 已配置',
+    target: 'interfaces' as ViewKey
+  },
+  {
+    label: '版本状态',
+    value: updateInfo.value.status || 'unknown',
+    severity: updateInfo.value.status === 'outdated' ? 'warning' : 'info',
+    hint: updateInfo.value.latestVersion ? `最新 ${updateInfo.value.latestVersion}` : '等待更新检查',
+    target: 'system' as ViewKey
+  }
+])
 const poorQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'poor'))
 const excellentQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'excellent'))
 const qualityCaseByRecordId = computed(() => {
@@ -239,6 +300,28 @@ function alertTagType(severity: string) {
   if (severity === 'critical') return 'danger'
   if (severity === 'warning') return 'warning'
   return 'info'
+}
+
+function riskClass(severity: string) {
+  if (severity === 'critical') return 'critical'
+  if (severity === 'warning') return 'warning'
+  return 'info'
+}
+
+function navigateTo(key: ViewKey) {
+  activeView.value = key
+  if (!pageTabs.value.includes(key)) {
+    pageTabs.value = [...pageTabs.value, key].slice(-8)
+  }
+}
+
+function closePageTab(key: ViewKey) {
+  if (key === 'dashboard') return
+  const nextTabs = pageTabs.value.filter((item) => item !== key)
+  pageTabs.value = nextTabs.length ? nextTabs : ['dashboard']
+  if (activeView.value === key) {
+    activeView.value = pageTabs.value[pageTabs.value.length - 1] || 'dashboard'
+  }
 }
 
 function loadThemeMode() {
@@ -871,7 +954,7 @@ window.addEventListener('beforeunload', (event) => {
       <nav class="sidebar-nav">
         <section v-for="group in navGroups" :key="group.title">
           <p>{{ group.title }}</p>
-          <button v-for="item in group.items" :key="item.key" :class="{ active: activeView === item.key }" @click="activeView = item.key">
+          <button v-for="item in group.items" :key="item.key" :class="{ active: activeView === item.key }" @click="navigateTo(item.key)">
             <el-icon><component :is="item.icon" /></el-icon>
             <span>{{ item.label }}</span>
           </button>
@@ -886,7 +969,12 @@ window.addEventListener('beforeunload', (event) => {
     <main class="admin-main">
       <header class="admin-topbar">
         <div>
-          <span class="eyebrow">Image Studio API</span>
+          <nav class="page-breadcrumb" aria-label="当前位置">
+            <span v-for="(item, index) in breadcrumbItems" :key="`${item.label}-${index}`">
+              <el-icon v-if="item.icon"><component :is="item.icon" /></el-icon>
+              {{ item.label }}
+            </span>
+          </nav>
           <h1>{{ currentTitle }}</h1>
           <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
         </div>
@@ -898,6 +986,47 @@ window.addEventListener('beforeunload', (event) => {
           <el-button :icon="SwitchButton" type="danger" plain @click="logout">退出登录</el-button>
         </div>
       </header>
+
+      <nav class="page-tabs" aria-label="打开的模块">
+        <button
+          v-for="tab in openedPageTabs"
+          :key="tab.key"
+          :class="{ active: activeView === tab.key }"
+          @click="navigateTo(tab.key)"
+        >
+          <el-icon><component :is="tab.icon" /></el-icon>
+          <span>{{ tab.label }}</span>
+          <el-icon v-if="tab.key !== 'dashboard'" class="tab-close" @click.stop="closePageTab(tab.key)"><Close /></el-icon>
+        </button>
+      </nav>
+
+      <section class="operations-panel" aria-label="后台快捷操作">
+        <div>
+          <div class="panel-heading">
+            <el-icon><Operation /></el-icon>
+            <span>运维快捷动作</span>
+          </div>
+          <div class="quick-actions">
+            <el-button
+              v-for="item in quickActions"
+              :key="item.label"
+              :type="item.type === 'primary' ? 'primary' : undefined"
+              :icon="item.icon"
+              @click="item.action"
+            >
+              {{ item.label }}
+            </el-button>
+          </div>
+        </div>
+        <div class="risk-board">
+          <button v-for="item in riskItems" :key="item.label" :class="riskClass(item.severity)" @click="navigateTo(item.target)">
+            <el-icon><WarningFilled /></el-icon>
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+            <small>{{ item.hint }}</small>
+          </button>
+        </div>
+      </section>
 
       <section v-if="activeView === 'dashboard'" class="view-stack">
         <div class="metric-grid">

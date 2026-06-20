@@ -92,3 +92,29 @@ test("Vue dashboard exposes trend and status distribution visualizations", async
   assert.match(styleSource, /\.usage-trend/, "Styles should include trend chart layout");
   assert.match(styleSource, /\.status-distribution/, "Styles should include status distribution layout");
 });
+
+test("Vue shell exposes Art Design Pro workspace navigation and quick actions", async () => {
+  const source = await readAppSource();
+  const shellSection = sourceBetween(
+    source,
+    "<main class=\"admin-main\">",
+    "<section v-if=\"activeView === 'dashboard'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /pageTabs/, "Shell should keep an opened page tab list");
+  assert.match(source, /navigateTo/, "Shell should route view changes through a navigation helper");
+  assert.match(source, /closePageTab/, "Shell should allow closing opened page tabs");
+  assert.match(source, /breadcrumbItems/, "Shell should compute breadcrumb items for the active module");
+  assert.match(source, /quickActions/, "Shell should expose high-frequency admin quick actions");
+  assert.match(source, /riskItems/, "Shell should expose operational risk summaries");
+  assert.match(shellSection, /page-breadcrumb/, "Shell should render an Art Design Pro style breadcrumb row");
+  assert.match(shellSection, /page-tabs/, "Shell should render route-like page tabs");
+  assert.match(shellSection, /operations-panel/, "Shell should render an operations panel below the topbar");
+  assert.match(shellSection, /quick-actions/, "Operations panel should render quick action buttons");
+  assert.match(shellSection, /risk-board/, "Operations panel should render the risk summary board");
+  assert.match(styleSource, /\.page-tabs/, "Styles should include page tab layout");
+  assert.match(styleSource, /\.operations-panel/, "Styles should include the operations panel layout");
+  assert.match(styleSource, /\.quick-actions/, "Styles should include quick action layout");
+  assert.match(styleSource, /\.risk-board/, "Styles should include risk board layout");
+});

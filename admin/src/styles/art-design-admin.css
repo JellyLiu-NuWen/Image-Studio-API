@@ -277,6 +277,181 @@ button,
   letter-spacing: 0;
 }
 
+.page-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.page-breadcrumb span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.page-breadcrumb span:not(:last-child)::after {
+  content: "/";
+  margin-left: 8px;
+  color: #94a3b8;
+}
+
+.page-tabs {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 7px;
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  background: var(--art-card);
+  box-shadow: var(--art-shadow);
+}
+
+.page-tabs button {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--art-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  transition: 180ms ease;
+}
+
+.page-tabs button:hover {
+  border-color: var(--art-border);
+  background: var(--art-soft);
+  color: var(--art-text);
+}
+
+.page-tabs button.active {
+  border-color: rgba(37, 99, 235, 0.22);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--art-primary);
+}
+
+.tab-close {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+}
+
+.tab-close:hover {
+  background: rgba(100, 116, 139, 0.18);
+}
+
+.operations-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--art-border);
+  border-radius: 16px;
+  background: var(--art-card);
+  box-shadow: var(--art-shadow);
+}
+
+.panel-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--art-text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.risk-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.risk-board button {
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon label"
+    "value value"
+    "hint hint";
+  gap: 4px 8px;
+  align-content: start;
+  border: 1px solid var(--art-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--art-soft);
+  color: var(--art-text);
+  font: inherit;
+  text-align: left;
+  transition: 180ms ease;
+}
+
+.risk-board button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.risk-board .el-icon {
+  grid-area: icon;
+  margin-top: 1px;
+}
+
+.risk-board span {
+  grid-area: label;
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.risk-board strong {
+  grid-area: value;
+  color: var(--art-text);
+  font-size: 22px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.risk-board small {
+  grid-area: hint;
+  min-height: 28px;
+  color: var(--art-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow: hidden;
+}
+
+.risk-board button.critical {
+  border-color: rgba(220, 38, 38, 0.24);
+  background: rgba(220, 38, 38, 0.07);
+}
+
+.risk-board button.warning {
+  border-color: rgba(217, 119, 6, 0.28);
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.risk-board button.info {
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
 .dirty-hint {
   display: inline-block;
   margin-top: 6px;
@@ -707,7 +882,8 @@ button,
 @media (max-width: 1120px) {
   .login-page,
   .admin-shell,
-  .content-grid {
+  .content-grid,
+  .operations-panel {
     grid-template-columns: 1fr;
   }
 
@@ -717,7 +893,8 @@ button,
   }
 
   .metric-grid,
-  .preset-grid {
+  .preset-grid,
+  .risk-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -738,6 +915,7 @@ button,
 
   .metric-grid,
   .preset-grid,
+  .risk-board,
   .filter-bar,
   .status-list {
     grid-template-columns: 1fr;
