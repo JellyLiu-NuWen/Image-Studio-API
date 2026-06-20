@@ -3507,8 +3507,8 @@ window.addEventListener('beforeunload', (event) => {
       </div>
       <template v-if="config && drawerMode === 'interface' && config.interfaces[drawerIndex]">
         <el-form :model="config.interfaces[drawerIndex]" label-position="top" class="art-drawer-form">
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Connection /><span>基础信息</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Connection /><span>基础信息</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="接口 ID"><el-input v-model="config.interfaces[drawerIndex].id" /></el-form-item>
               <el-form-item label="名称"><el-input v-model="config.interfaces[drawerIndex].name" /></el-form-item>
@@ -3516,8 +3516,8 @@ window.addEventListener('beforeunload', (event) => {
               <el-form-item label="最后使用"><el-input :model-value="formatTime(config.interfaces[drawerIndex].lastUsedAt)" readonly /></el-form-item>
             </div>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Key /><span>密钥与路由</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Key /><span>密钥与路由</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="Skill 调用 Key" class="art-drawer-form-wide">
                 <div class="art-secret-line">
@@ -3530,8 +3530,8 @@ window.addEventListener('beforeunload', (event) => {
               <el-form-item label="上游绑定" class="art-drawer-form-wide"><el-select v-model="config.interfaces[drawerIndex].upstreamIds" multiple><el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
             </div>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><MagicStick /><span>默认出图参数</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><MagicStick /><span>默认出图参数</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="默认模型"><el-input v-model="config.interfaces[drawerIndex].defaultImageModel" /></el-form-item>
               <el-form-item label="尺寸"><el-input v-model="config.interfaces[drawerIndex].defaultSize" /></el-form-item>
@@ -3540,8 +3540,8 @@ window.addEventListener('beforeunload', (event) => {
               <el-form-item label="质量预设" class="art-drawer-form-wide"><el-select v-model="config.interfaces[drawerIndex].qualityPresetId"><el-option v-for="item in activePresets" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
             </div>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Timer /><span>请求策略</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Timer /><span>请求策略</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="超时秒数"><el-input-number v-model="config.interfaces[drawerIndex].requestTimeoutSeconds" :min="10" :max="900" /></el-form-item>
               <el-form-item label="并发上限"><el-input-number v-model="config.interfaces[drawerIndex].maxConcurrentRequests" :min="1" :max="10" /></el-form-item>
@@ -3553,16 +3553,16 @@ window.addEventListener('beforeunload', (event) => {
 
       <template v-if="config && drawerMode === 'upstream' && config.upstreams[drawerIndex]">
         <el-form :model="config.upstreams[drawerIndex]" label-position="top" class="art-drawer-form">
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Link /><span>基础信息</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Link /><span>基础信息</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="上游 ID"><el-input v-model="config.upstreams[drawerIndex].id" /></el-form-item>
               <el-form-item label="名称"><el-input v-model="config.upstreams[drawerIndex].name" /></el-form-item>
               <el-form-item label="Base URL" class="art-drawer-form-wide"><el-input v-model="config.upstreams[drawerIndex].baseURL" /></el-form-item>
             </div>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Key /><span>认证密钥</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Key /><span>认证密钥</span></div>
             <el-form-item label="上游 API Key">
               <div class="art-secret-line">
                 <el-input v-model="config.upstreams[drawerIndex].apiKey" :placeholder="config.upstreams[drawerIndex].apiKeySet ? '已保存，留空保持不变' : '请输入 Key'" />
@@ -3572,8 +3572,8 @@ window.addEventListener('beforeunload', (event) => {
               <el-input v-if="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" :model-value="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" readonly />
             </el-form-item>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Operation /><span>调度策略</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Operation /><span>调度策略</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="优先级"><el-input-number v-model="config.upstreams[drawerIndex].priority" :min="1" :max="1000" /></el-form-item>
               <el-form-item label="权重"><el-input-number v-model="config.upstreams[drawerIndex].weight" :min="1" :max="100" /></el-form-item>
@@ -3586,8 +3586,8 @@ window.addEventListener('beforeunload', (event) => {
 
       <template v-if="config && drawerMode === 'model' && config.models[drawerIndex]">
         <el-form :model="config.models[drawerIndex]" label-position="top" class="art-drawer-form">
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Box /><span>模型信息</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Box /><span>模型信息</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="模型 ID"><el-input v-model="config.models[drawerIndex].id" /></el-form-item>
               <el-form-item label="名称"><el-input v-model="config.models[drawerIndex].name" /></el-form-item>
@@ -3595,8 +3595,8 @@ window.addEventListener('beforeunload', (event) => {
               <el-form-item label="默认输出格式"><el-select v-model="config.models[drawerIndex].defaultOutputFormat" allow-create filterable><el-option value="png" label="png" /><el-option value="jpeg" label="jpeg" /><el-option value="webp" label="webp" /></el-select></el-form-item>
             </div>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><MagicStick /><span>能力目录</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><MagicStick /><span>能力目录</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="能力"><el-select v-model="config.models[drawerIndex].capabilities" multiple allow-create filterable><el-option value="generate" label="generate" /><el-option value="edit" label="edit" /></el-select></el-form-item>
               <el-form-item label="尺寸"><el-select v-model="config.models[drawerIndex].sizes" multiple allow-create filterable><el-option value="1024x1024" label="1024x1024" /><el-option value="1536x1024" label="1536x1024" /><el-option value="1024x1536" label="1024x1536" /></el-select></el-form-item>
@@ -3604,8 +3604,8 @@ window.addEventListener('beforeunload', (event) => {
               <el-form-item label="绑定上游"><el-select v-model="config.models[drawerIndex].upstreamIds" multiple filterable><el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
             </div>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Document /><span>推荐用途</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Document /><span>推荐用途</span></div>
             <el-form-item label="推荐用途"><el-input v-model="config.models[drawerIndex].recommendedUse" type="textarea" :rows="3" /></el-form-item>
           </section>
         </el-form>
@@ -3613,8 +3613,8 @@ window.addEventListener('beforeunload', (event) => {
 
       <template v-if="config && drawerMode === 'quality' && config.qualityPresets[drawerIndex]">
         <el-form :model="config.qualityPresets[drawerIndex]" label-position="top" class="art-drawer-form">
-          <section class="drawer-section">
-            <div class="drawer-section-title"><MagicStick /><span>预设信息</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><MagicStick /><span>预设信息</span></div>
             <div class="art-drawer-form-grid">
               <el-form-item label="预设 ID"><el-input v-model="config.qualityPresets[drawerIndex].id" /></el-form-item>
               <el-form-item label="名称"><el-input v-model="config.qualityPresets[drawerIndex].name" /></el-form-item>
@@ -3625,8 +3625,8 @@ window.addEventListener('beforeunload', (event) => {
               <el-form-item label="用途" class="art-drawer-form-wide"><el-input v-model="config.qualityPresets[drawerIndex].useCase" /></el-form-item>
             </div>
           </section>
-          <section class="drawer-section">
-            <div class="drawer-section-title"><Document /><span>Prompt 模板</span></div>
+          <section class="art-drawer-section">
+            <div class="art-drawer-section-title"><Document /><span>Prompt 模板</span></div>
             <el-form-item label="Prompt 模板"><el-input v-model="config.qualityPresets[drawerIndex].template" type="textarea" :rows="6" /></el-form-item>
           </section>
         </el-form>

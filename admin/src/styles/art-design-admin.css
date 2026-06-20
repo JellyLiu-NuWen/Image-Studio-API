@@ -3304,7 +3304,7 @@ button,
   gap: 14px;
 }
 
-.drawer-section {
+.art-drawer-section {
   display: grid;
   gap: 12px;
   padding: 14px;
@@ -3313,7 +3313,7 @@ button,
   background: var(--art-card);
 }
 
-.drawer-section-title {
+.art-drawer-section-title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -3321,7 +3321,7 @@ button,
   font-weight: 900;
 }
 
-.drawer-section-title .el-icon {
+.art-drawer-section-title .el-icon {
   color: var(--art-primary);
 }
 
