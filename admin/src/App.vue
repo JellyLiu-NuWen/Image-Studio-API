@@ -149,6 +149,8 @@ const usageInterfaceRows = computed(() => usageRows(usage.value?.byInterface))
 const usageModelRows = computed(() => usageRows(usage.value?.byModel))
 const usageUpstreamRows = computed(() => usageRows(usage.value?.byUpstream))
 const usageDateRows = computed(() => usageRows(usage.value?.byDate).sort((left, right) => right.name.localeCompare(left.name)))
+const poorQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'poor'))
+const excellentQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'excellent'))
 const qualityCaseByRecordId = computed(() => {
   const map = new Map<string, QualityCase[]>()
   for (const item of qualityCases.value) {
@@ -196,6 +198,10 @@ function usageRows(group?: Record<string, UsageBucket>) {
 
 function qualityCaseTag(recordId: string, label: 'poor' | 'excellent') {
   return qualityCaseByRecordId.value.get(recordId)?.some((item) => item.label === label) || false
+}
+
+function qualityCaseLabel(label: 'poor' | 'excellent') {
+  return label === 'poor' ? '质量差' : '优秀'
 }
 
 function upstreamHealthFor(id?: string) {
@@ -635,6 +641,22 @@ function openLogDetail(record: LogRecord) {
   logDetailVisible.value = true
 }
 
+function openQualityCaseLog(item: QualityCase) {
+  const record = generationLogs.value.find((entry) => entry.id === item.recordId)
+  selectedLog.value = record || {
+    id: item.recordId,
+    createdAt: item.createdAt,
+    endpoint: item.endpoint,
+    status: item.status,
+    interfaceId: item.interfaceId,
+    upstreamId: item.upstreamId,
+    model: item.model,
+    durationMs: item.durationMs,
+    errorSummary: item.errorSummary,
+  }
+  logDetailVisible.value = true
+}
+
 function sanitizedCurl(record: LogRecord) {
   const endpoint = record.endpoint || record.path || '/v1/images/generations'
   const method = record.method || 'POST'
@@ -1007,6 +1029,28 @@ window.addEventListener('beforeunload', (event) => {
           <el-button type="primary" :icon="Plus" @click="addPreset">新增预设</el-button>
           <el-button :icon="Finished" @click="saveQualityPresets">保存质量预设</el-button>
         </div>
+        <div class="metric-grid">
+          <el-card shadow="never" class="metric-card">
+            <span>质量预设</span>
+            <strong>{{ activePresets.length }}</strong>
+            <small>可绑定到接口默认参数</small>
+          </el-card>
+          <el-card shadow="never" class="metric-card">
+            <span>质量差案例</span>
+            <strong>{{ poorQualityCases.length }}</strong>
+            <small>用于修正模板与参数</small>
+          </el-card>
+          <el-card shadow="never" class="metric-card">
+            <span>优秀案例</span>
+            <strong>{{ excellentQualityCases.length }}</strong>
+            <small>用于沉淀高质量提示词</small>
+          </el-card>
+          <el-card shadow="never" class="metric-card">
+            <span>增强开关</span>
+            <strong>{{ activePresets.filter((item) => item.promptEnhance).length }}</strong>
+            <small>默认关闭，按预设启用</small>
+          </el-card>
+        </div>
         <div class="preset-grid">
           <el-card v-for="(preset, index) in activePresets" :key="preset.id" shadow="never" class="preset-card">
             <template #header>
@@ -1027,6 +1071,36 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
+        <el-card shadow="never">
+          <template #header>
+            <div class="section-actions">
+              <div class="card-title"><Document />质量案例库</div>
+              <el-button size="small" :icon="Refresh" @click="refreshAll">刷新案例</el-button>
+            </div>
+          </template>
+          <el-table :data="qualityCases" height="360" empty-text="暂无质量案例">
+            <el-table-column prop="createdAt" label="时间" min-width="160">
+              <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
+            </el-table-column>
+            <el-table-column prop="label" label="标签" width="100">
+              <template #default="{ row }">
+                <el-tag :type="row.label === 'poor' ? 'danger' : 'success'">{{ qualityCaseLabel(row.label) }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="model" label="模型" min-width="130" />
+            <el-table-column prop="interfaceId" label="接口" min-width="110" />
+            <el-table-column prop="upstreamId" label="上游" min-width="110" />
+            <el-table-column prop="durationMs" label="耗时" width="100">
+              <template #default="{ row }">{{ formatDuration(row.durationMs) }}</template>
+            </el-table-column>
+            <el-table-column prop="errorSummary" label="错误摘要" min-width="220" show-overflow-tooltip />
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" :icon="View" @click="openQualityCaseLog(row)">日志</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
       </section>
 
       <section v-if="activeView === 'logs'" class="view-stack">
