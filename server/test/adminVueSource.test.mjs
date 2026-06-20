@@ -992,16 +992,43 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(source, /activeLogTab/, "Logs page should keep the active log tab state");
   assert.match(logSection, /log-workspace/, "Logs page should render a workspace wrapper");
   assert.match(logSection, /log-summary-grid/, "Logs page should render compact summary cards");
-  assert.match(logSection, /query-panel/, "Logs page should render a query panel");
+  assert.match(logSection, /art-query-panel/, "Logs page should render an Art query panel");
+  assert.match(logSection, /art-query-panel-heading/, "Logs query panel should render an Art query heading");
   assert.match(logSection, /art-search-form-grid/, "Query panel should use an ArtSearchBar form grid layout");
-  assert.match(logSection, /result-toolbar/, "Logs page should render a result toolbar above tables");
+  assert.match(logSection, /art-search-form-item/, "Query panel fields should use Art search form items");
+  assert.match(logSection, /art-result-toolbar/, "Logs page should render an Art result toolbar above tables");
+  for (const legacyClass of [
+    "query-panel",
+    "query-panel-heading",
+    "search-form-item",
+    "result-toolbar",
+  ]) {
+    assert.doesNotMatch(
+      logSection,
+      new RegExp(`(?<![A-Za-z0-9_-])${legacyClass}(?![A-Za-z0-9_-])`),
+      `Logs page should not keep generic ${legacyClass} classes`,
+    );
+  }
   assert.match(logSection, /v-model="activeLogTab"/, "Logs tabs should bind the active tab");
   assert.match(logSection, /:size="tableSize"/, "Logs tables should respect shared density size");
   assert.match(logSection, /刷新日志/, "Result toolbar should include a clear refresh action");
   assert.match(styleSource, /\.log-workspace/, "Styles should include log workspace layout");
   assert.match(styleSource, /\.log-summary-grid/, "Styles should include log summary layout");
-  assert.match(styleSource, /\.query-panel/, "Styles should include query panel layout");
-  assert.match(styleSource, /\.result-toolbar/, "Styles should include result toolbar layout");
+  assert.match(styleSource, /\.art-query-panel/, "Styles should include Art query panel layout");
+  assert.match(styleSource, /\.art-result-toolbar/, "Styles should include Art result toolbar layout");
+  assert.match(styleSource, /\.art-search-form-item/, "Styles should include Art search form item layout");
+  for (const legacyClass of [
+    "query-panel",
+    "query-panel-heading",
+    "search-form-item",
+    "result-toolbar",
+  ]) {
+    assert.doesNotMatch(
+      styleSource,
+      new RegExp(`\\.${legacyClass}(?![A-Za-z0-9_-])`),
+      `Styles should remove the generic ${legacyClass} selector`,
+    );
+  }
   assert.doesNotMatch(styleSource, /\.filter-bar\b/, "Styles should remove the legacy filter-bar selector");
   assert.doesNotMatch(styleSource, /\.query-actions\b/, "Styles should remove the legacy query-actions selector");
   assert.doesNotMatch(styleSource, /\.log-actions\b/, "Styles should remove the legacy log-actions selector");
@@ -1146,7 +1173,8 @@ test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
   assert.match(usageSection, /usage-analytics-grid/, "Usage page should render an analytics grid");
   assert.match(usageSection, /usage-trend-workspace/, "Usage page should render a dedicated trend workspace");
   assert.match(usageSection, /usage-breakdown-workspace/, "Usage page should render a breakdown table workspace");
-  assert.match(usageSection, /result-toolbar/, "Usage page should render a result toolbar above tables");
+  assert.match(usageSection, /art-result-toolbar/, "Usage page should render an Art result toolbar above tables");
+  assert.doesNotMatch(usageSection, /(?<![A-Za-z0-9_-])result-toolbar(?![A-Za-z0-9_-])/, "Usage page should not keep the generic result-toolbar class");
   assert.match(usageSection, /:size="tableSize"/, "Usage tables should respect shared density size");
   assert.match(styleSource, /\.usage-workspace/, "Styles should include usage workspace layout");
   assert.match(styleSource, /\.usage-summary-grid/, "Styles should include usage summary layout");

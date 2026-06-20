@@ -2651,8 +2651,8 @@ window.addEventListener('beforeunload', (event) => {
               <small>{{ item.hint }}</small>
             </button>
           </div>
-          <div class="query-panel art-search-bar art-card-xs art-log-panel log-query-panel" :class="{ 'is-expanded': logSearchExpanded }">
-            <div class="query-panel-heading log-panel-header">
+          <div class="art-query-panel art-search-bar art-card-xs art-log-panel log-query-panel" :class="{ 'is-expanded': logSearchExpanded }">
+            <div class="art-query-panel-heading log-panel-header">
               <div class="log-panel-title">
                 <h4><Document />日志查询</h4>
                 <p>按接口、上游、模型、状态、耗时和请求 ID 组合筛选。</p>
@@ -2665,7 +2665,7 @@ window.addEventListener('beforeunload', (event) => {
               <div
                 v-for="field in visibleLogSearchFields"
                 :key="field.key"
-                class="search-form-item"
+                class="art-search-form-item"
                 :class="{ 'is-wide': field.span === 'wide' }"
               >
                 <label>{{ field.label }}</label>
@@ -2708,7 +2708,7 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </div>
           <div class="art-log-panel log-result-panel">
-            <div class="result-toolbar log-panel-header">
+            <div class="art-result-toolbar log-panel-header">
               <div class="log-panel-title">
                 <h4><DataAnalysis />日志结果</h4>
                 <p>查看调用明细、质量标记、导出文件和脱敏重放命令。</p>
@@ -2865,7 +2865,7 @@ window.addEventListener('beforeunload', (event) => {
         </div>
         <el-card shadow="never" class="usage-breakdown-workspace art-usage-panel usage-breakdown-panel">
           <template #header>
-            <div class="result-toolbar usage-panel-header">
+            <div class="art-result-toolbar usage-panel-header">
               <div class="usage-panel-title">
                 <h4><DataAnalysis />用量明细</h4>
                 <p>按日期、接口、模型和上游拆分调用量、成功率、耗时与估算成本。</p>
