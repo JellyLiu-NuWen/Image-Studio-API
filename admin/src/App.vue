@@ -178,6 +178,43 @@ const securityForm = computed(() => config.value?.security || {
   totpConfigured: false,
   failedLoginLockoutEnabled: true
 })
+const loginHistoryRows = computed(() => auditLogs.value.filter((item) => item.action.startsWith('auth.')).slice(0, 8))
+const securityScore = computed(() => {
+  let score = 25
+  if (securityForm.value.totpEnabled) score += 25
+  else if (securityForm.value.totpConfigured) score += 12
+  if (securityForm.value.failedLoginLockoutEnabled) score += 20
+  if (securityForm.value.ipAllowlist.length) score += 18
+  if (sessions.value.some((item) => item.current)) score += 7
+  const criticalPenalty = Math.min(15, alertSummary.value.critical * 5)
+  return Math.max(0, Math.min(100, score - criticalPenalty))
+})
+const securitySummaryCards = computed(() => [
+  {
+    label: '二次验证',
+    value: securityForm.value.totpEnabled ? '已启用' : securityForm.value.totpConfigured ? '待验证' : '未启用',
+    hint: securityForm.value.totpEnabled ? '登录需要动态验证码' : '建议为后台账号启用 TOTP',
+    type: securityForm.value.totpEnabled ? 'success' : 'warning'
+  },
+  {
+    label: 'IP 白名单',
+    value: securityForm.value.ipAllowlist.length,
+    hint: securityForm.value.ipAllowlist.length ? '限制后台来源地址' : '当前允许任意来源登录',
+    type: securityForm.value.ipAllowlist.length ? 'success' : 'info'
+  },
+  {
+    label: '活跃会话',
+    value: sessions.value.length,
+    hint: sessions.value.some((item) => item.current) ? '当前会话已识别' : '等待会话同步',
+    type: sessions.value.length > 1 ? 'warning' : 'info'
+  },
+  {
+    label: '认证审计',
+    value: loginHistoryRows.value.length,
+    hint: securityForm.value.failedLoginLockoutEnabled ? '失败登录锁定已开启' : '失败登录锁定未开启',
+    type: securityForm.value.failedLoginLockoutEnabled ? 'success' : 'warning'
+  }
+])
 const filteredGenerationLogs = computed(() => filterLogs(generationLogs.value))
 const filteredApiLogs = computed(() => filterLogs(apiLogs.value))
 const logSummaryCards = computed(() => {
@@ -1618,12 +1655,35 @@ window.addEventListener('beforeunload', (event) => {
         </el-card>
       </section>
 
-      <section v-if="activeView === 'security'" class="view-stack">
-        <div class="content-grid">
+      <section v-if="activeView === 'security'" class="view-stack security-workspace">
+        <div class="security-overview">
+          <el-card shadow="never" class="security-score-card">
+            <div class="score-shell">
+              <div>
+                <span>安全评分</span>
+                <strong>{{ securityScore }}</strong>
+                <small>{{ securityScore >= 85 ? '策略完整' : securityScore >= 65 ? '仍有加固空间' : '需要优先处理' }}</small>
+              </div>
+              <el-progress type="dashboard" :percentage="securityScore" :width="116" :stroke-width="10" />
+            </div>
+            <div class="score-hints">
+              <el-tag :type="securityForm.totpEnabled ? 'success' : 'warning'">TOTP {{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
+              <el-tag :type="securityForm.failedLoginLockoutEnabled ? 'success' : 'danger'">失败锁定 {{ securityForm.failedLoginLockoutEnabled ? '开启' : '关闭' }}</el-tag>
+              <el-tag :type="securityForm.ipAllowlist.length ? 'success' : 'info'">白名单 {{ securityForm.ipAllowlist.length }} 条</el-tag>
+            </div>
+          </el-card>
+          <div class="security-summary-grid">
+            <button v-for="item in securitySummaryCards" :key="item.label" :class="item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'info'" type="button">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+              <small>{{ item.hint }}</small>
+            </button>
+          </div>
+        </div>
+        <div class="security-policy-grid">
           <el-card shadow="never">
             <template #header><div class="card-title"><Lock />账号与安全</div></template>
             <el-form v-if="config" label-width="140px" class="narrow-form">
-              <el-alert title="启用 IP 白名单后，后台登录会按 x-forwarded-for / x-real-ip 校验来源；失败登录锁定会在同一 IP 与账号连续失败后临时拒绝登录。" type="info" show-icon :closable="false" />
               <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP，例如 203.0.113.10" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
               <el-form-item label="失败登录锁定"><el-switch v-model="config.security.failedLoginLockoutEnabled" /></el-form-item>
               <el-form-item><el-button type="primary" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
@@ -1664,7 +1724,7 @@ window.addEventListener('beforeunload', (event) => {
             </el-form>
           </el-card>
         </div>
-        <div class="content-grid">
+        <div class="session-workspace">
           <el-card shadow="never">
             <template #header>
               <div class="section-actions">
@@ -1672,7 +1732,7 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button size="small" type="warning" plain @click="revokeOtherSessions">退出其他会话</el-button>
               </div>
             </template>
-            <el-table :data="sessions">
+            <el-table :data="sessions" :size="tableSize">
               <el-table-column prop="username" label="账号" />
               <el-table-column prop="createdAt" label="登录时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="current" label="当前" width="90"><template #default="{ row }"><el-tag v-if="row.current" type="success">当前</el-tag></template></el-table-column>
@@ -1681,16 +1741,16 @@ window.addEventListener('beforeunload', (event) => {
           </el-card>
           <el-card shadow="never">
             <template #header><div class="card-title"><Document />登录历史</div></template>
-            <el-table :data="auditLogs.filter((item) => item.action.startsWith('auth.')).slice(0, 8)" height="280">
+            <el-table :data="loginHistoryRows" :size="tableSize" height="280">
               <el-table-column prop="createdAt" label="时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
               <el-table-column prop="username" label="账号" />
               <el-table-column prop="action" label="动作" />
             </el-table>
           </el-card>
         </div>
-        <el-card shadow="never">
+        <el-card shadow="never" class="audit-workspace">
           <template #header><div class="card-title"><Document />审计日志</div></template>
-          <el-table :data="auditLogs" height="360">
+          <el-table :data="auditLogs" :size="tableSize" height="360">
             <el-table-column prop="createdAt" label="时间" min-width="160"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
             <el-table-column prop="username" label="操作者" width="120" />
             <el-table-column prop="action" label="动作" min-width="160" />

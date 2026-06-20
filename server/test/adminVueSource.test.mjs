@@ -192,3 +192,30 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(styleSource, /\.query-panel/, "Styles should include query panel layout");
   assert.match(styleSource, /\.result-toolbar/, "Styles should include result toolbar layout");
 });
+
+test("Vue security page uses an Art Design Pro security workspace", async () => {
+  const source = await readAppSource();
+  const securitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'security'\"",
+    "<section v-if=\"activeView === 'system'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /securityScore/, "Security page should compute an overall security score");
+  assert.match(source, /securitySummaryCards/, "Security page should compute security summary cards");
+  assert.match(source, /loginHistoryRows/, "Security page should compute recent login history rows");
+  assert.match(securitySection, /security-workspace/, "Security page should render a workspace wrapper");
+  assert.match(securitySection, /security-overview/, "Security page should render a security overview area");
+  assert.match(securitySection, /security-score-card/, "Security page should render a score card");
+  assert.match(securitySection, /security-summary-grid/, "Security page should render summary cards");
+  assert.match(securitySection, /security-policy-grid/, "Security page should render policy controls in a grid");
+  assert.match(securitySection, /session-workspace/, "Security page should render session workspace");
+  assert.match(securitySection, /audit-workspace/, "Security page should render audit workspace");
+  assert.match(securitySection, /:size="tableSize"/, "Security tables should respect shared density size");
+  assert.match(styleSource, /\.security-workspace/, "Styles should include security workspace layout");
+  assert.match(styleSource, /\.security-overview/, "Styles should include security overview layout");
+  assert.match(styleSource, /\.security-summary-grid/, "Styles should include security summary grid layout");
+  assert.match(styleSource, /\.security-policy-grid/, "Styles should include security policy grid layout");
+  assert.match(styleSource, /\.session-workspace/, "Styles should include session workspace styling");
+});
