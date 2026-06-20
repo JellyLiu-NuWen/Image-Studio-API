@@ -72,6 +72,7 @@ type MenuStyleMode = 'design' | 'dark' | 'light'
 type TableDensity = 'default' | 'comfortable' | 'compact'
 type SettingOptionGroup = 'theme' | 'layout' | 'menuStyle' | 'density'
 type WorkTabActionKey = 'refresh' | 'fixed' | 'left' | 'right' | 'other' | 'all'
+type TableHeaderToolKey = 'search' | 'refresh' | 'density' | 'columns'
 
 const navGroups: Array<{ title: string; items: Array<{ key: ViewKey; label: string; icon: unknown }> }> = [
   { title: '监控', items: [
@@ -239,6 +240,12 @@ const tableSize = computed(() => {
   if (tableDensity.value === 'default') return 'large'
   return 'default'
 })
+const tableHeaderTools = computed(() => [
+  { key: 'search', icon: Search, active: true },
+  { key: 'refresh', icon: Refresh, active: false },
+  { key: 'density', icon: Operation, active: tableDensity.value === 'compact' },
+  { key: 'columns', icon: More, active: false }
+] as Array<{ key: TableHeaderToolKey; icon: unknown; active: boolean }>)
 const emptyStateCopy = {
   interfaces: {
     title: '还没有可用接口',
@@ -1046,6 +1053,31 @@ function filterLogs(records: LogRecord[]) {
     const matchesKeyword = !keyword || JSON.stringify(record).toLowerCase().includes(keyword)
     return matchesKeyword
   })
+}
+
+function tableHeaderToolLabel(key: TableHeaderToolKey) {
+  const labels: Record<TableHeaderToolKey, string> = {
+    search: '搜索',
+    refresh: '刷新',
+    density: '密度',
+    columns: '列设置'
+  }
+  return labels[key]
+}
+
+function handleTableHeaderTool(key: TableHeaderToolKey) {
+  if (key === 'refresh') {
+    refreshAll()
+    return
+  }
+  if (key === 'density') {
+    tableDensity.value = tableDensity.value === 'compact' ? 'comfortable' : 'compact'
+    persistSettings()
+    return
+  }
+  if (key === 'columns') {
+    ElMessage.info('列设置会在后续模板化步骤中接入。')
+  }
 }
 
 function toggleLogSearchExpanded() {
@@ -1900,16 +1932,22 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'interfaces'" class="view-stack">
-        <el-card shadow="never" class="table-workspace">
-          <div class="table-toolbar">
-            <div>
+        <el-card shadow="never" class="table-workspace art-table-card">
+          <div class="table-toolbar art-table-header">
+            <div class="table-header-main">
               <div class="card-title"><Connection />接口管理</div>
               <div class="toolbar-meta">共 {{ activeInterfaces.length }} 个接口，当前显示 {{ filteredInterfaces.length }} 个</div>
+              <el-input v-model="tableSearch.interfaces" clearable placeholder="搜索接口、模型、上游" />
             </div>
             <div class="toolbar-actions">
-              <el-input v-model="tableSearch.interfaces" clearable placeholder="搜索接口、模型、上游" />
+              <div class="table-header-tools">
+                <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
+                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                    <component :is="tool.icon" />
+                  </button>
+                </el-tooltip>
+              </div>
               <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
-              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
               <el-button type="primary" :icon="Plus" @click="addInterface">新增接口</el-button>
               <el-button :icon="Finished" @click="saveConfig()">保存接口配置</el-button>
             </div>
@@ -1969,16 +2007,22 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'upstreams'" class="view-stack">
-        <el-card shadow="never" class="table-workspace">
-          <div class="table-toolbar">
-            <div>
+        <el-card shadow="never" class="table-workspace art-table-card">
+          <div class="table-toolbar art-table-header">
+            <div class="table-header-main">
               <div class="card-title"><Link />上游管理</div>
               <div class="toolbar-meta">共 {{ activeUpstreams.length }} 个上游，当前显示 {{ filteredUpstreams.length }} 个</div>
+              <el-input v-model="tableSearch.upstreams" clearable placeholder="搜索上游、URL、失败原因" />
             </div>
             <div class="toolbar-actions">
-              <el-input v-model="tableSearch.upstreams" clearable placeholder="搜索上游、URL、失败原因" />
+              <div class="table-header-tools">
+                <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
+                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                    <component :is="tool.icon" />
+                  </button>
+                </el-tooltip>
+              </div>
               <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
-              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
               <el-button type="primary" :icon="Plus" @click="addUpstream">新增上游</el-button>
               <el-button :icon="Finished" @click="saveConfig()">保存上游配置</el-button>
             </div>
@@ -2039,16 +2083,22 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'models'" class="view-stack">
-        <el-card shadow="never" class="table-workspace">
-          <div class="table-toolbar">
-            <div>
+        <el-card shadow="never" class="table-workspace art-table-card">
+          <div class="table-toolbar art-table-header">
+            <div class="table-header-main">
               <div class="card-title"><Box />模型目录</div>
               <div class="toolbar-meta">共 {{ activeModels.length }} 个模型，当前显示 {{ filteredModels.length }} 个</div>
+              <el-input v-model="tableSearch.models" clearable placeholder="搜索模型、能力、用途" />
             </div>
             <div class="toolbar-actions">
-              <el-input v-model="tableSearch.models" clearable placeholder="搜索模型、能力、用途" />
+              <div class="table-header-tools">
+                <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
+                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                    <component :is="tool.icon" />
+                  </button>
+                </el-tooltip>
+              </div>
               <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
-              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
               <el-button type="primary" :icon="Plus" @click="addModel">新增模型</el-button>
               <el-button :icon="Finished" @click="saveModels">保存模型目录</el-button>
             </div>
@@ -2122,16 +2172,22 @@ window.addEventListener('beforeunload', (event) => {
             <small>默认关闭，按预设启用</small>
           </el-card>
         </div>
-        <el-card shadow="never" class="table-workspace">
-          <div class="table-toolbar">
-            <div>
+        <el-card shadow="never" class="table-workspace art-table-card">
+          <div class="table-toolbar art-table-header">
+            <div class="table-header-main">
               <div class="card-title"><MagicStick />生图质量预设</div>
               <div class="toolbar-meta">共 {{ activePresets.length }} 个预设，当前显示 {{ filteredPresets.length }} 个</div>
+              <el-input v-model="tableSearch.quality" clearable placeholder="搜索预设、用途、模板" />
             </div>
             <div class="toolbar-actions">
-              <el-input v-model="tableSearch.quality" clearable placeholder="搜索预设、用途、模板" />
+              <div class="table-header-tools">
+                <el-tooltip v-for="tool in tableHeaderTools" :key="tool.key" :content="tableHeaderToolLabel(tool.key)" placement="top">
+                  <button type="button" class="table-tool-button" :class="{ active: tool.active }" @click="handleTableHeaderTool(tool.key)">
+                    <component :is="tool.icon" />
+                  </button>
+                </el-tooltip>
+              </div>
               <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
-              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
               <el-button type="primary" :icon="Plus" @click="addPreset">新增预设</el-button>
               <el-button :icon="Finished" @click="saveQualityPresets">保存质量预设</el-button>
             </div>

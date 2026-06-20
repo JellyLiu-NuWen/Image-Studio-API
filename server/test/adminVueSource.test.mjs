@@ -390,6 +390,47 @@ test("Vue management tables use an Art Design Pro style table workspace", async 
   assert.match(styleSource, /\.toolbar-meta/, "Styles should include compact table meta styling");
 });
 
+test("Vue management tables use the ArtTableHeader card pattern", async () => {
+  const source = await readAppSource();
+  const interfaceSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'upstreams'\"",
+  );
+  const upstreamSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'upstreams'\"",
+    "<section v-if=\"activeView === 'models'\"",
+  );
+  const modelSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'models'\"",
+    "<section v-if=\"activeView === 'quality'\"",
+  );
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /tableHeaderTools/, "Management table headers should expose template-style tool metadata");
+  assert.match(source, /tableHeaderToolLabel/, "Management table headers should resolve tool labels");
+  assert.match(source, /handleTableHeaderTool/, "Management table headers should route tool actions");
+  for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
+    assert.match(section, /art-table-card/, "Management card should use the Art table card shell");
+    assert.match(section, /art-table-header/, "Management card should render an ArtTableHeader-style header");
+    assert.match(section, /table-header-main/, "Art table header should include the title/search side");
+    assert.match(section, /table-header-tools/, "Art table header should include the tool cluster");
+    assert.match(section, /table-tool-button/, "Art table header should render compact tool buttons");
+    assert.match(section, /tableHeaderTools/, "Art table header should render the shared tool list");
+  }
+  assert.match(styleSource, /\.art-table-card/, "Styles should include Art table card shell");
+  assert.match(styleSource, /\.art-table-header/, "Styles should include ArtTableHeader layout");
+  assert.match(styleSource, /\.table-header-tools/, "Styles should include table header tool cluster");
+  assert.match(styleSource, /\.table-tool-button/, "Styles should include compact table tool buttons");
+});
+
 test("Vue tables expose Art Design Pro empty states", async () => {
   const source = await readAppSource();
   const managementSection = sourceBetween(
