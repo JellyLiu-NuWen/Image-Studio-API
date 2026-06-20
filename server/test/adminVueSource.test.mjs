@@ -688,6 +688,29 @@ test("Vue quality metrics use ArtStatsCard style cards", async () => {
   assert.match(styleSource, /\.quality-stat-icon/, "Styles should include quality stat icon blocks");
 });
 
+test("Vue quality preset cards use an Art Design Pro card template", async () => {
+  const source = await readAppSource();
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(qualitySection, /art-preset-grid/, "Preset cards should render inside an Art card grid");
+  assert.match(qualitySection, /art-preset-card/, "Preset cards should use a dedicated Art card shell");
+  assert.match(qualitySection, /preset-card-header/, "Preset cards should expose a structured header");
+  assert.match(qualitySection, /preset-card-title/, "Preset cards should expose a title block");
+  assert.match(qualitySection, /preset-card-meta/, "Preset cards should expose compact metadata");
+  assert.match(qualitySection, /preset-card-body/, "Preset cards should expose a body section");
+  assert.match(qualitySection, /preset-card-footer/, "Preset cards should expose footer actions");
+  assert.doesNotMatch(qualitySection, /class="preset-card"/, "Preset cards should no longer use the legacy card class");
+  assert.match(styleSource, /\.art-preset-grid/, "Styles should include the Art preset grid");
+  assert.match(styleSource, /\.art-preset-card/, "Styles should include preset card shell styling");
+  assert.match(styleSource, /\.preset-card-header/, "Styles should include preset card header styling");
+  assert.match(styleSource, /\.preset-card-footer/, "Styles should include preset card footer styling");
+});
+
 test("Vue tables expose Art Design Pro empty states", async () => {
   const source = await readAppSource();
   const managementSection = sourceBetween(

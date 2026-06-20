@@ -2489,21 +2489,26 @@ window.addEventListener('beforeunload', (event) => {
               <el-button :icon="Finished" @click="saveQualityPresets">保存质量预设</el-button>
             </div>
           </div>
-          <div class="preset-grid">
-            <el-card v-for="preset in paginatedPresets" :key="preset.id" shadow="never" class="preset-card">
-              <template #header>
-                <div class="card-title">
-                  <MagicStick />
-                  <span>{{ preset.name }}</span>
+          <div class="art-preset-grid">
+            <el-card v-for="preset in paginatedPresets" :key="preset.id" shadow="never" class="art-preset-card">
+              <div class="preset-card-header">
+                <div class="preset-card-icon"><MagicStick /></div>
+                <div class="preset-card-title">
+                  <h4>{{ preset.name }}</h4>
+                  <span>{{ preset.id }}</span>
                 </div>
-              </template>
-              <p>{{ preset.useCase }}</p>
-              <div class="tag-row">
-                <el-tag>{{ preset.quality }}</el-tag>
-                <el-tag type="info">{{ preset.size }}</el-tag>
-                <el-tag :type="preset.promptEnhance ? 'success' : 'info'">{{ preset.promptEnhance ? '增强开启' : '增强关闭' }}</el-tag>
+                <el-tag :type="preset.promptEnhance ? 'success' : 'info'">{{ preset.promptEnhance ? '增强' : '模板' }}</el-tag>
               </div>
-              <div class="card-actions">
+              <div class="preset-card-body">
+                <p>{{ preset.useCase }}</p>
+                <div class="preset-card-meta">
+                  <span><strong>{{ preset.quality }}</strong>质量</span>
+                  <span><strong>{{ preset.size }}</strong>尺寸</span>
+                  <span><strong>{{ preset.outputFormat }}</strong>格式</span>
+                </div>
+              </div>
+              <div class="preset-card-footer">
+                <span>{{ preset.promptEnhance ? 'Prompt 自动增强已启用' : '保留用户核心意图' }}</span>
                 <div class="art-table-actions">
                   <el-tooltip content="编辑预设" placement="top">
                     <button type="button" class="art-table-action-button action-edit" aria-label="编辑质量预设" @click="openDrawer('quality', rowIndex(activePresets, preset))">
