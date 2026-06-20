@@ -3206,8 +3206,8 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="system-panel-body">
-              <div class="system-actions">
-                <input ref="backupFileInput" class="hidden-file" type="file" accept="application/json,.json" @change="restoreFromFile" />
+              <div class="art-system-backup-status">
+                <input ref="backupFileInput" class="art-system-file-input" type="file" accept="application/json,.json" @change="restoreFromFile" />
                 <span>{{ backupStatus || '自动保留最近配置快照，恢复前请确认版本。' }}</span>
               </div>
               <el-table :data="backups" :size="tableSize" height="320" empty-text="暂无备份">
@@ -3276,7 +3276,7 @@ window.addEventListener('beforeunload', (event) => {
                 <div><span>状态</span><strong>{{ updateInfo.status || 'unknown' }}</strong></div>
                 <div><span>来源</span><strong>{{ updateInfo.source || 'release' }}</strong></div>
               </div>
-              <div class="update-actions system-panel-actions">
+              <div class="art-system-update-actions system-panel-actions">
                 <el-button type="primary" class="system-panel-action" :icon="Download" @click="createBackup">更新前备份</el-button>
                 <el-button class="system-panel-action" :disabled="!updateInfo.changelogURL && !updateInfo.releaseURL" @click="openUpdateLink">查看 Changelog</el-button>
                 <el-button class="system-panel-action" :disabled="!updateInfo.rollbackCommand" @click="copyRollbackCommand">复制回滚命令</el-button>

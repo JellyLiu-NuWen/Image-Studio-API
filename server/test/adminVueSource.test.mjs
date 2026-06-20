@@ -1108,12 +1108,24 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.match(systemSection, /system-panel-actions/g, "System panels should group compact actions");
   assert.match(systemSection, /system-panel-action/, "System panel buttons should use compact action styling");
   assert.match(systemSection, /art-system-status-list/, "System update status should use a dedicated Art status list");
+  assert.match(systemSection, /art-system-backup-status/, "System backup status should use a dedicated Art status row");
+  assert.match(systemSection, /art-system-file-input/, "System restore input should use a dedicated Art hidden file control");
+  assert.match(systemSection, /art-system-update-actions/, "System update actions should use a dedicated Art action row");
   assert.doesNotMatch(systemSection, /class="status-list"/, "System panels should not keep the legacy status-list class");
+  assert.doesNotMatch(systemSection, /class="system-actions"/, "System panels should not keep the generic system-actions class");
+  assert.doesNotMatch(systemSection, /class="hidden-file"/, "System panels should not keep the generic hidden-file class");
+  assert.doesNotMatch(systemSection, /class="update-actions system-panel-actions"/, "System panels should not keep the generic update-actions class");
   assert.match(styleSource, /\.art-system-panel/, "Styles should include system panel shell");
   assert.match(styleSource, /\.system-panel-header/, "Styles should include system panel header");
   assert.match(styleSource, /\.system-panel-body/, "Styles should include system panel body layout");
   assert.match(styleSource, /\.system-panel-action/, "Styles should include system panel actions");
   assert.match(styleSource, /\.art-system-status-list/, "Styles should include system status list styling");
+  assert.match(styleSource, /\.art-system-backup-status/, "Styles should include system backup status row");
+  assert.match(styleSource, /\.art-system-file-input/, "Styles should include system hidden file input");
+  assert.match(styleSource, /\.art-system-update-actions/, "Styles should include system update actions row");
+  assert.doesNotMatch(styleSource, /\.system-actions\b/, "Styles should remove the legacy system-actions selector");
+  assert.doesNotMatch(styleSource, /\.hidden-file\b/, "Styles should remove the legacy hidden-file selector");
+  assert.doesNotMatch(styleSource, /\.update-actions\b/, "Styles should remove the legacy update-actions selector");
 });
 
 test("Vue alerts page uses an Art Design Pro alert center workspace", async () => {

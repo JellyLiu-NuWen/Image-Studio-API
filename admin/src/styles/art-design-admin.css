@@ -1314,7 +1314,6 @@ button,
 .topbar-actions,
 .section-actions,
 .card-actions,
-.system-actions,
 .tag-row,
 .secret-line {
   display: flex;
@@ -3012,10 +3011,6 @@ button,
   font-size: 13px;
 }
 
-.system-actions {
-  margin-bottom: 14px;
-}
-
 .system-workspace {
   gap: 14px;
 }
@@ -3172,15 +3167,20 @@ button,
   margin-bottom: 14px;
 }
 
-.system-actions span {
+.art-system-backup-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.art-system-backup-status span {
   color: var(--art-muted);
   font-size: 13px;
 }
 
-.update-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.art-system-update-actions {
   margin-top: 16px;
 }
 
@@ -3965,7 +3965,7 @@ button,
   white-space: nowrap;
 }
 
-.hidden-file {
+.art-system-file-input {
   display: none;
 }
 
