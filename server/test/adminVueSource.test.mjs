@@ -1033,10 +1033,14 @@ test("Vue security policy and session cards use Art Design Pro panels", async ()
   assert.match(securitySection, /security-panel-title/g, "Security panels should expose title and helper copy");
   assert.match(securitySection, /security-panel-body/g, "Security panels should wrap body content consistently");
   assert.match(securitySection, /security-panel-action/, "Security panels should use compact action affordances");
+  assert.match(securitySection, /art-security-form/g, "Security policy forms should use a dedicated Art form layout");
+  assert.doesNotMatch(securitySection, /class="narrow-form"/, "Security panels should not keep the generic narrow-form class");
   assert.match(styleSource, /\.art-security-panel/, "Styles should include security panel shell");
   assert.match(styleSource, /\.security-panel-header/, "Styles should include security panel header");
   assert.match(styleSource, /\.security-panel-body/, "Styles should include security panel body layout");
   assert.match(styleSource, /\.security-panel-action/, "Styles should include security panel actions");
+  assert.match(styleSource, /\.art-security-form/, "Styles should include security form layout");
+  assert.doesNotMatch(styleSource, /\.narrow-form\b/, "Styles should remove the legacy narrow-form selector");
 });
 
 test("Vue audit log uses an Art Design Pro security panel", async () => {

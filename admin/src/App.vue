@@ -3049,7 +3049,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="security-panel-body">
-              <el-form v-if="config" label-width="140px" class="narrow-form">
+              <el-form v-if="config" label-width="140px" class="art-security-form">
                 <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP，例如 203.0.113.10" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
                 <el-form-item label="失败登录锁定"><el-switch v-model="config.security.failedLoginLockoutEnabled" /></el-form-item>
                 <el-form-item><el-button type="primary" class="security-panel-action" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
@@ -3073,7 +3073,7 @@ window.addEventListener('beforeunload', (event) => {
                 <el-tag v-if="securityForm.totpConfigured && !securityForm.totpEnabled" type="warning">待验证</el-tag>
               </div>
               <el-alert v-if="!securityForm.totpEnabled" title="生成密钥后，用认证器添加 otpauth URI 或手动输入密钥，再提交 6 位验证码完成启用。" type="info" show-icon :closable="false" />
-              <el-form label-width="120px" class="narrow-form">
+              <el-form label-width="120px" class="art-security-form">
                 <template v-if="totpSetup">
                   <el-form-item label="手动密钥"><el-input :model-value="totpSetup.secret" readonly /></el-form-item>
                   <el-form-item label="otpauth URI"><el-input :model-value="totpSetup.otpauthURL" type="textarea" :rows="3" readonly /></el-form-item>
@@ -3099,7 +3099,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="security-panel-body">
-              <el-form :model="accountForm" label-width="120px" class="narrow-form">
+              <el-form :model="accountForm" label-width="120px" class="art-security-form">
                 <el-form-item label="账号"><el-input v-model="accountForm.username" /></el-form-item>
                 <el-form-item label="当前密码"><el-input v-model="accountForm.currentPassword" type="password" show-password /></el-form-item>
                 <el-form-item label="新密码"><el-input v-model="accountForm.newPassword" type="password" show-password /></el-form-item>
