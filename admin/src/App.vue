@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import {
   Aim,
   Avatar,
@@ -100,6 +100,9 @@ const pageTabs = ref<ViewKey[]>(['dashboard'])
 const themeMode = ref<ThemeMode>('light')
 const layoutMode = ref<LayoutMode>('left')
 const menuStyleMode = ref<MenuStyleMode>('design')
+const globalSearchVisible = ref(false)
+const highlightedSearchIndex = ref(0)
+const globalSearchInputRef = ref<HTMLInputElement | null>(null)
 const loginForm = reactive({ username: 'admin', password: '', totpCode: '' })
 const accountForm = reactive({ username: '', currentPassword: '', newPassword: '' })
 const totpSetup = ref<{ secret: string; otpauthURL: string } | null>(null)
@@ -702,7 +705,54 @@ function navigateTo(key: ViewKey) {
 
 function selectHeaderSearch(key: ViewKey) {
   navigateTo(key)
+  closeGlobalSearch()
+}
+
+function openGlobalSearch() {
+  globalSearchVisible.value = true
+  nextTick(() => {
+    globalSearchInputRef.value?.focus?.()
+  })
+}
+
+function closeGlobalSearch() {
+  globalSearchVisible.value = false
   headerSearchKeyword.value = ''
+  highlightedSearchIndex.value = 0
+}
+
+function moveSearchHighlight(step: number) {
+  const count = headerSearchResults.value.length
+  if (!count) return
+  highlightedSearchIndex.value = (highlightedSearchIndex.value + step + count) % count
+}
+
+function selectHighlightedSearch() {
+  const item = headerSearchResults.value[highlightedSearchIndex.value]
+  if (item) selectHeaderSearch(item.key)
+}
+
+function handleGlobalSearchKeydown(event: KeyboardEvent) {
+  const isCommandKey = event.ctrlKey || event.metaKey
+  if (isCommandKey && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    openGlobalSearch()
+    return
+  }
+  if (!globalSearchVisible.value) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    closeGlobalSearch()
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    moveSearchHighlight(1)
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    moveSearchHighlight(-1)
+  } else if (event.key === 'Enter') {
+    event.preventDefault()
+    selectHighlightedSearch()
+  }
 }
 
 function openNotifications() {
@@ -1343,7 +1393,12 @@ function copySnippet(item: StudioInterface) {
 
 onMounted(() => {
   loadThemeMode()
+  document.addEventListener('keydown', handleGlobalSearchKeydown)
   bootstrap()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalSearchKeydown)
 })
 
 window.addEventListener('beforeunload', (event) => {
@@ -1445,26 +1500,11 @@ window.addEventListener('beforeunload', (event) => {
           <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
         </div>
         <div class="topbar-actions header-tools">
-          <el-popover placement="bottom-end" width="320" trigger="click" popper-class="global-search-popper">
-            <template #reference>
-              <div class="global-search">
-                <el-icon><Search /></el-icon>
-                <span>搜索模块</span>
-                <kbd>Ctrl K</kbd>
-              </div>
-            </template>
-            <div class="global-search-panel">
-              <el-input v-model="headerSearchKeyword" :prefix-icon="Search" clearable placeholder="搜索页面、配置、日志" />
-              <div class="global-search-results">
-                <button v-for="item in headerSearchResults" :key="item.key" type="button" @click="selectHeaderSearch(item.key)">
-                  <el-icon><component :is="item.icon" /></el-icon>
-                  <span>{{ item.label }}</span>
-                  <small>{{ item.hint }}</small>
-                </button>
-                <div v-if="!headerSearchResults.length" class="global-search-empty">没有匹配的模块</div>
-              </div>
-            </div>
-          </el-popover>
+          <button type="button" class="global-search" @click="openGlobalSearch" aria-label="搜索模块">
+            <el-icon><Search /></el-icon>
+            <span>搜索模块</span>
+            <kbd>Ctrl K</kbd>
+          </button>
           <button type="button" class="header-tool notification-entry" @click="openNotifications" aria-label="告警通知">
             <el-badge :value="pendingAlertCount" :hidden="!pendingAlertCount" type="danger">
               <Bell />
@@ -2431,6 +2471,40 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </section>
     </main>
+
+    <el-dialog v-model="globalSearchVisible" width="620px" :show-close="false" class="global-search-command" @closed="closeGlobalSearch">
+      <div class="command-search-input">
+        <el-input
+          ref="globalSearchInputRef"
+          v-model="headerSearchKeyword"
+          :prefix-icon="Search"
+          clearable
+          placeholder="搜索页面、配置、日志"
+        />
+      </div>
+      <div class="command-result-list">
+        <button
+          v-for="(item, index) in headerSearchResults"
+          :key="item.key"
+          type="button"
+          :class="{ active: highlightedSearchIndex === index }"
+          @click="selectHeaderSearch(item.key)"
+          @mouseenter="highlightedSearchIndex = index"
+        >
+          <el-icon><component :is="item.icon" /></el-icon>
+          <span>{{ item.label }}</span>
+          <small>{{ item.hint }}</small>
+        </button>
+        <div v-if="!headerSearchResults.length" class="global-search-empty">没有匹配的模块</div>
+      </div>
+      <template #footer>
+        <div class="command-shortcuts">
+          <span><kbd>Enter</kbd> 进入</span>
+          <span><kbd>↑ ↓</kbd> 切换</span>
+          <span><kbd>Esc</kbd> 退出</span>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-drawer v-model="settingsPanelVisible" title="" size="420px" destroy-on-close class="art-settings-panel">
       <div class="setting-panel-header">

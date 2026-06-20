@@ -164,6 +164,36 @@ test("Vue topbar exposes Art Design Pro header tools", async () => {
   assert.match(styleSource, /\.user-entry/, "Styles should include user entry styling");
 });
 
+test("Vue global search uses an Art Design Pro command dialog", async () => {
+  const source = await readAppSource();
+  const topbarSection = sourceBetween(
+    source,
+    "<header class=\"admin-topbar\">",
+    "</header>",
+  );
+  const searchDialog = sourceBetween(
+    source,
+    "<el-dialog v-model=\"globalSearchVisible\"",
+    "<el-drawer v-model=\"settingsPanelVisible\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /globalSearchVisible/, "Admin should keep command dialog visibility state");
+  assert.match(source, /highlightedSearchIndex/, "Command dialog should track the highlighted result");
+  assert.match(source, /openGlobalSearch/, "Topbar should open the command dialog");
+  assert.match(source, /handleGlobalSearchKeydown/, "Command dialog should handle keyboard shortcuts");
+  assert.match(source, /document\.addEventListener\('keydown', handleGlobalSearchKeydown\)/, "Global search should register Ctrl/Command+K");
+  assert.match(topbarSection, /@click="openGlobalSearch"/, "Search trigger should open the command dialog");
+  assert.match(searchDialog, /global-search-command/, "Search should render a command dialog");
+  assert.match(searchDialog, /command-search-input/, "Command dialog should include a focused search input");
+  assert.match(searchDialog, /command-result-list/, "Command dialog should render command results");
+  assert.match(searchDialog, /command-shortcuts/, "Command dialog should show keyboard affordances");
+  assert.match(searchDialog, /@click="selectHeaderSearch/, "Command results should navigate to modules");
+  assert.match(styleSource, /\.global-search-command/, "Styles should include command dialog shell");
+  assert.match(styleSource, /\.command-result-list/, "Styles should include command result list");
+  assert.match(styleSource, /\.command-shortcuts/, "Styles should include keyboard shortcut footer");
+});
+
 test("Vue topbar settings open an Art Design Pro settings panel", async () => {
   const source = await readAppSource();
   const topbarSection = sourceBetween(

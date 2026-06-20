@@ -540,6 +540,106 @@ button,
   text-align: center;
 }
 
+.global-search-command :deep(.el-dialog) {
+  border: 1px solid var(--art-border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--art-card);
+}
+
+.global-search-command :deep(.el-dialog__header) {
+  display: none;
+}
+
+.global-search-command :deep(.el-dialog__body) {
+  display: grid;
+  gap: 14px;
+  padding: 18px 18px 0;
+}
+
+.global-search-command :deep(.el-dialog__footer) {
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--art-border);
+  background: var(--art-soft);
+}
+
+.command-search-input :deep(.el-input__wrapper) {
+  min-height: 48px;
+  border: 1px solid var(--art-border);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.command-result-list {
+  max-height: 372px;
+  display: grid;
+  gap: 8px;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+.command-result-list button {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--art-soft);
+  color: var(--art-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: 180ms ease;
+}
+
+.command-result-list button:hover,
+.command-result-list button.active {
+  border-color: rgba(37, 99, 235, 0.32);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--art-primary);
+}
+
+.command-result-list span {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-result-list small {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.command-shortcuts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.command-shortcuts kbd {
+  min-width: 32px;
+  display: inline-flex;
+  justify-content: center;
+  margin-right: 4px;
+  padding: 3px 6px;
+  border: 1px solid var(--art-border);
+  border-radius: 6px;
+  background: var(--art-card);
+  color: var(--art-text-soft);
+  font-family: inherit;
+}
+
 .header-tool,
 .user-entry {
   min-width: 36px;
