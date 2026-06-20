@@ -2690,9 +2690,9 @@ window.addEventListener('beforeunload', (event) => {
                 <el-input-number v-else-if="field.key === 'minDurationMs'" v-model="logFilter.minDurationMs" :min="0" placeholder="耗时≥ms" controls-position="right" />
                 <el-input-number v-else-if="field.key === 'maxDurationMs'" v-model="logFilter.maxDurationMs" :min="0" placeholder="耗时≤ms" controls-position="right" />
               </div>
-              <div class="action-column">
+              <div class="art-search-action-column">
                 <div class="action-buttons-wrapper">
-                  <div class="form-buttons">
+                  <div class="art-search-form-buttons">
                     <el-button class="reset-button" @click="resetLogFilters">重置</el-button>
                     <el-button class="search-button" type="primary" :icon="Refresh" @click="refreshLogsOnly">查询</el-button>
                   </div>

@@ -847,13 +847,18 @@ test("Vue logs page query panel follows the ArtSearchBar template pattern", asyn
   assert.match(logSection, /art-search-form-grid/, "Logs query fields should render in the template form grid");
   assert.doesNotMatch(logSection, /query-grid/, "Logs query fields should not keep the legacy query-grid class");
   assert.match(logSection, /visibleLogSearchFields/, "Logs query grid should render the visible field list");
-  assert.match(logSection, /action-column/, "Logs search bar should render the ArtSearchBar action column");
-  assert.match(logSection, /form-buttons/, "Logs search bar should group reset and search actions");
+  assert.match(logSection, /art-search-action-column/, "Logs search bar should render the ArtSearchBar action column");
+  assert.match(logSection, /art-search-form-buttons/, "Logs search bar should group reset and search actions");
+  assert.doesNotMatch(logSection, /class="action-column"/, "Logs search bar should not keep the legacy action-column class");
+  assert.doesNotMatch(logSection, /class="form-buttons"/, "Logs search bar should not keep the legacy form-buttons class");
   assert.match(logSection, /filter-toggle/, "Logs search bar should expose expand and collapse control");
   assert.match(styleSource, /\.art-search-bar/, "Styles should include the ArtSearchBar shell");
   assert.match(styleSource, /\.art-search-form-grid/, "Styles should include the ArtSearchBar form grid");
   assert.doesNotMatch(styleSource, /\.query-grid\b/, "Styles should remove the legacy query grid selector");
-  assert.match(styleSource, /\.action-column/, "Styles should include the action column");
+  assert.match(styleSource, /\.art-search-action-column/, "Styles should include the ArtSearchBar action column");
+  assert.match(styleSource, /\.art-search-form-buttons/, "Styles should include the ArtSearchBar form buttons");
+  assert.doesNotMatch(styleSource, /(^|\n)\.action-column\b/, "Styles should not keep the standalone legacy action-column selector");
+  assert.doesNotMatch(styleSource, /(^|\n)\.form-buttons\b/, "Styles should not keep the standalone legacy form-buttons selector");
   assert.match(styleSource, /\.filter-toggle/, "Styles should include the expand toggle");
 });
 

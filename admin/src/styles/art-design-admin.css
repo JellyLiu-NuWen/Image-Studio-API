@@ -2761,7 +2761,7 @@ button,
   width: 100%;
 }
 
-.action-column {
+.art-search-action-column {
   grid-column: span 2;
   min-width: 0;
 }
@@ -2775,7 +2775,7 @@ button,
   gap: 10px;
 }
 
-.form-buttons {
+.art-search-form-buttons {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -4195,17 +4195,17 @@ button,
   }
 
   .search-form-item.is-wide,
-  .action-column {
+  .art-search-action-column {
     grid-column: auto;
   }
 
   .action-buttons-wrapper,
-  .form-buttons {
+  .art-search-form-buttons {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .form-buttons .el-button,
+  .art-search-form-buttons .el-button,
   .filter-toggle {
     width: 100%;
     justify-content: center;
