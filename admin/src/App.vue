@@ -74,6 +74,7 @@ type SettingOptionGroup = 'theme' | 'layout' | 'menuStyle' | 'density'
 type WorkTabActionKey = 'refresh' | 'fixed' | 'left' | 'right' | 'other' | 'all'
 type TableHeaderToolKey = 'search' | 'refresh' | 'density' | 'columns'
 type TableModuleKey = 'interfaces' | 'upstreams' | 'models' | 'quality'
+type TablePaginationState = { currentPage: number; pageSize: number }
 
 const navGroups: Array<{ title: string; items: Array<{ key: ViewKey; label: string; icon: unknown }> }> = [
   { title: '监控', items: [
@@ -163,6 +164,13 @@ const tableSearchVisible = reactive<Record<TableModuleKey, boolean>>({
   upstreams: true,
   models: true,
   quality: true
+})
+const tablePageSizes = [10, 20, 30, 50, 100]
+const tablePagination = reactive<Record<TableModuleKey, TablePaginationState>>({
+  interfaces: { currentPage: 1, pageSize: 10 },
+  upstreams: { currentPage: 1, pageSize: 10 },
+  models: { currentPage: 1, pageSize: 10 },
+  quality: { currentPage: 1, pageSize: 10 }
 })
 const tableDensity = ref<TableDensity>('comfortable')
 const tableColumnSettingsVisible = ref(false)
@@ -365,6 +373,10 @@ const filteredInterfaces = computed(() => filterTableRows(activeInterfaces.value
 const filteredUpstreams = computed(() => filterTableRows(activeUpstreams.value, tableSearch.upstreams))
 const filteredModels = computed(() => filterTableRows(activeModels.value, tableSearch.models))
 const filteredPresets = computed(() => filterTableRows(activePresets.value, tableSearch.quality))
+const paginatedInterfaces = computed(() => paginateTableRows(filteredInterfaces.value, 'interfaces'))
+const paginatedUpstreams = computed(() => paginateTableRows(filteredUpstreams.value, 'upstreams'))
+const paginatedModels = computed(() => paginateTableRows(filteredModels.value, 'models'))
+const paginatedPresets = computed(() => paginateTableRows(filteredPresets.value, 'quality'))
 const drawerContext = computed(() => {
   if (!config.value || !drawerMode.value) return null
   if (drawerMode.value === 'interface') {
@@ -812,6 +824,28 @@ function filterTableRows<T>(rows: T[], keyword: string) {
   const normalized = String(keyword || '').trim().toLowerCase()
   if (!normalized) return rows
   return rows.filter((row) => JSON.stringify(row).toLowerCase().includes(normalized))
+}
+
+function paginateTableRows<T>(rows: T[], module: TableModuleKey) {
+  const pagination = tablePagination[module]
+  const currentPage = tableEffectiveCurrentPage(module, rows.length)
+  const start = (currentPage - 1) * pagination.pageSize
+  return rows.slice(start, start + pagination.pageSize)
+}
+
+function tableEffectiveCurrentPage(module: TableModuleKey, total: number) {
+  const pagination = tablePagination[module]
+  const maxPage = Math.max(1, Math.ceil(total / pagination.pageSize))
+  return Math.min(Math.max(1, pagination.currentPage), maxPage)
+}
+
+function handleTablePageSizeChange(module: TableModuleKey, pageSize: number) {
+  tablePagination[module].pageSize = pageSize
+  tablePagination[module].currentPage = 1
+}
+
+function handleTableCurrentPageChange(module: TableModuleKey, currentPage: number) {
+  tablePagination[module].currentPage = currentPage
 }
 
 function rowIndex<T extends { id?: string }>(rows: T[], row: T) {
@@ -2045,7 +2079,7 @@ window.addEventListener('beforeunload', (event) => {
               <el-button :icon="Finished" @click="saveConfig()">保存接口配置</el-button>
             </div>
           </div>
-          <el-table :data="filteredInterfaces" :size="tableSize" row-key="id">
+          <el-table :data="paginatedInterfaces" :size="tableSize" row-key="id">
             <template #empty>
               <div class="art-empty-state">
                 <Connection />
@@ -2096,6 +2130,18 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
+          <div v-if="filteredInterfaces.length" class="art-table-pagination custom-pagination right">
+            <el-pagination
+              background
+              :page-sizes="tablePageSizes"
+              layout="total, prev, pager, next, sizes, jumper"
+              :total="filteredInterfaces.length"
+              :page-size="tablePagination.interfaces.pageSize"
+              :current-page="tableEffectiveCurrentPage('interfaces', filteredInterfaces.length)"
+              @size-change="handleTablePageSizeChange('interfaces', $event)"
+              @current-change="handleTableCurrentPageChange('interfaces', $event)"
+            />
+          </div>
         </el-card>
       </section>
 
@@ -2120,7 +2166,7 @@ window.addEventListener('beforeunload', (event) => {
               <el-button :icon="Finished" @click="saveConfig()">保存上游配置</el-button>
             </div>
           </div>
-          <el-table :data="filteredUpstreams" :size="tableSize" row-key="id">
+          <el-table :data="paginatedUpstreams" :size="tableSize" row-key="id">
             <template #empty>
               <div class="art-empty-state">
                 <Link />
@@ -2172,6 +2218,18 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
+          <div v-if="filteredUpstreams.length" class="art-table-pagination custom-pagination right">
+            <el-pagination
+              background
+              :page-sizes="tablePageSizes"
+              layout="total, prev, pager, next, sizes, jumper"
+              :total="filteredUpstreams.length"
+              :page-size="tablePagination.upstreams.pageSize"
+              :current-page="tableEffectiveCurrentPage('upstreams', filteredUpstreams.length)"
+              @size-change="handleTablePageSizeChange('upstreams', $event)"
+              @current-change="handleTableCurrentPageChange('upstreams', $event)"
+            />
+          </div>
         </el-card>
       </section>
 
@@ -2196,7 +2254,7 @@ window.addEventListener('beforeunload', (event) => {
               <el-button :icon="Finished" @click="saveModels">保存模型目录</el-button>
             </div>
           </div>
-          <el-table :data="filteredModels" :size="tableSize" row-key="id">
+          <el-table :data="paginatedModels" :size="tableSize" row-key="id">
             <template #empty>
               <div class="art-empty-state">
                 <Box />
@@ -2239,6 +2297,18 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
+          <div v-if="filteredModels.length" class="art-table-pagination custom-pagination right">
+            <el-pagination
+              background
+              :page-sizes="tablePageSizes"
+              layout="total, prev, pager, next, sizes, jumper"
+              :total="filteredModels.length"
+              :page-size="tablePagination.models.pageSize"
+              :current-page="tableEffectiveCurrentPage('models', filteredModels.length)"
+              @size-change="handleTablePageSizeChange('models', $event)"
+              @current-change="handleTableCurrentPageChange('models', $event)"
+            />
+          </div>
         </el-card>
       </section>
 
@@ -2286,7 +2356,7 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </div>
           <div class="preset-grid">
-            <el-card v-for="preset in filteredPresets" :key="preset.id" shadow="never" class="preset-card">
+            <el-card v-for="preset in paginatedPresets" :key="preset.id" shadow="never" class="preset-card">
               <template #header>
                 <div class="card-title">
                   <MagicStick />
@@ -2305,7 +2375,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </el-card>
           </div>
-          <el-table :data="filteredPresets" :size="tableSize" class="preset-list-table">
+          <el-table :data="paginatedPresets" :size="tableSize" class="preset-list-table">
             <template #empty>
               <div class="art-empty-state">
                 <MagicStick />
@@ -2330,6 +2400,18 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
+          <div v-if="filteredPresets.length" class="art-table-pagination custom-pagination right">
+            <el-pagination
+              background
+              :page-sizes="tablePageSizes"
+              layout="total, prev, pager, next, sizes, jumper"
+              :total="filteredPresets.length"
+              :page-size="tablePagination.quality.pageSize"
+              :current-page="tableEffectiveCurrentPage('quality', filteredPresets.length)"
+              @size-change="handleTablePageSizeChange('quality', $event)"
+              @current-change="handleTableCurrentPageChange('quality', $event)"
+            />
+          </div>
         </el-card>
         <el-card shadow="never">
           <template #header>

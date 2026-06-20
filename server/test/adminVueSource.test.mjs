@@ -516,6 +516,52 @@ test("Vue management table headers expose ArtTable column visibility settings", 
   assert.match(styleSource, /\.column-option-row/, "Styles should include column option rows");
 });
 
+test("Vue management tables expose ArtTable style pagination", async () => {
+  const source = await readAppSource();
+  const interfaceSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'upstreams'\"",
+  );
+  const upstreamSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'upstreams'\"",
+    "<section v-if=\"activeView === 'models'\"",
+  );
+  const modelSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'models'\"",
+    "<section v-if=\"activeView === 'quality'\"",
+  );
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /tablePagination/, "Management tables should keep per-module pagination state");
+  assert.match(source, /tablePageSizes/, "Management tables should expose ArtTable-style page size choices");
+  assert.match(source, /paginateTableRows/, "Management tables should derive paginated rows");
+  assert.match(source, /tableEffectiveCurrentPage/, "Management pagination should clamp the visible current page");
+  assert.match(source, /handleTablePageSizeChange/, "Management pagination should handle page size changes");
+  assert.match(source, /handleTableCurrentPageChange/, "Management pagination should handle current page changes");
+
+  assert.match(interfaceSection, /:data="paginatedInterfaces"/, "Interface table should render paginated rows");
+  assert.match(upstreamSection, /:data="paginatedUpstreams"/, "Upstream table should render paginated rows");
+  assert.match(modelSection, /:data="paginatedModels"/, "Model table should render paginated rows");
+  assert.match(qualitySection, /:data="paginatedPresets"/, "Quality preset table should render paginated rows");
+  for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
+    assert.match(section, /art-table-pagination/, "Management table should render an ArtTable pagination footer");
+    assert.match(section, /custom-pagination/, "Pagination footer should use the ArtTable custom pagination token");
+    assert.match(section, /:current-page="tableEffectiveCurrentPage/, "Pagination footer should bind a clamped current page");
+    assert.match(section, /@size-change="/, "Pagination footer should handle page size changes");
+    assert.match(section, /@current-change="/, "Pagination footer should handle current page changes");
+  }
+  assert.match(styleSource, /\.art-table-pagination/, "Styles should include ArtTable pagination footer");
+  assert.match(styleSource, /\.custom-pagination/, "Styles should include custom pagination controls");
+});
+
 test("Vue tables expose Art Design Pro empty states", async () => {
   const source = await readAppSource();
   const managementSection = sourceBetween(
