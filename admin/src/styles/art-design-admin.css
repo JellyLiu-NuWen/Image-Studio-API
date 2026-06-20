@@ -672,6 +672,165 @@ button,
   position: relative;
 }
 
+.art-notification-panel {
+  position: fixed;
+  top: 92px;
+  right: 24px;
+  z-index: 2300;
+  width: min(380px, calc(100vw - 28px));
+  max-height: min(560px, calc(100vh - 112px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  background: var(--art-card);
+  box-shadow: var(--art-shadow);
+}
+
+.notification-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+}
+
+.notification-panel-head div {
+  display: grid;
+  gap: 3px;
+}
+
+.notification-panel-head span {
+  color: var(--art-primary);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.notification-panel-head strong {
+  color: var(--art-text);
+  font-size: 16px;
+}
+
+.notification-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--art-border);
+}
+
+.notification-tab-bar button {
+  height: 42px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--art-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.notification-tab-bar button.active {
+  border-bottom-color: var(--art-primary);
+  color: var(--art-primary);
+}
+
+.notification-list {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.notification-list button {
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--art-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: 180ms ease;
+}
+
+.notification-list button:hover {
+  border-color: var(--art-border);
+  background: var(--art-soft);
+}
+
+.notification-list i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--art-primary);
+}
+
+.notification-list button.critical i {
+  background: var(--art-danger);
+}
+
+.notification-list button.warning i {
+  background: var(--art-warning);
+}
+
+.notification-list button.success i {
+  background: var(--art-success);
+}
+
+.notification-list span {
+  overflow: hidden;
+  color: var(--art-text);
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-list small {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.notification-list p {
+  grid-column: 2 / -1;
+  margin: 0;
+  color: var(--art-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.notification-empty {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  color: var(--art-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.notification-empty svg {
+  width: 36px;
+  height: 36px;
+  color: var(--art-primary);
+}
+
+.notification-view-all {
+  margin: 8px 14px 14px;
+}
+
 .user-entry {
   padding: 0 10px;
 }

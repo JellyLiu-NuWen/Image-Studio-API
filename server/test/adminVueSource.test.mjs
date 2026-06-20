@@ -164,6 +164,37 @@ test("Vue topbar exposes Art Design Pro header tools", async () => {
   assert.match(styleSource, /\.user-entry/, "Styles should include user entry styling");
 });
 
+test("Vue topbar notifications use an Art Design Pro notification panel", async () => {
+  const source = await readAppSource();
+  const topbarSection = sourceBetween(
+    source,
+    "<header class=\"admin-topbar\">",
+    "</header>",
+  );
+  const notificationPanel = sourceBetween(
+    source,
+    "<div v-if=\"notificationPanelVisible\"",
+    "<el-dialog v-model=\"globalSearchVisible\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /notificationPanelVisible/, "Admin should keep notification panel visibility state");
+  assert.match(source, /notificationTabs/, "Notification panel should define Art Design style tabs");
+  assert.match(source, /notificationPreviewItems/, "Notification panel should derive preview items from alert state");
+  assert.match(source, /activeNotificationTab/, "Notification panel should track the selected tab");
+  assert.match(source, /viewAllNotifications/, "Notification panel should keep a full alert center action");
+  assert.match(topbarSection, /@click="toggleNotificationPanel"/, "Notification button should toggle a panel");
+  assert.doesNotMatch(sourceBetween(source, "function openNotifications()", "function openSettings()"), /navigateTo\('alerts'\)/, "Opening notifications should not immediately navigate away");
+  assert.match(notificationPanel, /art-notification-panel/, "Notification preview should use Art Design panel class");
+  assert.match(notificationPanel, /notification-tab-bar/, "Notification panel should render tabs");
+  assert.match(notificationPanel, /notification-list/, "Notification panel should render preview list");
+  assert.match(notificationPanel, /notification-empty/, "Notification panel should render an empty state");
+  assert.match(notificationPanel, /@click="viewAllNotifications"/, "Notification panel should link to the full alerts page");
+  assert.match(styleSource, /\.art-notification-panel/, "Styles should include notification panel shell");
+  assert.match(styleSource, /\.notification-tab-bar/, "Styles should include notification tabs");
+  assert.match(styleSource, /\.notification-list/, "Styles should include notification list");
+});
+
 test("Vue global search uses an Art Design Pro command dialog", async () => {
   const source = await readAppSource();
   const topbarSection = sourceBetween(

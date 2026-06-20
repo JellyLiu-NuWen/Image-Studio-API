@@ -103,6 +103,8 @@ const menuStyleMode = ref<MenuStyleMode>('design')
 const globalSearchVisible = ref(false)
 const highlightedSearchIndex = ref(0)
 const globalSearchInputRef = ref<HTMLInputElement | null>(null)
+const notificationPanelVisible = ref(false)
+const activeNotificationTab = ref<'alerts' | 'notifications' | 'system'>('alerts')
 const loginForm = reactive({ username: 'admin', password: '', totpCode: '' })
 const accountForm = reactive({ username: '', currentPassword: '', newPassword: '' })
 const totpSetup = ref<{ secret: string; otpauthURL: string } | null>(null)
@@ -426,6 +428,41 @@ const systemSummaryCards = computed(() => [
   }
 ])
 const pendingAlertCount = computed(() => activeAlerts.value.filter((item) => !item.acknowledged).length)
+const notificationTabs = computed(() => [
+  { key: 'alerts', label: '告警', count: pendingAlertCount.value },
+  { key: 'notifications', label: '通知', count: alertNotification.value.status === 'idle' ? 0 : 1 },
+  { key: 'system', label: '系统', count: updateInfo.value.status ? 1 : 0 },
+] as Array<{ key: 'alerts' | 'notifications' | 'system'; label: string; count: number }>)
+const notificationPreviewItems = computed(() => {
+  if (activeNotificationTab.value === 'alerts') {
+    return activeAlerts.value
+      .filter((item) => !item.acknowledged)
+      .slice(0, 6)
+      .map((item) => ({
+        id: item.id,
+        title: item.title,
+        time: formatTime(item.createdAt),
+        meta: item.message,
+        type: item.severity === 'critical' ? 'critical' : item.severity === 'warning' ? 'warning' : 'info',
+      }))
+  }
+  if (activeNotificationTab.value === 'notifications') {
+    return [{
+      id: 'alert-webhook-status',
+      title: `Webhook ${notificationLabel(alertNotification.value.status)}`,
+      time: alertNotification.value.sentAt ? formatTime(alertNotification.value.sentAt) : '未发送',
+      meta: config.value?.alerts.webhookURLSet ? '告警通知通道已配置' : 'Webhook 通知未配置',
+      type: alertNotification.value.status === 'failed' ? 'critical' : alertNotification.value.status === 'sent' ? 'success' : 'info',
+    }]
+  }
+  return [{
+    id: 'system-update-status',
+    title: `版本状态 ${updateInfo.value.status || 'unknown'}`,
+    time: updateInfo.value.status ? '已检查' : '等待检查',
+    meta: updateInfo.value.latestVersion ? `最新版本 ${updateInfo.value.latestVersion}` : '未获取到更新信息',
+    type: updateInfo.value.status === 'outdated' ? 'warning' : 'info',
+  }]
+})
 const alertSummaryCards = computed(() => [
   {
     label: '活跃告警',
@@ -709,6 +746,7 @@ function selectHeaderSearch(key: ViewKey) {
 }
 
 function openGlobalSearch() {
+  notificationPanelVisible.value = false
   globalSearchVisible.value = true
   nextTick(() => {
     globalSearchInputRef.value?.focus?.()
@@ -756,11 +794,21 @@ function handleGlobalSearchKeydown(event: KeyboardEvent) {
 }
 
 function openNotifications() {
-  navigateTo('alerts')
+  notificationPanelVisible.value = true
+}
+
+function toggleNotificationPanel() {
+  notificationPanelVisible.value = !notificationPanelVisible.value
 }
 
 function openSettings() {
+  notificationPanelVisible.value = false
   settingsPanelVisible.value = true
+}
+
+function viewAllNotifications() {
+  notificationPanelVisible.value = false
+  navigateTo('alerts')
 }
 
 function closeSettingsPanel() {
@@ -1505,7 +1553,7 @@ window.addEventListener('beforeunload', (event) => {
             <span>搜索模块</span>
             <kbd>Ctrl K</kbd>
           </button>
-          <button type="button" class="header-tool notification-entry" @click="openNotifications" aria-label="告警通知">
+          <button type="button" class="header-tool notification-entry" @click="toggleNotificationPanel" aria-label="告警通知">
             <el-badge :value="pendingAlertCount" :hidden="!pendingAlertCount" type="danger">
               <Bell />
             </el-badge>
@@ -2471,6 +2519,46 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </section>
     </main>
+
+    <div v-if="notificationPanelVisible" class="art-notification-panel" @click.stop>
+      <div class="notification-panel-head">
+        <div>
+          <span>Notification</span>
+          <strong>运维通知</strong>
+        </div>
+        <el-button text @click="viewAllNotifications">查看全部</el-button>
+      </div>
+      <div class="notification-tab-bar">
+        <button
+          v-for="tab in notificationTabs"
+          :key="tab.key"
+          type="button"
+          :class="{ active: activeNotificationTab === tab.key }"
+          @click="activeNotificationTab = tab.key"
+        >
+          {{ tab.label }} ({{ tab.count }})
+        </button>
+      </div>
+      <div class="notification-list">
+        <button
+          v-for="item in notificationPreviewItems"
+          :key="item.id"
+          type="button"
+          :class="item.type"
+          @click="viewAllNotifications"
+        >
+          <i></i>
+          <span>{{ item.title }}</span>
+          <small>{{ item.time }}</small>
+          <p>{{ item.meta }}</p>
+        </button>
+        <div v-if="!notificationPreviewItems.length" class="notification-empty">
+          <Bell />
+          <span>当前没有{{ notificationTabs.find((item) => item.key === activeNotificationTab)?.label || '通知' }}</span>
+        </div>
+      </div>
+      <el-button class="notification-view-all" @click="viewAllNotifications">进入告警中心</el-button>
+    </div>
 
     <el-dialog v-model="globalSearchVisible" width="620px" :show-close="false" class="global-search-command" @closed="closeGlobalSearch">
       <div class="command-search-input">
