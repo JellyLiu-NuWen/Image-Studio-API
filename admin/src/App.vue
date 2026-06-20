@@ -98,6 +98,9 @@ const loading = ref(false)
 const authenticated = ref(false)
 const username = ref('admin')
 const activeView = ref<ViewKey>('dashboard')
+const pageContentRefreshing = ref(true)
+const showPageTransitionMask = ref(false)
+const pageTransitionName = computed(() => showPageTransitionMask.value ? '' : 'slide-left')
 const pageTabs = ref<ViewKey[]>(['dashboard'])
 const fixedPageTabs = ref<ViewKey[]>(['dashboard'])
 const workTabTarget = ref<ViewKey>('dashboard')
@@ -933,6 +936,17 @@ function closeAllPageTabs() {
 async function refreshCurrentPageTab() {
   if (activeView.value === 'logs') await refreshLogsOnly()
   else await refreshAll()
+  await reloadPageContent()
+}
+
+async function reloadPageContent() {
+  pageContentRefreshing.value = false
+  showPageTransitionMask.value = true
+  await nextTick()
+  pageContentRefreshing.value = true
+  window.setTimeout(() => {
+    showPageTransitionMask.value = false
+  }, 120)
 }
 
 async function runWorkTabAction(key: WorkTabActionKey) {
@@ -1709,35 +1723,40 @@ window.addEventListener('beforeunload', (event) => {
         </el-dropdown>
       </nav>
 
-      <section class="operations-panel" aria-label="后台快捷操作">
-        <div>
-          <div class="panel-heading">
-            <el-icon><Operation /></el-icon>
-            <span>运维快捷动作</span>
-          </div>
-          <div class="quick-actions">
-            <el-button
-              v-for="item in quickActions"
-              :key="item.label"
-              :type="item.type === 'primary' ? 'primary' : undefined"
-              :icon="item.icon"
-              @click="item.action"
-            >
-              {{ item.label }}
-            </el-button>
-          </div>
+      <div class="layout-content">
+        <div id="app-content-header">
+          <section class="operations-panel" aria-label="后台快捷操作">
+            <div>
+              <div class="panel-heading">
+                <el-icon><Operation /></el-icon>
+                <span>运维快捷动作</span>
+              </div>
+              <div class="quick-actions">
+                <el-button
+                  v-for="item in quickActions"
+                  :key="item.label"
+                  :type="item.type === 'primary' ? 'primary' : undefined"
+                  :icon="item.icon"
+                  @click="item.action"
+                >
+                  {{ item.label }}
+                </el-button>
+              </div>
+            </div>
+            <div class="risk-board">
+              <button v-for="item in riskItems" :key="item.label" :class="riskClass(item.severity)" @click="navigateTo(item.target)">
+                <el-icon><WarningFilled /></el-icon>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <small>{{ item.hint }}</small>
+              </button>
+            </div>
+          </section>
         </div>
-        <div class="risk-board">
-          <button v-for="item in riskItems" :key="item.label" :class="riskClass(item.severity)" @click="navigateTo(item.target)">
-            <el-icon><WarningFilled /></el-icon>
-            <span>{{ item.label }}</span>
-            <strong>{{ item.value }}</strong>
-            <small>{{ item.hint }}</small>
-          </button>
-        </div>
-      </section>
 
-      <section v-if="activeView === 'dashboard'" class="view-stack">
+        <Transition :name="pageTransitionName" mode="out-in" appear>
+          <div v-if="pageContentRefreshing" :key="activeView" class="art-page-view">
+            <section v-if="activeView === 'dashboard'" class="view-stack">
         <div class="metric-grid">
           <el-card shadow="never" class="metric-card">
             <span>今日生图</span>
@@ -2627,7 +2646,11 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
-      </section>
+            </section>
+          </div>
+        </Transition>
+        <div v-show="showPageTransitionMask" class="page-transition-mask"></div>
+      </div>
     </main>
 
     <div v-if="notificationPanelVisible" class="art-notification-panel" @click.stop>

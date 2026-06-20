@@ -168,6 +168,30 @@ test("Vue page tabs behave like an Art Design Pro worktab bar", async () => {
   assert.match(styleSource, /\.worktab-action-trigger/, "Styles should include worktab action trigger");
 });
 
+test("Vue page modules render inside an Art Design Pro page content container", async () => {
+  const source = await readAppSource();
+  const contentSection = sourceBetween(
+    source,
+    "<div class=\"layout-content\"",
+    "<div v-if=\"notificationPanelVisible\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /pageContentRefreshing/, "Page content should track refresh state");
+  assert.match(source, /pageTransitionName/, "Page content should expose an Art Design transition name");
+  assert.match(source, /showPageTransitionMask/, "Page content should expose a transition mask state");
+  assert.match(source, /reloadPageContent/, "Page content should support content refresh reloads");
+  assert.match(contentSection, /class="layout-content"/, "Main modules should sit inside the ArtPageContent shell");
+  assert.match(contentSection, /id="app-content-header"/, "Page content should include the template header slot anchor");
+  assert.match(contentSection, /<Transition :name="pageTransitionName" mode="out-in" appear>/, "Page content should use Vue transitions for module changes");
+  assert.match(contentSection, /class="art-page-view"/, "Active module body should use the Art Design page view class");
+  assert.match(contentSection, /page-transition-mask/, "Page content should render a transition mask");
+  assert.match(styleSource, /\.layout-content/, "Styles should include ArtPageContent layout shell");
+  assert.match(styleSource, /\.art-page-view/, "Styles should include Art page view");
+  assert.match(styleSource, /\.page-transition-mask/, "Styles should include transition mask");
+  assert.match(styleSource, /\.slide-left-enter-active/, "Styles should include slide-left page transition");
+});
+
 test("Vue topbar exposes Art Design Pro header tools", async () => {
   const source = await readAppSource();
   const topbarSection = sourceBetween(

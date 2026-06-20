@@ -418,6 +418,68 @@ button,
   padding: 24px;
 }
 
+.layout-content {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+#app-content-header {
+  min-width: 0;
+}
+
+.art-page-view {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.page-transition-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--art-bg) 74%, transparent);
+}
+
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(14px);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.slide-left-enter-to,
+.slide-left-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-left-enter-active,
+  .slide-left-leave-active {
+    transition: none;
+  }
+
+  .slide-left-enter-from,
+  .slide-left-leave-to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .admin-topbar {
   min-height: 74px;
   display: flex;
