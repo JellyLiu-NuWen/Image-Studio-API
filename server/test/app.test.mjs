@@ -396,6 +396,58 @@ test("image stream proxy extends upstream timeout for long running image work", 
   }
 });
 
+test("image proxy extends non-stream timeout for long running image work", async () => {
+  const originalTimeout = AbortSignal.timeout;
+  let capturedTimeoutMs = 0;
+  AbortSignal.timeout = (ms) => {
+    capturedTimeoutMs = ms;
+    return new AbortController().signal;
+  };
+  try {
+    const app = createSelfHostedApp({
+      store: memoryStore({
+        imageApiToken: "client-token",
+        upstreamBaseURL: "https://upstream.example/v1",
+        upstreamApiKey: "upstream-key",
+        requestTimeoutSeconds: 60,
+      }),
+      ...ADMIN_OPTIONS,
+      fetchImpl: async () => new Response(JSON.stringify({ data: [{ b64_json: "slow-json" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    });
+    const body = [
+      "--edit-boundary",
+      'Content-Disposition: form-data; name="prompt"',
+      "",
+      "slow non-stream edit",
+      "--edit-boundary",
+      'Content-Disposition: form-data; name="image"; filename="input.png"',
+      "Content-Type: image/png",
+      "",
+      "fake-image-bytes",
+      "--edit-boundary--",
+      "",
+    ].join("\r\n");
+
+    const response = await app.handle(new Request("http://localhost/v1/images/edits", {
+      method: "POST",
+      headers: {
+        authorization: "Bearer client-token",
+        "content-type": "multipart/form-data; boundary=edit-boundary",
+      },
+      body,
+    }));
+
+    assert.equal(response.status, 200);
+    await response.text();
+    assert.equal(capturedTimeoutMs, 300_000);
+  } finally {
+    AbortSignal.timeout = originalTimeout;
+  }
+});
+
 test("image proxy returns structured json when upstream fetch fails", async () => {
   const app = createSelfHostedApp({
     store: memoryStore({

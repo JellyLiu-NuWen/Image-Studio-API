@@ -97,7 +97,7 @@ async function forwardRawWithRetry({
         method,
         headers,
         body: bodyBuffer,
-        signal: createTimeoutSignal(timeoutSeconds),
+        signal: createTimeoutSignal(imageWorkTimeoutSeconds(pathname, timeoutSeconds)),
       });
     } catch (error) {
       lastStatus = 502;
@@ -171,7 +171,7 @@ async function forwardRawAsSSE({
   });
   const encoder = new TextEncoder();
   const heartbeatMs = streamHeartbeatMs();
-  const timeoutSignal = createTimeoutSignal(streamTimeoutSeconds(timeoutSeconds));
+  const timeoutSignal = createTimeoutSignal(imageWorkTimeoutSeconds(pathname, timeoutSeconds));
 
   const body = new ReadableStream({
     async start(controller) {
@@ -261,9 +261,14 @@ function streamHeartbeatMs() {
   return 15_000;
 }
 
-function streamTimeoutSeconds(configuredSeconds) {
+function isImageWorkPath(pathname) {
+  return pathname === "/v1/images/generations" || pathname === "/v1/images/edits";
+}
+
+function imageWorkTimeoutSeconds(pathname, configuredSeconds) {
   const configured = Number(configuredSeconds);
-  const minimum = Number(process.env.IMAGE_STUDIO_STREAM_TIMEOUT_SECONDS || 300);
+  if (!isImageWorkPath(pathname)) return configured;
+  const minimum = Number(process.env.IMAGE_STUDIO_IMAGE_TIMEOUT_SECONDS || process.env.IMAGE_STUDIO_STREAM_TIMEOUT_SECONDS || 300);
   const resolvedMinimum = Number.isFinite(minimum) && minimum > 0 ? minimum : 300;
   if (!Number.isFinite(configured) || configured <= 0) return resolvedMinimum;
   return Math.max(configured, resolvedMinimum);
