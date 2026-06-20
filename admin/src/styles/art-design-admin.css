@@ -1791,8 +1791,21 @@ button,
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--art-border);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--art-soft);
+}
+
+.art-card-xs {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.art-search-bar {
+  padding: 14px 16px 10px;
+  background: color-mix(in srgb, var(--art-card) 82%, var(--art-soft));
+}
+
+.art-search-bar.is-expanded {
+  background: var(--art-card);
 }
 
 .query-panel-heading,
@@ -1804,15 +1817,83 @@ button,
   gap: 10px;
 }
 
-.query-grid {
+.query-grid,
+.search-form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(168px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.search-form-item {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.search-form-item.is-wide {
+  grid-column: span 2;
+}
+
+.search-form-item label {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.search-form-item :deep(.el-input__wrapper),
+.search-form-item :deep(.el-select__wrapper),
+.search-form-item :deep(.el-input-number .el-input__wrapper) {
+  min-height: 34px;
+  border-radius: 8px;
 }
 
 .query-grid .el-input-number,
-.query-grid .el-date-editor {
+.query-grid .el-date-editor,
+.search-form-grid .el-input-number,
+.search-form-grid .el-date-editor {
   width: 100%;
+}
+
+.action-column {
+  grid-column: span 2;
+  min-width: 0;
+}
+
+.action-buttons-wrapper {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.form-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-toggle {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--art-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.filter-toggle:hover {
+  color: var(--art-text);
+  transform: translateY(-1px);
 }
 
 .query-actions {
@@ -2826,6 +2907,23 @@ button,
   .toolbar-actions .el-segmented,
   .query-actions .el-button {
     width: 100%;
+  }
+
+  .search-form-item.is-wide,
+  .action-column {
+    grid-column: auto;
+  }
+
+  .action-buttons-wrapper,
+  .form-buttons {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-buttons .el-button,
+  .filter-toggle {
+    width: 100%;
+    justify-content: center;
   }
 
   .admin-topbar {

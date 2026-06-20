@@ -5,6 +5,8 @@ import {
   Avatar,
   Bell,
   Box,
+  ArrowDownBold,
+  ArrowUpBold,
   Close,
   Collection,
   Connection,
@@ -145,6 +147,7 @@ const drawerIndex = ref(-1)
 const logDetailVisible = ref(false)
 const selectedLog = ref<LogRecord | null>(null)
 const activeLogTab = ref<'generations' | 'api'>('generations')
+const logSearchExpanded = ref(false)
 const secretValues = reactive<Record<string, string>>({})
 const headerSearchKeyword = ref('')
 const tableSearch = reactive<Record<'interfaces' | 'upstreams' | 'models' | 'quality', string>>({
@@ -528,6 +531,25 @@ const logSummaryCards = computed(() => {
     { label: '质量案例', value: qualityCases.value.length, hint: '差评与优秀沉淀', type: 'info' }
   ]
 })
+const logSearchFields = computed(() => [
+  { key: 'keyword', label: '关键词', span: 'wide' },
+  { key: 'status', label: '状态' },
+  { key: 'interfaceId', label: '接口' },
+  { key: 'upstreamId', label: '上游' },
+  { key: 'model', label: '模型' },
+  { key: 'endpoint', label: 'Endpoint' },
+  { key: 'requestId', label: '请求 ID' },
+  { key: 'from', label: '开始时间' },
+  { key: 'to', label: '结束时间' },
+  { key: 'statusMin', label: '状态≥' },
+  { key: 'statusMax', label: '状态≤' },
+  { key: 'minDurationMs', label: '耗时≥ms' },
+  { key: 'maxDurationMs', label: '耗时≤ms' }
+])
+const visibleLogSearchFields = computed(() => logSearchExpanded.value
+  ? logSearchFields.value
+  : logSearchFields.value.slice(0, 4))
+const hiddenLogSearchFieldCount = computed(() => Math.max(0, logSearchFields.value.length - visibleLogSearchFields.value.length))
 const usageSummaryCards = computed(() => {
   const total = usage.value?.total
   const failureCount = Number(total?.failed || 0)
@@ -1024,6 +1046,10 @@ function filterLogs(records: LogRecord[]) {
     const matchesKeyword = !keyword || JSON.stringify(record).toLowerCase().includes(keyword)
     return matchesKeyword
   })
+}
+
+function toggleLogSearchExpanded() {
+  logSearchExpanded.value = !logSearchExpanded.value
 }
 
 function logQuery() {
@@ -2205,36 +2231,55 @@ window.addEventListener('beforeunload', (event) => {
               <small>{{ item.hint }}</small>
             </button>
           </div>
-          <div class="query-panel">
+          <div class="query-panel art-search-bar art-card-xs" :class="{ 'is-expanded': logSearchExpanded }">
             <div class="query-panel-heading">
               <div class="card-title"><Document />日志查询</div>
               <span>按接口、上游、模型、状态、耗时和请求 ID 组合筛选</span>
             </div>
-            <div class="query-grid">
-              <el-input v-model="logFilter.keyword" placeholder="搜索请求 ID、模型、错误摘要" clearable />
-              <el-select v-model="logFilter.status" placeholder="状态" clearable>
-                <el-option label="success" value="success" />
-                <el-option label="failed" value="failed" />
-              </el-select>
-              <el-select v-model="logFilter.interfaceId" placeholder="接口" clearable>
-                <el-option v-for="item in activeInterfaces" :key="item.id" :label="item.name" :value="item.id" />
-              </el-select>
-              <el-select v-model="logFilter.upstreamId" placeholder="上游" clearable>
-                <el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" />
-              </el-select>
-              <el-input v-model="logFilter.model" placeholder="模型" clearable />
-              <el-input v-model="logFilter.endpoint" placeholder="Endpoint" clearable />
-              <el-input v-model="logFilter.requestId" placeholder="请求 ID" clearable />
-              <el-date-picker v-model="logFilter.from" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="开始时间" />
-              <el-date-picker v-model="logFilter.to" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="结束时间" />
-              <el-input-number v-model="logFilter.statusMin" :min="100" :max="599" placeholder="状态≥" controls-position="right" />
-              <el-input-number v-model="logFilter.statusMax" :min="100" :max="599" placeholder="状态≤" controls-position="right" />
-              <el-input-number v-model="logFilter.minDurationMs" :min="0" placeholder="耗时≥ms" controls-position="right" />
-              <el-input-number v-model="logFilter.maxDurationMs" :min="0" placeholder="耗时≤ms" controls-position="right" />
-            </div>
-            <div class="query-actions">
-              <el-button type="primary" :icon="Refresh" @click="refreshLogsOnly">应用筛选</el-button>
-              <el-button @click="resetLogFilters">重置</el-button>
+            <div class="query-grid search-form-grid">
+              <div
+                v-for="field in visibleLogSearchFields"
+                :key="field.key"
+                class="search-form-item"
+                :class="{ 'is-wide': field.span === 'wide' }"
+              >
+                <label>{{ field.label }}</label>
+                <el-input v-if="field.key === 'keyword'" v-model="logFilter.keyword" placeholder="搜索请求 ID、模型、错误摘要" clearable />
+                <el-select v-else-if="field.key === 'status'" v-model="logFilter.status" placeholder="全部状态" clearable>
+                  <el-option label="success" value="success" />
+                  <el-option label="failed" value="failed" />
+                </el-select>
+                <el-select v-else-if="field.key === 'interfaceId'" v-model="logFilter.interfaceId" placeholder="全部接口" clearable>
+                  <el-option v-for="item in activeInterfaces" :key="item.id" :label="item.name" :value="item.id" />
+                </el-select>
+                <el-select v-else-if="field.key === 'upstreamId'" v-model="logFilter.upstreamId" placeholder="全部上游" clearable>
+                  <el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" />
+                </el-select>
+                <el-input v-else-if="field.key === 'model'" v-model="logFilter.model" placeholder="模型 ID" clearable />
+                <el-input v-else-if="field.key === 'endpoint'" v-model="logFilter.endpoint" placeholder="/v1/images/..." clearable />
+                <el-input v-else-if="field.key === 'requestId'" v-model="logFilter.requestId" placeholder="请求 ID" clearable />
+                <el-date-picker v-else-if="field.key === 'from'" v-model="logFilter.from" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="选择开始时间" />
+                <el-date-picker v-else-if="field.key === 'to'" v-model="logFilter.to" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss.SSSZ" placeholder="选择结束时间" />
+                <el-input-number v-else-if="field.key === 'statusMin'" v-model="logFilter.statusMin" :min="100" :max="599" placeholder="状态≥" controls-position="right" />
+                <el-input-number v-else-if="field.key === 'statusMax'" v-model="logFilter.statusMax" :min="100" :max="599" placeholder="状态≤" controls-position="right" />
+                <el-input-number v-else-if="field.key === 'minDurationMs'" v-model="logFilter.minDurationMs" :min="0" placeholder="耗时≥ms" controls-position="right" />
+                <el-input-number v-else-if="field.key === 'maxDurationMs'" v-model="logFilter.maxDurationMs" :min="0" placeholder="耗时≤ms" controls-position="right" />
+              </div>
+              <div class="action-column">
+                <div class="action-buttons-wrapper">
+                  <div class="form-buttons">
+                    <el-button class="reset-button" @click="resetLogFilters">重置</el-button>
+                    <el-button class="search-button" type="primary" :icon="Refresh" @click="refreshLogsOnly">查询</el-button>
+                  </div>
+                  <button v-if="hiddenLogSearchFieldCount || logSearchExpanded" type="button" class="filter-toggle" @click="toggleLogSearchExpanded">
+                    <span>{{ logSearchExpanded ? '收起筛选' : `展开 ${hiddenLogSearchFieldCount} 项` }}</span>
+                    <el-icon>
+                      <ArrowUpBold v-if="logSearchExpanded" />
+                      <ArrowDownBold v-else />
+                    </el-icon>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="result-toolbar">
