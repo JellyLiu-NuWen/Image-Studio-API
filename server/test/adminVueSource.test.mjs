@@ -186,13 +186,23 @@ test("Vue shell exposes Art Design Pro workspace navigation and quick actions", 
   assert.match(source, /riskItems/, "Shell should expose operational risk summaries");
   assert.match(shellSection, /page-breadcrumb/, "Shell should render an Art Design Pro style breadcrumb row");
   assert.match(shellSection, /page-tabs/, "Shell should render route-like page tabs");
-  assert.match(shellSection, /operations-panel/, "Shell should render an operations panel below the topbar");
-  assert.match(shellSection, /quick-actions/, "Operations panel should render quick action buttons");
-  assert.match(shellSection, /risk-board/, "Operations panel should render the risk summary board");
+  assert.match(shellSection, /art-operations-panel/, "Shell should render an Art operations panel below the topbar");
+  assert.match(shellSection, /art-operations-heading/, "Operations panel should render an Art heading");
+  assert.match(shellSection, /art-quick-actions/, "Operations panel should render Art quick action buttons");
+  assert.match(shellSection, /art-risk-board/, "Operations panel should render the Art risk summary board");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])operations-panel(?![A-Za-z0-9_-])/, "Shell should not keep the generic operations-panel class");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])panel-heading(?![A-Za-z0-9_-])/, "Shell should not keep the generic panel-heading class");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])quick-actions(?![A-Za-z0-9_-])/, "Shell should not keep the generic quick-actions class");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])risk-board(?![A-Za-z0-9_-])/, "Shell should not keep the generic risk-board class");
   assert.match(styleSource, /\.page-tabs/, "Styles should include page tab layout");
-  assert.match(styleSource, /\.operations-panel/, "Styles should include the operations panel layout");
-  assert.match(styleSource, /\.quick-actions/, "Styles should include quick action layout");
-  assert.match(styleSource, /\.risk-board/, "Styles should include risk board layout");
+  assert.match(styleSource, /\.art-operations-panel/, "Styles should include the Art operations panel layout");
+  assert.match(styleSource, /\.art-operations-heading/, "Styles should include the Art operations panel heading");
+  assert.match(styleSource, /\.art-quick-actions/, "Styles should include Art quick action layout");
+  assert.match(styleSource, /\.art-risk-board/, "Styles should include Art risk board layout");
+  assert.doesNotMatch(styleSource, /\.operations-panel(?![A-Za-z0-9_-])/, "Styles should remove the legacy operations-panel selector");
+  assert.doesNotMatch(styleSource, /\.panel-heading(?![A-Za-z0-9_-])/, "Styles should remove the legacy panel-heading selector");
+  assert.doesNotMatch(styleSource, /\.quick-actions(?![A-Za-z0-9_-])/, "Styles should remove the legacy quick-actions selector");
+  assert.doesNotMatch(styleSource, /\.risk-board(?![A-Za-z0-9_-])/, "Styles should remove the legacy risk-board selector");
 });
 
 test("Vue page tabs behave like an Art Design Pro worktab bar", async () => {
@@ -200,7 +210,7 @@ test("Vue page tabs behave like an Art Design Pro worktab bar", async () => {
   const tabSection = sourceBetween(
     source,
     "<nav class=\"page-tabs art-work-tab\"",
-    "<section class=\"operations-panel\"",
+    "<section class=\"art-operations-panel\"",
   );
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 

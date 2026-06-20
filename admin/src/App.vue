@@ -2014,13 +2014,13 @@ window.addEventListener('beforeunload', (event) => {
 
       <div class="layout-content">
         <div id="app-content-header">
-          <section class="operations-panel" aria-label="后台快捷操作">
+          <section class="art-operations-panel" aria-label="后台快捷操作">
             <div>
-              <div class="panel-heading">
+              <div class="art-operations-heading">
                 <el-icon><Operation /></el-icon>
                 <span>运维快捷动作</span>
               </div>
-              <div class="quick-actions">
+              <div class="art-quick-actions">
                 <el-button
                   v-for="item in quickActions"
                   :key="item.label"
@@ -2032,7 +2032,7 @@ window.addEventListener('beforeunload', (event) => {
                 </el-button>
               </div>
             </div>
-            <div class="risk-board">
+            <div class="art-risk-board">
               <button v-for="item in riskItems" :key="item.label" :class="riskClass(item.severity)" @click="navigateTo(item.target)">
                 <el-icon><WarningFilled /></el-icon>
                 <span>{{ item.label }}</span>

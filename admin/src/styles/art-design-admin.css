@@ -1194,7 +1194,7 @@ button,
   background: rgba(100, 116, 139, 0.18);
 }
 
-.operations-panel {
+.art-operations-panel {
   display: grid;
   grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
   gap: 14px;
@@ -1205,7 +1205,7 @@ button,
   box-shadow: var(--art-shadow);
 }
 
-.panel-heading {
+.art-operations-heading {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1215,19 +1215,19 @@ button,
   font-weight: 900;
 }
 
-.quick-actions {
+.art-quick-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 9px;
 }
 
-.risk-board {
+.art-risk-board {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
-.risk-board button {
+.art-risk-board button {
   min-height: 86px;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1247,24 +1247,24 @@ button,
   transition: 180ms ease;
 }
 
-.risk-board button:hover {
+.art-risk-board button:hover {
   transform: translateY(-1px);
   border-color: rgba(37, 99, 235, 0.3);
 }
 
-.risk-board .el-icon {
+.art-risk-board .el-icon {
   grid-area: icon;
   margin-top: 1px;
 }
 
-.risk-board span {
+.art-risk-board span {
   grid-area: label;
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 900;
 }
 
-.risk-board strong {
+.art-risk-board strong {
   grid-area: value;
   color: var(--art-text);
   font-size: 22px;
@@ -1272,7 +1272,7 @@ button,
   overflow-wrap: anywhere;
 }
 
-.risk-board small {
+.art-risk-board small {
   grid-area: hint;
   min-height: 28px;
   color: var(--art-muted);
@@ -1281,17 +1281,17 @@ button,
   overflow: hidden;
 }
 
-.risk-board button.critical {
+.art-risk-board button.critical {
   border-color: rgba(220, 38, 38, 0.24);
   background: rgba(220, 38, 38, 0.07);
 }
 
-.risk-board button.warning {
+.art-risk-board button.warning {
   border-color: rgba(217, 119, 6, 0.28);
   background: rgba(217, 119, 6, 0.08);
 }
 
-.risk-board button.info {
+.art-risk-board button.info {
   border-color: rgba(37, 99, 235, 0.16);
 }
 
@@ -3992,7 +3992,7 @@ button,
   .session-workspace,
   .system-workspace-grid,
   .usage-analytics-grid,
-  .operations-panel {
+  .art-operations-panel {
     grid-template-columns: 1fr;
   }
 
@@ -4023,7 +4023,7 @@ button,
   .system-summary-grid,
   .usage-summary-grid,
   .login-signal-grid,
-  .risk-board {
+  .art-risk-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -4119,7 +4119,7 @@ button,
   .usage-summary-grid,
   .login-signal-grid,
   .art-search-form-grid,
-  .risk-board,
+  .art-risk-board,
   .art-console-status-list,
   .art-alert-status-list,
   .art-system-status-list {
