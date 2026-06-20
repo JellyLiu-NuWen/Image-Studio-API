@@ -152,6 +152,24 @@ const usageInterfaceRows = computed(() => usageRows(usage.value?.byInterface))
 const usageModelRows = computed(() => usageRows(usage.value?.byModel))
 const usageUpstreamRows = computed(() => usageRows(usage.value?.byUpstream))
 const usageDateRows = computed(() => usageRows(usage.value?.byDate).sort((left, right) => right.name.localeCompare(left.name)))
+const usageTrendBars = computed(() => {
+  const rows = usageRows(usage.value?.byDate).sort((left, right) => left.name.localeCompare(right.name)).slice(-7)
+  const maxTotal = Math.max(1, ...rows.map((item) => item.total))
+  return rows.map((item) => ({
+    ...item,
+    shortName: item.name.slice(5),
+    height: Math.max(8, Math.round((item.total / maxTotal) * 100))
+  }))
+})
+const statusDistribution = computed(() => {
+  const total = Math.max(1, Number(metrics.value?.generations.total || 0))
+  const success = Number(metrics.value?.generations.success || 0)
+  const failed = Number(metrics.value?.generations.failed || metrics.value?.generations.error || 0)
+  return [
+    { label: '成功', count: success, percent: Math.round((success / total) * 100), className: 'success' },
+    { label: '失败', count: failed, percent: Math.round((failed / total) * 100), className: 'failed' }
+  ]
+})
 const poorQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'poor'))
 const excellentQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'excellent'))
 const qualityCaseByRecordId = computed(() => {
@@ -902,6 +920,32 @@ window.addEventListener('beforeunload', (event) => {
             <span>当前并发</span>
             <strong>{{ metricValue(metrics?.activeRequests) }}</strong>
             <small>接口上限 {{ config?.maxConcurrentRequests || 0 }}</small>
+          </el-card>
+        </div>
+        <div class="content-grid dashboard-visual-grid">
+          <el-card shadow="never">
+            <template #header><div class="card-title"><DataAnalysis />近 7 日用量趋势</div></template>
+            <div class="usage-trend" aria-label="近 7 日用量趋势">
+              <div v-for="item in usageTrendBars" :key="item.name" class="trend-bar">
+                <span>{{ item.total }}</span>
+                <i :style="{ height: `${item.height}%` }"></i>
+                <small>{{ item.shortName }}</small>
+              </div>
+              <div v-if="!usageTrendBars.length" class="empty-visual">暂无用量数据</div>
+            </div>
+          </el-card>
+          <el-card shadow="never">
+            <template #header><div class="card-title"><Monitor />任务状态分布</div></template>
+            <div class="status-distribution" aria-label="任务状态分布">
+              <div v-for="item in statusDistribution" :key="item.label" class="distribution-row">
+                <div>
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.count }}</strong>
+                </div>
+                <p><i :class="item.className" :style="{ width: `${item.percent}%` }"></i></p>
+                <small>{{ item.percent }}%</small>
+              </div>
+            </div>
           </el-card>
         </div>
         <div class="content-grid">

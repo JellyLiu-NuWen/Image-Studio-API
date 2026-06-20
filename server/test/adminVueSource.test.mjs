@@ -75,3 +75,20 @@ test("Vue admin shell exposes an Art Design Pro style theme switch", async () =>
   assert.match(topbarSection, /主题/, "Topbar should expose a visible theme switch control");
   assert.match(styleSource, /\.admin-shell\[data-theme="dark"\]/, "Styles should define dark theme variables");
 });
+
+test("Vue dashboard exposes trend and status distribution visualizations", async () => {
+  const source = await readAppSource();
+  const dashboardSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'dashboard'\"",
+    "<section v-if=\"activeView === 'interfaces'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /usageTrendBars/, "Dashboard should compute usage trend bars from usage buckets");
+  assert.match(source, /statusDistribution/, "Dashboard should compute success and failure distribution");
+  assert.match(dashboardSection, /usage-trend/, "Dashboard should render the usage trend chart area");
+  assert.match(dashboardSection, /status-distribution/, "Dashboard should render the status distribution chart area");
+  assert.match(styleSource, /\.usage-trend/, "Styles should include trend chart layout");
+  assert.match(styleSource, /\.status-distribution/, "Styles should include status distribution layout");
+});

@@ -346,6 +346,10 @@ button,
   align-items: start;
 }
 
+.dashboard-visual-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+}
+
 .card-title {
   display: inline-flex;
   align-items: center;
@@ -385,6 +389,101 @@ button,
 .status-list strong {
   overflow-wrap: anywhere;
   color: var(--art-text);
+}
+
+.usage-trend {
+  min-height: 210px;
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  padding: 12px 4px 2px;
+}
+
+.trend-bar {
+  min-width: 42px;
+  flex: 1;
+  height: 180px;
+  display: grid;
+  grid-template-rows: 24px 1fr 20px;
+  align-items: end;
+  gap: 7px;
+  text-align: center;
+}
+
+.trend-bar span,
+.trend-bar small {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.trend-bar i {
+  width: 100%;
+  min-height: 8px;
+  display: block;
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(180deg, #22c55e, #2563eb);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
+}
+
+.empty-visual {
+  width: 100%;
+  align-self: center;
+  color: var(--art-muted);
+  text-align: center;
+}
+
+.status-distribution {
+  display: grid;
+  gap: 18px;
+  padding: 14px 2px;
+}
+
+.distribution-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 54px;
+  align-items: center;
+  gap: 12px;
+}
+
+.distribution-row div {
+  display: grid;
+  gap: 3px;
+}
+
+.distribution-row span,
+.distribution-row small {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.distribution-row strong {
+  color: var(--art-text);
+  font-size: 20px;
+}
+
+.distribution-row p {
+  height: 12px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--art-soft);
+}
+
+.distribution-row i {
+  height: 100%;
+  min-width: 2px;
+  display: block;
+  border-radius: inherit;
+}
+
+.distribution-row i.success {
+  background: #16a34a;
+}
+
+.distribution-row i.failed {
+  background: #dc2626;
 }
 
 .preset-grid {
