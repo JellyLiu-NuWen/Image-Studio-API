@@ -1003,12 +1003,14 @@ button,
   color: #94a3b8;
 }
 
-.page-tabs {
+.page-tabs,
+.art-work-tab {
   min-height: 46px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  overflow-x: auto;
+  justify-content: space-between;
+  gap: 10px;
+  overflow: hidden;
   padding: 7px;
   border: 1px solid var(--art-border);
   border-radius: 14px;
@@ -1016,7 +1018,17 @@ button,
   box-shadow: var(--art-shadow);
 }
 
-.page-tabs button {
+.worktab-scroll {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.page-tabs button,
+.worktab-action-trigger {
   height: 30px;
   display: inline-flex;
   align-items: center;
@@ -1033,7 +1045,8 @@ button,
   transition: 180ms ease;
 }
 
-.page-tabs button:hover {
+.page-tabs button:hover,
+.worktab-action-trigger:hover {
   border-color: var(--art-border);
   background: var(--art-soft);
   color: var(--art-text);
@@ -1043,6 +1056,27 @@ button,
   border-color: rgba(37, 99, 235, 0.22);
   background: rgba(37, 99, 235, 0.1);
   color: var(--art-primary);
+}
+
+.page-tabs button.fixed {
+  padding-left: 11px;
+  border-style: solid;
+}
+
+.page-tabs button.fixed .el-icon:first-child {
+  color: var(--art-primary);
+}
+
+.worktab-action-trigger {
+  width: 32px;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: var(--art-soft);
+}
+
+.worktab-action-trigger svg {
+  width: 16px;
+  height: 16px;
 }
 
 .tab-close {

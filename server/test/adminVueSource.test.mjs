@@ -140,6 +140,34 @@ test("Vue shell exposes Art Design Pro workspace navigation and quick actions", 
   assert.match(styleSource, /\.risk-board/, "Styles should include risk board layout");
 });
 
+test("Vue page tabs behave like an Art Design Pro worktab bar", async () => {
+  const source = await readAppSource();
+  const tabSection = sourceBetween(
+    source,
+    "<nav class=\"page-tabs art-work-tab\"",
+    "<section class=\"operations-panel\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /fixedPageTabs/, "Worktab state should track fixed tabs");
+  assert.match(source, /workTabActions/, "Worktab should expose Art Design style bulk actions");
+  assert.match(source, /closePageTabsToLeft/, "Worktab should close tabs to the left");
+  assert.match(source, /closePageTabsToRight/, "Worktab should close tabs to the right");
+  assert.match(source, /closeOtherPageTabs/, "Worktab should close other tabs");
+  assert.match(source, /closeAllPageTabs/, "Worktab should close all non-fixed tabs");
+  assert.match(source, /toggleFixedPageTab/, "Worktab should toggle fixed tabs");
+  assert.match(source, /refreshCurrentPageTab/, "Worktab should refresh the active module");
+  assert.match(tabSection, /art-work-tab/, "Page tabs should use the Art Design worktab shell class");
+  assert.match(tabSection, /worktab-scroll/, "Worktab should keep scrollable tab content");
+  assert.match(tabSection, /worktab-action-trigger/, "Worktab should expose a dropdown trigger");
+  assert.match(tabSection, /@contextmenu\.prevent/, "Worktab should support a context menu action on tabs");
+  assert.match(tabSection, /isPageTabFixed/, "Worktab should show fixed state");
+  assert.match(tabSection, /workTabActions/, "Worktab dropdown should render bulk actions");
+  assert.match(styleSource, /\.art-work-tab/, "Styles should include Art Design worktab shell");
+  assert.match(styleSource, /\.worktab-scroll/, "Styles should include worktab scroll area");
+  assert.match(styleSource, /\.worktab-action-trigger/, "Styles should include worktab action trigger");
+});
+
 test("Vue topbar exposes Art Design Pro header tools", async () => {
   const source = await readAppSource();
   const topbarSection = sourceBetween(

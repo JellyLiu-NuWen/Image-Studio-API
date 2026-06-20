@@ -26,6 +26,7 @@ import {
   Moon,
   Operation,
   Plus,
+  Position,
   Refresh,
   Search,
   Setting,
@@ -68,6 +69,7 @@ type LayoutMode = 'left' | 'compact' | 'wide'
 type MenuStyleMode = 'design' | 'dark' | 'light'
 type TableDensity = 'default' | 'comfortable' | 'compact'
 type SettingOptionGroup = 'theme' | 'layout' | 'menuStyle' | 'density'
+type WorkTabActionKey = 'refresh' | 'fixed' | 'left' | 'right' | 'other' | 'all'
 
 const navGroups: Array<{ title: string; items: Array<{ key: ViewKey; label: string; icon: unknown }> }> = [
   { title: '监控', items: [
@@ -97,6 +99,8 @@ const authenticated = ref(false)
 const username = ref('admin')
 const activeView = ref<ViewKey>('dashboard')
 const pageTabs = ref<ViewKey[]>(['dashboard'])
+const fixedPageTabs = ref<ViewKey[]>(['dashboard'])
+const workTabTarget = ref<ViewKey>('dashboard')
 const themeMode = ref<ThemeMode>('light')
 const layoutMode = ref<LayoutMode>('left')
 const menuStyleMode = ref<MenuStyleMode>('design')
@@ -169,7 +173,23 @@ const breadcrumbItems = computed(() => [
 ])
 const openedPageTabs = computed(() => pageTabs.value
   .map((key) => flatNavItems.value.find((item) => item.key === key))
-  .filter(Boolean) as Array<{ key: ViewKey; label: string; icon: unknown; group: string }>)
+  .filter((item): item is NonNullable<typeof item> => Boolean(item))
+  .map((item) => ({ ...item, fixed: fixedPageTabs.value.includes(item.key) })) as Array<{ key: ViewKey; label: string; icon: unknown; group: string; fixed: boolean }>)
+const workTabActions = computed(() => {
+  const target = workTabTarget.value
+  const targetIndex = pageTabs.value.indexOf(target)
+  const leftTabs = pageTabs.value.slice(0, Math.max(targetIndex, 0))
+  const rightTabs = targetIndex >= 0 ? pageTabs.value.slice(targetIndex + 1) : []
+  const isOnlyClosable = pageTabs.value.filter((key) => !isPageTabFixed(key)).length <= 0
+  return [
+    { key: 'refresh', label: '刷新当前', icon: Refresh, disabled: target !== activeView.value },
+    { key: 'fixed', label: isPageTabFixed(target) ? '取消固定' : '固定标签', icon: Position, disabled: target === 'dashboard' },
+    { key: 'left', label: '关闭左侧', icon: Close, disabled: !leftTabs.some((key) => !isPageTabFixed(key)) },
+    { key: 'right', label: '关闭右侧', icon: Close, disabled: !rightTabs.some((key) => !isPageTabFixed(key)) },
+    { key: 'other', label: '关闭其它', icon: Collection, disabled: !pageTabs.value.some((key) => key !== target && !isPageTabFixed(key)) },
+    { key: 'all', label: '关闭全部', icon: SwitchButton, disabled: isOnlyClosable },
+  ] as Array<{ key: WorkTabActionKey; label: string; icon: unknown; disabled: boolean }>
+})
 const headerSearchResults = computed(() => {
   const keyword = headerSearchKeyword.value.trim().toLowerCase()
   const items = flatNavItems.value.map((item) => ({
@@ -736,8 +756,9 @@ function riskClass(severity: string) {
 function navigateTo(key: ViewKey) {
   activeView.value = key
   if (!pageTabs.value.includes(key)) {
-    pageTabs.value = [...pageTabs.value, key].slice(-8)
+    pageTabs.value = compactPageTabs([...pageTabs.value, key])
   }
+  workTabTarget.value = key
 }
 
 function selectHeaderSearch(key: ViewKey) {
@@ -847,13 +868,81 @@ function resetSettingsPanel() {
   persistSettings()
 }
 
+function isPageTabFixed(key: ViewKey) {
+  return fixedPageTabs.value.includes(key)
+}
+
+function compactPageTabs(keys: ViewKey[]) {
+  const unique = Array.from(new Set(keys))
+  const pinned = fixedPageTabs.value.filter((key) => unique.includes(key))
+  const floating = unique.filter((key) => !pinned.includes(key))
+  const maxFloating = Math.max(1, 8 - pinned.length)
+  return [...pinned, ...floating.slice(-maxFloating)]
+}
+
+function setWorkTabTarget(key: ViewKey) {
+  workTabTarget.value = key
+}
+
 function closePageTab(key: ViewKey) {
-  if (key === 'dashboard') return
+  if (isPageTabFixed(key)) return
   const nextTabs = pageTabs.value.filter((item) => item !== key)
   pageTabs.value = nextTabs.length ? nextTabs : ['dashboard']
   if (activeView.value === key) {
     activeView.value = pageTabs.value[pageTabs.value.length - 1] || 'dashboard'
   }
+  workTabTarget.value = activeView.value
+}
+
+function toggleFixedPageTab(key: ViewKey) {
+  if (key === 'dashboard') return
+  fixedPageTabs.value = isPageTabFixed(key)
+    ? fixedPageTabs.value.filter((item) => item !== key)
+    : [...fixedPageTabs.value, key]
+  pageTabs.value = compactPageTabs(pageTabs.value)
+}
+
+function closePageTabsToLeft(key: ViewKey) {
+  const index = pageTabs.value.indexOf(key)
+  if (index <= 0) return
+  pageTabs.value = pageTabs.value.filter((item, itemIndex) => itemIndex >= index || isPageTabFixed(item))
+  if (!pageTabs.value.includes(activeView.value)) activeView.value = key
+  workTabTarget.value = activeView.value
+}
+
+function closePageTabsToRight(key: ViewKey) {
+  const index = pageTabs.value.indexOf(key)
+  if (index < 0) return
+  pageTabs.value = pageTabs.value.filter((item, itemIndex) => itemIndex <= index || isPageTabFixed(item))
+  if (!pageTabs.value.includes(activeView.value)) activeView.value = key
+  workTabTarget.value = activeView.value
+}
+
+function closeOtherPageTabs(key: ViewKey) {
+  pageTabs.value = pageTabs.value.filter((item) => item === key || isPageTabFixed(item))
+  if (!pageTabs.value.includes(activeView.value)) activeView.value = key
+  workTabTarget.value = activeView.value
+}
+
+function closeAllPageTabs() {
+  pageTabs.value = fixedPageTabs.value.length ? [...fixedPageTabs.value] : ['dashboard']
+  if (!pageTabs.value.includes(activeView.value)) activeView.value = pageTabs.value[0] || 'dashboard'
+  workTabTarget.value = activeView.value
+}
+
+async function refreshCurrentPageTab() {
+  if (activeView.value === 'logs') await refreshLogsOnly()
+  else await refreshAll()
+}
+
+async function runWorkTabAction(key: WorkTabActionKey) {
+  const target = workTabTarget.value || activeView.value
+  if (key === 'refresh') await refreshCurrentPageTab()
+  if (key === 'fixed') toggleFixedPageTab(target)
+  if (key === 'left') closePageTabsToLeft(target)
+  if (key === 'right') closePageTabsToRight(target)
+  if (key === 'other') closeOtherPageTabs(target)
+  if (key === 'all') closeAllPageTabs()
 }
 
 function loadThemeMode() {
@@ -1586,17 +1675,38 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </header>
 
-      <nav class="page-tabs" aria-label="打开的模块">
-        <button
-          v-for="tab in openedPageTabs"
-          :key="tab.key"
-          :class="{ active: activeView === tab.key }"
-          @click="navigateTo(tab.key)"
-        >
-          <el-icon><component :is="tab.icon" /></el-icon>
-          <span>{{ tab.label }}</span>
-          <el-icon v-if="tab.key !== 'dashboard'" class="tab-close" @click.stop="closePageTab(tab.key)"><Close /></el-icon>
-        </button>
+      <nav class="page-tabs art-work-tab" aria-label="打开的模块">
+        <div class="worktab-scroll">
+          <button
+            v-for="tab in openedPageTabs"
+            :key="tab.key"
+            :class="{ active: activeView === tab.key, fixed: isPageTabFixed(tab.key) }"
+            @click="navigateTo(tab.key)"
+            @contextmenu.prevent="setWorkTabTarget(tab.key)"
+          >
+            <el-icon><component :is="tab.fixed ? Position : tab.icon" /></el-icon>
+            <span>{{ tab.label }}</span>
+            <el-icon v-if="!isPageTabFixed(tab.key)" class="tab-close" @click.stop="closePageTab(tab.key)"><Close /></el-icon>
+          </button>
+        </div>
+        <el-dropdown trigger="click" @command="(key: WorkTabActionKey) => runWorkTabAction(key)">
+          <button type="button" class="worktab-action-trigger" @click="setWorkTabTarget(activeView)" aria-label="标签操作">
+            <More />
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                v-for="item in workTabActions"
+                :key="item.key"
+                :command="item.key"
+                :disabled="item.disabled"
+              >
+                <el-icon><component :is="item.icon" /></el-icon>
+                <span>{{ item.label }}</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </nav>
 
       <section class="operations-panel" aria-label="后台快捷操作">
