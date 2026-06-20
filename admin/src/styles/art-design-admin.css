@@ -3156,7 +3156,7 @@ button,
   margin-top: 16px;
 }
 
-.changelog-preview,
+.art-changelog-preview,
 .art-rollback-command {
   margin-top: 16px;
   padding: 12px;
@@ -3165,7 +3165,7 @@ button,
   background: var(--art-code-bg);
 }
 
-.changelog-preview strong,
+.art-changelog-preview strong,
 .art-rollback-command span {
   display: block;
   margin-bottom: 8px;
@@ -3173,7 +3173,7 @@ button,
   font-size: 13px;
 }
 
-.changelog-preview pre {
+.art-changelog-preview pre {
   max-height: 180px;
   margin: 0;
   overflow: auto;
@@ -3888,7 +3888,7 @@ button,
   overflow-wrap: anywhere;
 }
 
-.curl-block {
+.art-curl-block {
   margin: 0;
   padding: 14px;
   overflow-x: auto;

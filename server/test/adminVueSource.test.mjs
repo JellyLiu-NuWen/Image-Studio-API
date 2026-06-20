@@ -1188,16 +1188,20 @@ test("Vue log detail diagnostic cards use Art Design Pro panels", async () => {
   assert.match(detailDrawer, /detail-panel-meta/, "Detail cards should expose metadata in the header");
   assert.match(detailDrawer, /detail-panel-body/, "Detail cards should wrap content in a panel body");
   assert.match(detailDrawer, /art-detail-text/, "Diagnostic summary copy should use an Art detail text token");
+  assert.match(detailDrawer, /art-curl-block/, "Sanitized replay command should use an Art curl block token");
   assert.match(detailDrawer, /route-detail-panel/, "Route card should use the shared detail panel shell");
   assert.match(detailDrawer, /diagnostic-detail-panel/, "Diagnostic card should use the shared detail panel shell");
   assert.match(detailDrawer, /curl-detail-panel/, "Curl card should use the shared detail panel shell");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-text(?![A-Za-z0-9_-])/, "Detail drawer should not keep the generic detail-text class");
+  assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])curl-block(?![A-Za-z0-9_-])/, "Detail drawer should not keep the generic curl-block class");
   assert.doesNotMatch(detailDrawer, /<template #header><div class="card-title"/, "Log detail drawer should not use legacy one-line card titles");
   assert.match(styleSource, /\.art-detail-panel/, "Styles should include the Art detail panel shell");
   assert.match(styleSource, /\.detail-panel-header/, "Styles should include detail panel header styling");
   assert.match(styleSource, /\.detail-panel-body/, "Styles should include detail panel body styling");
   assert.match(styleSource, /\.art-detail-text/, "Styles should include Art detail text styling");
+  assert.match(styleSource, /\.art-curl-block/, "Styles should include Art curl block styling");
   assert.doesNotMatch(styleSource, /\.detail-text(?![A-Za-z0-9_-])/, "Styles should remove the generic detail-text selector");
+  assert.doesNotMatch(styleSource, /\.curl-block(?![A-Za-z0-9_-])/, "Styles should remove the generic curl-block selector");
 });
 
 test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
@@ -1371,11 +1375,13 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.match(systemSection, /art-system-backup-status/, "System backup status should use a dedicated Art status row");
   assert.match(systemSection, /art-system-file-input/, "System restore input should use a dedicated Art hidden file control");
   assert.match(systemSection, /art-system-update-actions/, "System update actions should use a dedicated Art action row");
+  assert.match(systemSection, /art-changelog-preview/, "System changelog preview should use an Art preview token");
   assert.match(systemSection, /art-rollback-command/, "System rollback command should use an Art command token");
   assert.doesNotMatch(systemSection, /class="status-list"/, "System panels should not keep the legacy status-list class");
   assert.doesNotMatch(systemSection, /class="system-actions"/, "System panels should not keep the generic system-actions class");
   assert.doesNotMatch(systemSection, /class="hidden-file"/, "System panels should not keep the generic hidden-file class");
   assert.doesNotMatch(systemSection, /class="update-actions system-panel-actions"/, "System panels should not keep the generic update-actions class");
+  assert.doesNotMatch(systemSection, /(?<![A-Za-z0-9_-])changelog-preview(?![A-Za-z0-9_-])/, "System panels should not keep the generic changelog-preview class");
   assert.doesNotMatch(systemSection, /(?<![A-Za-z0-9_-])rollback-command(?![A-Za-z0-9_-])/, "System panels should not keep the generic rollback-command class");
   assert.match(styleSource, /\.art-system-panel/, "Styles should include system panel shell");
   assert.match(styleSource, /\.system-panel-header/, "Styles should include system panel header");
@@ -1385,10 +1391,12 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.match(styleSource, /\.art-system-backup-status/, "Styles should include system backup status row");
   assert.match(styleSource, /\.art-system-file-input/, "Styles should include system hidden file input");
   assert.match(styleSource, /\.art-system-update-actions/, "Styles should include system update actions row");
+  assert.match(styleSource, /\.art-changelog-preview/, "Styles should include Art changelog preview styling");
   assert.match(styleSource, /\.art-rollback-command/, "Styles should include Art rollback command styling");
   assert.doesNotMatch(styleSource, /\.system-actions\b/, "Styles should remove the legacy system-actions selector");
   assert.doesNotMatch(styleSource, /\.hidden-file\b/, "Styles should remove the legacy hidden-file selector");
   assert.doesNotMatch(styleSource, /\.update-actions\b/, "Styles should remove the legacy update-actions selector");
+  assert.doesNotMatch(styleSource, /\.changelog-preview(?![A-Za-z0-9_-])/, "Styles should remove the generic changelog-preview selector");
   assert.doesNotMatch(styleSource, /\.rollback-command(?![A-Za-z0-9_-])/, "Styles should remove the generic rollback-command selector");
 });
 

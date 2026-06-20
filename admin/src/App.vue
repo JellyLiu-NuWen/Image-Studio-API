@@ -3281,7 +3281,7 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button class="system-panel-action" :disabled="!updateInfo.changelogURL && !updateInfo.releaseURL" @click="openUpdateLink">查看 Changelog</el-button>
                 <el-button class="system-panel-action" :disabled="!updateInfo.rollbackCommand" @click="copyRollbackCommand">复制回滚命令</el-button>
               </div>
-              <div v-if="updateInfo.changelog" class="changelog-preview">
+              <div v-if="updateInfo.changelog" class="art-changelog-preview">
                 <strong>Changelog</strong>
                 <pre>{{ updateInfo.changelog }}</pre>
               </div>
@@ -3715,7 +3715,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </template>
             <div class="detail-panel-body">
-              <pre class="curl-block">{{ sanitizedCurl(selectedLog) }}</pre>
+              <pre class="art-curl-block">{{ sanitizedCurl(selectedLog) }}</pre>
             </div>
           </el-card>
         </div>
