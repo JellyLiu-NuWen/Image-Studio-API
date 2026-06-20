@@ -3491,7 +3491,7 @@ window.addEventListener('beforeunload', (event) => {
     </el-drawer>
 
     <el-drawer v-model="drawerVisible" :title="drawerTitle()" size="620px" destroy-on-close class="config-drawer">
-      <div v-if="drawerContext" class="drawer-overview">
+      <div v-if="drawerContext" class="art-drawer-overview">
         <div>
           <span>{{ drawerContext.eyebrow }}</span>
           <h3>{{ drawerContext.title }}</h3>
@@ -3499,7 +3499,7 @@ window.addEventListener('beforeunload', (event) => {
         </div>
         <el-tag :type="drawerContext.enabled ? 'success' : 'warning'">{{ drawerContext.enabled ? '启用' : '停用' }}</el-tag>
       </div>
-      <div class="drawer-status-grid">
+      <div class="art-drawer-status-grid">
         <div v-for="item in drawerStatusCards" :key="item.label" :class="item.type">
           <span>{{ item.label }}</span>
           <strong>{{ item.value }}</strong>
@@ -3633,7 +3633,7 @@ window.addEventListener('beforeunload', (event) => {
       </template>
 
       <template #footer>
-        <div class="drawer-footer-actions">
+        <div class="art-drawer-footer-actions">
           <div>
             <strong>{{ drawerContext?.title || drawerTitle() }}</strong>
             <span>{{ drawerContext?.id || '未选择' }} · {{ drawerContext?.meta || '等待配置' }}</span>
