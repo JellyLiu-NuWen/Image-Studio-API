@@ -1441,20 +1441,20 @@ button,
   padding: 10px 18px 18px;
 }
 
-.console-panel-header {
+.art-console-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
 }
 
-.console-panel-title {
+.art-console-panel-title {
   min-width: 0;
   display: grid;
   gap: 5px;
 }
 
-.console-panel-title h4 {
+.art-console-panel-title h4 {
   margin: 0;
   display: inline-flex;
   align-items: center;
@@ -1464,25 +1464,25 @@ button,
   font-weight: 900;
 }
 
-.console-panel-title h4 svg {
+.art-console-panel-title h4 svg {
   width: 18px;
   height: 18px;
 }
 
-.console-panel-title p {
+.art-console-panel-title p {
   margin: 0;
   color: var(--art-muted);
   font-size: 12px;
 }
 
-.console-panel-tools {
+.art-console-panel-tools {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
 }
 
-.console-panel-badge {
+.art-console-panel-badge {
   min-height: 24px;
   display: inline-flex;
   align-items: center;
@@ -1494,7 +1494,7 @@ button,
   font-weight: 800;
 }
 
-.console-panel-action {
+.art-console-panel-action {
   min-height: 26px;
   padding: 0 10px;
   border: 1px solid var(--art-border);
@@ -1507,13 +1507,13 @@ button,
   transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
-.console-panel-action:hover {
+.art-console-panel-action:hover {
   border-color: rgba(68, 93, 255, 0.25);
   background: rgba(68, 93, 255, 0.08);
   transform: translateY(-1px);
 }
 
-.console-panel-action:focus-visible {
+.art-console-panel-action:focus-visible {
   outline: 2px solid rgba(68, 93, 255, 0.35);
   outline-offset: 2px;
 }

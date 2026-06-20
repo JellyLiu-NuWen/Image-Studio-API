@@ -2071,14 +2071,14 @@ window.addEventListener('beforeunload', (event) => {
         <div class="art-console-section-grid dashboard-visual-grid">
           <el-card shadow="never" class="art-console-panel">
             <template #header>
-              <div class="console-panel-header">
-                <div class="console-panel-title">
+              <div class="art-console-panel-header">
+                <div class="art-console-panel-title">
                   <h4><DataAnalysis />近 7 日用量趋势</h4>
                   <p>按日期汇总生成量与估算成本</p>
                 </div>
-                <div class="console-panel-tools">
-                  <span class="console-panel-badge">Usage</span>
-                  <button type="button" class="console-panel-action" @click="navigateTo('usage')">详情</button>
+                <div class="art-console-panel-tools">
+                  <span class="art-console-panel-badge">Usage</span>
+                  <button type="button" class="art-console-panel-action" @click="navigateTo('usage')">详情</button>
                 </div>
               </div>
             </template>
@@ -2093,14 +2093,14 @@ window.addEventListener('beforeunload', (event) => {
           </el-card>
           <el-card shadow="never" class="art-console-panel">
             <template #header>
-              <div class="console-panel-header">
-                <div class="console-panel-title">
+              <div class="art-console-panel-header">
+                <div class="art-console-panel-title">
                   <h4><Monitor />任务状态分布</h4>
                   <p>成功、失败与处理中请求占比</p>
                 </div>
-                <div class="console-panel-tools">
-                  <span class="console-panel-badge">Live</span>
-                  <button type="button" class="console-panel-action" @click="refreshAll">刷新</button>
+                <div class="art-console-panel-tools">
+                  <span class="art-console-panel-badge">Live</span>
+                  <button type="button" class="art-console-panel-action" @click="refreshAll">刷新</button>
                 </div>
               </div>
             </template>
@@ -2119,14 +2119,14 @@ window.addEventListener('beforeunload', (event) => {
         <div class="art-console-section-grid">
           <el-card shadow="never" class="art-console-panel">
             <template #header>
-              <div class="console-panel-header">
-                <div class="console-panel-title">
+              <div class="art-console-panel-header">
+                <div class="art-console-panel-title">
                   <h4><Monitor />服务状态</h4>
                   <p>接口、上游、模型和版本概览</p>
                 </div>
-                <div class="console-panel-tools">
-                  <span class="console-panel-badge">Service</span>
-                  <button type="button" class="console-panel-action" @click="navigateTo('system')">系统</button>
+                <div class="art-console-panel-tools">
+                  <span class="art-console-panel-badge">Service</span>
+                  <button type="button" class="art-console-panel-action" @click="navigateTo('system')">系统</button>
                 </div>
               </div>
             </template>
@@ -2139,14 +2139,14 @@ window.addEventListener('beforeunload', (event) => {
           </el-card>
           <el-card shadow="never" class="art-console-panel">
             <template #header>
-              <div class="console-panel-header">
-                <div class="console-panel-title">
+              <div class="art-console-panel-header">
+                <div class="art-console-panel-title">
                   <h4><Timer />最近失败</h4>
                   <p>快速定位近期失败请求</p>
                 </div>
-                <div class="console-panel-tools">
-                  <span class="console-panel-badge">Errors</span>
-                  <button type="button" class="console-panel-action" @click="navigateTo('logs')">日志</button>
+                <div class="art-console-panel-tools">
+                  <span class="art-console-panel-badge">Errors</span>
+                  <button type="button" class="art-console-panel-action" @click="navigateTo('logs')">日志</button>
                 </div>
               </div>
             </template>
@@ -2599,7 +2599,7 @@ window.addEventListener('beforeunload', (event) => {
                 <span class="quality-case-panel-badge">总计 {{ qualityCases.length }}</span>
                 <span class="quality-case-panel-badge danger">差例 {{ poorQualityCases.length }}</span>
                 <span class="quality-case-panel-badge success">优秀 {{ excellentQualityCases.length }}</span>
-                <button type="button" class="console-panel-action" @click="refreshAll">刷新案例</button>
+                <button type="button" class="art-console-panel-action" @click="refreshAll">刷新案例</button>
               </div>
             </div>
           </template>

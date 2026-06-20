@@ -154,19 +154,37 @@ test("Vue dashboard chart modules use Art Design Pro console panels", async () =
   assert.match(dashboardSection, /art-console-status-list/, "Dashboard status summary should use an Art console status list");
   assert.doesNotMatch(dashboardSection, /content-grid/, "Dashboard modules should not keep the legacy content-grid class");
   assert.doesNotMatch(dashboardSection, /class="status-list"/, "Dashboard modules should not keep the legacy status-list class");
-  assert.match(dashboardSection, /console-panel-header/g, "Dashboard modules should render template-style panel headers");
-  assert.match(dashboardSection, /console-panel-title/g, "Dashboard modules should render compact title blocks");
-  assert.match(dashboardSection, /console-panel-badge/g, "Dashboard module headers should include status badges");
-  assert.match(dashboardSection, /console-panel-action/g, "Dashboard module headers should expose small action affordances");
+  assert.match(dashboardSection, /art-console-panel-header/g, "Dashboard modules should render template-style Art panel headers");
+  assert.match(dashboardSection, /art-console-panel-title/g, "Dashboard modules should render compact Art title blocks");
+  assert.match(dashboardSection, /art-console-panel-badge/g, "Dashboard module headers should include Art status badges");
+  assert.match(dashboardSection, /art-console-panel-action/g, "Dashboard module headers should expose small Art action affordances");
+  assert.doesNotMatch(dashboardSection, /(?<![A-Za-z0-9_-])console-panel-header(?![A-Za-z0-9_-])/, "Dashboard modules should not keep generic console-panel-header classes");
+  assert.doesNotMatch(dashboardSection, /(?<![A-Za-z0-9_-])console-panel-title(?![A-Za-z0-9_-])/, "Dashboard modules should not keep generic console-panel-title classes");
+  assert.doesNotMatch(dashboardSection, /(?<![A-Za-z0-9_-])console-panel-tools(?![A-Za-z0-9_-])/, "Dashboard modules should not keep generic console-panel-tools classes");
+  assert.doesNotMatch(dashboardSection, /(?<![A-Za-z0-9_-])console-panel-badge(?![A-Za-z0-9_-])/, "Dashboard modules should not keep generic console-panel-badge classes");
+  assert.doesNotMatch(dashboardSection, /(?<![A-Za-z0-9_-])console-panel-action(?![A-Za-z0-9_-])/, "Dashboard modules should not keep generic console-panel-action classes");
   assert.match(dashboardSection, /@click="navigateTo\('usage'\)"/, "Usage trend panel should link to usage details");
   assert.match(dashboardSection, /@click="navigateTo\('logs'\)"/, "Failure panel should link to logs");
   assert.match(styleSource, /\.art-console-panel/, "Styles should include console panel shell");
   assert.match(styleSource, /\.art-console-section-grid/, "Styles should include Art console section grid layout");
   assert.match(styleSource, /\.art-console-status-list/, "Styles should include Art console status list styling");
   assert.doesNotMatch(styleSource, /\.content-grid\b/, "Styles should remove the legacy content grid selector");
-  assert.match(styleSource, /\.console-panel-header/, "Styles should include console panel header");
-  assert.match(styleSource, /\.console-panel-badge/, "Styles should include console panel status badges");
-  assert.match(styleSource, /\.console-panel-action/, "Styles should include console panel action buttons");
+  assert.match(styleSource, /\.art-console-panel-header/, "Styles should include Art console panel header");
+  assert.match(styleSource, /\.art-console-panel-badge/, "Styles should include Art console panel status badges");
+  assert.match(styleSource, /\.art-console-panel-action/, "Styles should include Art console panel action buttons");
+  for (const legacyClass of [
+    "console-panel-header",
+    "console-panel-title",
+    "console-panel-tools",
+    "console-panel-badge",
+    "console-panel-action",
+  ]) {
+    assert.doesNotMatch(
+      styleSource,
+      new RegExp(`\\.${legacyClass}(?![A-Za-z0-9_-])`),
+      `Styles should remove the generic ${legacyClass} selector`,
+    );
+  }
 });
 
 test("Vue shell exposes Art Design Pro workspace navigation and quick actions", async () => {
