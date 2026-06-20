@@ -3330,14 +3330,14 @@ window.addEventListener('beforeunload', (event) => {
     </el-popover>
 
     <div v-if="notificationPanelVisible" class="art-notification-panel" @click.stop>
-      <div class="notification-panel-head">
+      <div class="art-notification-panel-head">
         <div>
           <span>Notification</span>
           <strong>运维通知</strong>
         </div>
         <el-button text @click="viewAllNotifications">查看全部</el-button>
       </div>
-      <div class="notification-tab-bar">
+      <div class="art-notification-tab-bar">
         <button
           v-for="tab in notificationTabs"
           :key="tab.key"
@@ -3348,7 +3348,7 @@ window.addEventListener('beforeunload', (event) => {
           {{ tab.label }} ({{ tab.count }})
         </button>
       </div>
-      <div class="notification-list">
+      <div class="art-notification-list">
         <button
           v-for="item in notificationPreviewItems"
           :key="item.id"
@@ -3361,12 +3361,12 @@ window.addEventListener('beforeunload', (event) => {
           <small>{{ item.time }}</small>
           <p>{{ item.meta }}</p>
         </button>
-        <div v-if="!notificationPreviewItems.length" class="notification-empty">
+        <div v-if="!notificationPreviewItems.length" class="art-notification-empty">
           <Bell />
           <span>当前没有{{ notificationTabs.find((item) => item.key === activeNotificationTab)?.label || '通知' }}</span>
         </div>
       </div>
-      <el-button class="notification-view-all" @click="viewAllNotifications">进入告警中心</el-button>
+      <el-button class="art-notification-view-all" @click="viewAllNotifications">进入告警中心</el-button>
     </div>
 
     <el-dialog v-model="globalSearchVisible" width="620px" :show-close="false" class="global-search-command" @closed="closeGlobalSearch">

@@ -469,13 +469,28 @@ test("Vue topbar notifications use an Art Design Pro notification panel", async 
   assert.match(topbarSection, /@click="toggleNotificationPanel"/, "Notification button should toggle a panel");
   assert.doesNotMatch(sourceBetween(source, "function openNotifications()", "function openSettings()"), /navigateTo\('alerts'\)/, "Opening notifications should not immediately navigate away");
   assert.match(notificationPanel, /art-notification-panel/, "Notification preview should use Art Design panel class");
-  assert.match(notificationPanel, /notification-tab-bar/, "Notification panel should render tabs");
-  assert.match(notificationPanel, /notification-list/, "Notification panel should render preview list");
-  assert.match(notificationPanel, /notification-empty/, "Notification panel should render an empty state");
+  assert.match(notificationPanel, /art-notification-panel-head/, "Notification panel should render an Art header");
+  assert.match(notificationPanel, /art-notification-tab-bar/, "Notification panel should render Art tabs");
+  assert.match(notificationPanel, /art-notification-list/, "Notification panel should render an Art preview list");
+  assert.match(notificationPanel, /art-notification-empty/, "Notification panel should render an Art empty state");
+  assert.match(notificationPanel, /art-notification-view-all/, "Notification panel should render an Art view-all action");
+  assert.doesNotMatch(notificationPanel, /(?<![A-Za-z0-9_-])notification-panel-head(?![A-Za-z0-9_-])/, "Notification panel should not keep the generic notification-panel-head class");
+  assert.doesNotMatch(notificationPanel, /(?<![A-Za-z0-9_-])notification-tab-bar(?![A-Za-z0-9_-])/, "Notification panel should not keep the generic notification-tab-bar class");
+  assert.doesNotMatch(notificationPanel, /(?<![A-Za-z0-9_-])notification-list(?![A-Za-z0-9_-])/, "Notification panel should not keep the generic notification-list class");
+  assert.doesNotMatch(notificationPanel, /(?<![A-Za-z0-9_-])notification-empty(?![A-Za-z0-9_-])/, "Notification panel should not keep the generic notification-empty class");
+  assert.doesNotMatch(notificationPanel, /(?<![A-Za-z0-9_-])notification-view-all(?![A-Za-z0-9_-])/, "Notification panel should not keep the generic notification-view-all class");
   assert.match(notificationPanel, /@click="viewAllNotifications"/, "Notification panel should link to the full alerts page");
   assert.match(styleSource, /\.art-notification-panel/, "Styles should include notification panel shell");
-  assert.match(styleSource, /\.notification-tab-bar/, "Styles should include notification tabs");
-  assert.match(styleSource, /\.notification-list/, "Styles should include notification list");
+  assert.match(styleSource, /\.art-notification-panel-head/, "Styles should include Art notification header");
+  assert.match(styleSource, /\.art-notification-tab-bar/, "Styles should include Art notification tabs");
+  assert.match(styleSource, /\.art-notification-list/, "Styles should include Art notification list");
+  assert.match(styleSource, /\.art-notification-empty/, "Styles should include Art notification empty state");
+  assert.match(styleSource, /\.art-notification-view-all/, "Styles should include Art notification view-all action");
+  assert.doesNotMatch(styleSource, /\.notification-panel-head(?![A-Za-z0-9_-])/, "Styles should remove the generic notification-panel-head selector");
+  assert.doesNotMatch(styleSource, /\.notification-tab-bar(?![A-Za-z0-9_-])/, "Styles should remove the generic notification-tab-bar selector");
+  assert.doesNotMatch(styleSource, /\.notification-list(?![A-Za-z0-9_-])/, "Styles should remove the generic notification-list selector");
+  assert.doesNotMatch(styleSource, /\.notification-empty(?![A-Za-z0-9_-])/, "Styles should remove the generic notification-empty selector");
+  assert.doesNotMatch(styleSource, /\.notification-view-all(?![A-Za-z0-9_-])/, "Styles should remove the generic notification-view-all selector");
 });
 
 test("Vue global search uses an Art Design Pro command dialog", async () => {

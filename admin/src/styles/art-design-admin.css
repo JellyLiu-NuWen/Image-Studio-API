@@ -793,7 +793,7 @@ button,
   box-shadow: var(--art-shadow);
 }
 
-.notification-panel-head {
+.art-notification-panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -801,24 +801,24 @@ button,
   padding: 14px 16px 12px;
 }
 
-.notification-panel-head div {
+.art-notification-panel-head div {
   display: grid;
   gap: 3px;
 }
 
-.notification-panel-head span {
+.art-notification-panel-head span {
   color: var(--art-primary);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.notification-panel-head strong {
+.art-notification-panel-head strong {
   color: var(--art-text);
   font-size: 16px;
 }
 
-.notification-tab-bar {
+.art-notification-tab-bar {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -826,7 +826,7 @@ button,
   border-bottom: 1px solid var(--art-border);
 }
 
-.notification-tab-bar button {
+.art-notification-tab-bar button {
   height: 42px;
   border: 0;
   border-bottom: 2px solid transparent;
@@ -838,12 +838,12 @@ button,
   font-weight: 850;
 }
 
-.notification-tab-bar button.active {
+.art-notification-tab-bar button.active {
   border-bottom-color: var(--art-primary);
   color: var(--art-primary);
 }
 
-.notification-list {
+.art-notification-list {
   display: grid;
   align-content: start;
   gap: 4px;
@@ -851,7 +851,7 @@ button,
   padding: 8px;
 }
 
-.notification-list button {
+.art-notification-list button {
   min-height: 76px;
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr) auto;
@@ -868,31 +868,31 @@ button,
   transition: 180ms ease;
 }
 
-.notification-list button:hover {
+.art-notification-list button:hover {
   border-color: var(--art-border);
   background: var(--art-soft);
 }
 
-.notification-list i {
+.art-notification-list i {
   width: 8px;
   height: 8px;
   border-radius: 999px;
   background: var(--art-primary);
 }
 
-.notification-list button.critical i {
+.art-notification-list button.critical i {
   background: var(--art-danger);
 }
 
-.notification-list button.warning i {
+.art-notification-list button.warning i {
   background: var(--art-warning);
 }
 
-.notification-list button.success i {
+.art-notification-list button.success i {
   background: var(--art-success);
 }
 
-.notification-list span {
+.art-notification-list span {
   overflow: hidden;
   color: var(--art-text);
   font-size: 13px;
@@ -901,13 +901,13 @@ button,
   white-space: nowrap;
 }
 
-.notification-list small {
+.art-notification-list small {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 700;
 }
 
-.notification-list p {
+.art-notification-list p {
   grid-column: 2 / -1;
   margin: 0;
   color: var(--art-muted);
@@ -915,7 +915,7 @@ button,
   line-height: 1.45;
 }
 
-.notification-empty {
+.art-notification-empty {
   min-height: 190px;
   display: grid;
   place-items: center;
@@ -926,13 +926,13 @@ button,
   font-weight: 800;
 }
 
-.notification-empty svg {
+.art-notification-empty svg {
   width: 36px;
   height: 36px;
   color: var(--art-primary);
 }
 
-.notification-view-all {
+.art-notification-view-all {
   margin: 8px 14px 14px;
 }
 
