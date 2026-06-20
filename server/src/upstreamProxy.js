@@ -269,7 +269,7 @@ function imageWorkTimeoutSeconds(pathname, configuredSeconds) {
   const configured = Number(configuredSeconds);
   if (!isImageWorkPath(pathname)) return configured;
   const minimum = Number(process.env.IMAGE_STUDIO_IMAGE_TIMEOUT_SECONDS || process.env.IMAGE_STUDIO_STREAM_TIMEOUT_SECONDS || 300);
-  const resolvedMinimum = Number.isFinite(minimum) && minimum > 0 ? minimum : 300;
+  const resolvedMinimum = Math.max(300, Number.isFinite(minimum) && minimum > 0 ? minimum : 300);
   if (!Number.isFinite(configured) || configured <= 0) return resolvedMinimum;
   return Math.max(configured, resolvedMinimum);
 }
