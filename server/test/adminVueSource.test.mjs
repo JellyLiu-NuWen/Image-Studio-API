@@ -693,13 +693,15 @@ test("Vue management tables expose ArtTable style pagination", async () => {
   assert.match(qualitySection, /:data="paginatedPresets"/, "Quality preset table should render paginated rows");
   for (const section of [interfaceSection, upstreamSection, modelSection, qualitySection]) {
     assert.match(section, /art-table-pagination/, "Management table should render an ArtTable pagination footer");
-    assert.match(section, /custom-pagination/, "Pagination footer should use the ArtTable custom pagination token");
+    assert.match(section, /art-table-custom-pagination/, "Pagination footer should use the ArtTable custom pagination token");
+    assert.doesNotMatch(section, /(?<![A-Za-z0-9_-])custom-pagination(?![A-Za-z0-9_-])/, "Pagination footer should not keep the generic custom-pagination token");
     assert.match(section, /:current-page="tableEffectiveCurrentPage/, "Pagination footer should bind a clamped current page");
     assert.match(section, /@size-change="/, "Pagination footer should handle page size changes");
     assert.match(section, /@current-change="/, "Pagination footer should handle current page changes");
   }
   assert.match(styleSource, /\.art-table-pagination/, "Styles should include ArtTable pagination footer");
-  assert.match(styleSource, /\.custom-pagination/, "Styles should include custom pagination controls");
+  assert.match(styleSource, /\.art-table-custom-pagination/, "Styles should include Art custom pagination controls");
+  assert.doesNotMatch(styleSource, /\.custom-pagination(?![A-Za-z0-9_-])/, "Styles should remove the legacy custom-pagination selector");
 });
 
 test("Vue management table operations use ArtButtonTable style icon actions", async () => {

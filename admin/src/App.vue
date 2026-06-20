@@ -2254,7 +2254,7 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
-          <div v-if="filteredInterfaces.length" class="art-table-pagination custom-pagination right">
+          <div v-if="filteredInterfaces.length" class="art-table-pagination art-table-custom-pagination right">
             <el-pagination
               background
               :page-sizes="tablePageSizes"
@@ -2359,7 +2359,7 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
-          <div v-if="filteredUpstreams.length" class="art-table-pagination custom-pagination right">
+          <div v-if="filteredUpstreams.length" class="art-table-pagination art-table-custom-pagination right">
             <el-pagination
               background
               :page-sizes="tablePageSizes"
@@ -2451,7 +2451,7 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
-          <div v-if="filteredModels.length" class="art-table-pagination custom-pagination right">
+          <div v-if="filteredModels.length" class="art-table-pagination art-table-custom-pagination right">
             <el-pagination
               background
               :page-sizes="tablePageSizes"
@@ -2575,7 +2575,7 @@ window.addEventListener('beforeunload', (event) => {
               </template>
             </el-table-column>
           </el-table>
-          <div v-if="filteredPresets.length" class="art-table-pagination custom-pagination right">
+          <div v-if="filteredPresets.length" class="art-table-pagination art-table-custom-pagination right">
             <el-pagination
               background
               :page-sizes="tablePageSizes"

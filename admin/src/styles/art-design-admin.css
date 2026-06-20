@@ -1733,22 +1733,22 @@ button,
   justify-content: flex-end;
 }
 
-.art-table-pagination.custom-pagination :deep(.el-pagination .btn-prev),
-.art-table-pagination.custom-pagination :deep(.el-pagination .btn-next),
-.art-table-pagination.custom-pagination :deep(.el-pagination .el-pager li) {
+.art-table-pagination.art-table-custom-pagination :deep(.el-pagination .btn-prev),
+.art-table-pagination.art-table-custom-pagination :deep(.el-pagination .btn-next),
+.art-table-pagination.art-table-custom-pagination :deep(.el-pagination .el-pager li) {
   background-color: transparent;
   border: 1px solid var(--art-border);
   transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
 
-.art-table-pagination.custom-pagination :deep(.el-pagination .btn-prev:hover:not(.is-disabled)),
-.art-table-pagination.custom-pagination :deep(.el-pagination .btn-next:hover:not(.is-disabled)),
-.art-table-pagination.custom-pagination :deep(.el-pagination .el-pager li:hover:not(.is-disabled)) {
+.art-table-pagination.art-table-custom-pagination :deep(.el-pagination .btn-prev:hover:not(.is-disabled)),
+.art-table-pagination.art-table-custom-pagination :deep(.el-pagination .btn-next:hover:not(.is-disabled)),
+.art-table-pagination.art-table-custom-pagination :deep(.el-pagination .el-pager li:hover:not(.is-disabled)) {
   color: var(--art-primary);
   border-color: var(--art-primary);
 }
 
-.art-table-pagination.custom-pagination :deep(.el-pagination .el-pager li.is-active) {
+.art-table-pagination.art-table-custom-pagination :deep(.el-pagination .el-pager li.is-active) {
   color: #fff;
   background: var(--art-primary);
   border-color: var(--art-primary);
