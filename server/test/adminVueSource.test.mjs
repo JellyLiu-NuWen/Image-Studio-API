@@ -164,6 +164,38 @@ test("Vue topbar exposes Art Design Pro header tools", async () => {
   assert.match(styleSource, /\.user-entry/, "Styles should include user entry styling");
 });
 
+test("Vue topbar settings open an Art Design Pro settings panel", async () => {
+  const source = await readAppSource();
+  const topbarSection = sourceBetween(
+    source,
+    "<header class=\"admin-topbar\">",
+    "</header>",
+  );
+  const settingsDrawer = sourceBetween(
+    source,
+    "<el-drawer v-model=\"settingsPanelVisible\"",
+    "<el-drawer v-model=\"drawerVisible\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /settingsPanelVisible/, "Admin should keep settings panel visibility state");
+  assert.match(source, /layoutMode/, "Admin should keep a menu layout preference state");
+  assert.match(source, /menuStyleMode/, "Admin should keep a menu style preference state");
+  assert.match(source, /settingsOptions/, "Admin should expose Art Design style settings options");
+  assert.match(source, /applySettingsPreset/, "Admin should expose a settings option action");
+  assert.match(topbarSection, /@click="openSettings"/, "Settings entry should open the settings panel");
+  assert.doesNotMatch(sourceBetween(source, "function openSettings()", "function closePageTab"), /navigateTo\('system'\)/, "Opening settings should not navigate away from the current page");
+  assert.match(settingsDrawer, /art-settings-panel/, "Settings should render an Art Design settings panel drawer");
+  assert.match(settingsDrawer, /setting-panel-header/, "Settings panel should render a template-style header");
+  assert.match(settingsDrawer, /setting-section/g, "Settings panel should group preferences into sections");
+  assert.match(settingsDrawer, /setting-option-grid/, "Settings panel should render selectable option cards");
+  assert.match(settingsDrawer, /v-model="themeMode"/, "Settings panel should control the shell theme");
+  assert.match(settingsDrawer, /v-model="tableDensity"/, "Settings panel should control table density");
+  assert.match(styleSource, /\.art-settings-panel/, "Styles should include the settings panel shell");
+  assert.match(styleSource, /\.setting-option-grid/, "Styles should include settings option card layout");
+  assert.match(styleSource, /\.setting-panel-header/, "Styles should include settings panel header styling");
+});
+
 test("Vue management tables use an Art Design Pro style table workspace", async () => {
   const source = await readAppSource();
   const interfaceSection = sourceBetween(

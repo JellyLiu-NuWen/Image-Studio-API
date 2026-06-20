@@ -63,6 +63,11 @@ import type {
 
 type ViewKey = 'dashboard' | 'interfaces' | 'upstreams' | 'models' | 'quality' | 'logs' | 'usage' | 'alerts' | 'security' | 'system'
 type DrawerMode = 'interface' | 'upstream' | 'model' | 'quality' | null
+type ThemeMode = 'light' | 'dark'
+type LayoutMode = 'left' | 'compact' | 'wide'
+type MenuStyleMode = 'design' | 'dark' | 'light'
+type TableDensity = 'default' | 'comfortable' | 'compact'
+type SettingOptionGroup = 'theme' | 'layout' | 'menuStyle' | 'density'
 
 const navGroups: Array<{ title: string; items: Array<{ key: ViewKey; label: string; icon: unknown }> }> = [
   { title: '监控', items: [
@@ -92,7 +97,9 @@ const authenticated = ref(false)
 const username = ref('admin')
 const activeView = ref<ViewKey>('dashboard')
 const pageTabs = ref<ViewKey[]>(['dashboard'])
-const themeMode = ref<'light' | 'dark'>('light')
+const themeMode = ref<ThemeMode>('light')
+const layoutMode = ref<LayoutMode>('left')
+const menuStyleMode = ref<MenuStyleMode>('design')
 const loginForm = reactive({ username: 'admin', password: '', totpCode: '' })
 const accountForm = reactive({ username: '', currentPassword: '', newPassword: '' })
 const totpSetup = ref<{ secret: string; otpauthURL: string } | null>(null)
@@ -115,6 +122,7 @@ const alertSummary = ref<AlertSummary>({ total: 0, critical: 0, warning: 0, info
 const alertNotification = ref<AlertNotification>({ status: 'idle' })
 const backupStatus = ref('')
 const backupFileInput = ref<HTMLInputElement | null>(null)
+const settingsPanelVisible = ref(false)
 const drawerVisible = ref(false)
 const drawerMode = ref<DrawerMode>(null)
 const drawerIndex = ref(-1)
@@ -129,7 +137,7 @@ const tableSearch = reactive<Record<'interfaces' | 'upstreams' | 'models' | 'qua
   models: '',
   quality: ''
 })
-const tableDensity = ref<'default' | 'comfortable' | 'compact'>('comfortable')
+const tableDensity = ref<TableDensity>('comfortable')
 const logFilter = reactive({
   keyword: '',
   status: '',
@@ -166,6 +174,27 @@ const headerSearchResults = computed(() => {
   if (!keyword) return items.slice(0, 6)
   return items.filter((item) => `${item.group} ${item.label} ${item.key}`.toLowerCase().includes(keyword)).slice(0, 8)
 })
+const settingsOptions = computed(() => ({
+  theme: [
+    { label: '浅色', value: 'light', icon: Sunny, hint: '清爽工作台' },
+    { label: '深色', value: 'dark', icon: Moon, hint: '夜间运维' },
+  ],
+  layout: [
+    { label: '左侧菜单', value: 'left', icon: Operation, hint: '经典后台' },
+    { label: '紧凑菜单', value: 'compact', icon: Collection, hint: '更多内容空间' },
+    { label: '宽屏工作台', value: 'wide', icon: FullScreen, hint: '大屏监控' },
+  ],
+  menuStyle: [
+    { label: '设计风格', value: 'design', icon: MagicStick, hint: '品牌渐变' },
+    { label: '暗色菜单', value: 'dark', icon: Moon, hint: '高对比导航' },
+    { label: '亮色菜单', value: 'light', icon: Sunny, hint: '轻量导航' },
+  ],
+  density: [
+    { label: '默认', value: 'default', icon: More, hint: '大字号表格' },
+    { label: '舒适', value: 'comfortable', icon: Collection, hint: '均衡密度' },
+    { label: '紧凑', value: 'compact', icon: Operation, hint: '高频扫表' },
+  ],
+}))
 const activeInterfaces = computed(() => config.value?.interfaces || [])
 const activeUpstreams = computed(() => config.value?.upstreams || [])
 const activeModels = computed(() => config.value?.models || [])
@@ -681,7 +710,43 @@ function openNotifications() {
 }
 
 function openSettings() {
-  navigateTo('system')
+  settingsPanelVisible.value = true
+}
+
+function closeSettingsPanel() {
+  settingsPanelVisible.value = false
+}
+
+function persistSettings() {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem('image-studio-admin-theme', themeMode.value)
+  window.localStorage.setItem('image-studio-admin-layout', layoutMode.value)
+  window.localStorage.setItem('image-studio-admin-menu-style', menuStyleMode.value)
+  window.localStorage.setItem('image-studio-admin-table-density', tableDensity.value)
+}
+
+function applySettingsPreset(group: SettingOptionGroup, value: string) {
+  if (group === 'theme' && (value === 'light' || value === 'dark')) {
+    themeMode.value = value
+  }
+  if (group === 'layout' && (value === 'left' || value === 'compact' || value === 'wide')) {
+    layoutMode.value = value
+  }
+  if (group === 'menuStyle' && (value === 'design' || value === 'dark' || value === 'light')) {
+    menuStyleMode.value = value
+  }
+  if (group === 'density' && (value === 'default' || value === 'comfortable' || value === 'compact')) {
+    tableDensity.value = value
+  }
+  persistSettings()
+}
+
+function resetSettingsPanel() {
+  themeMode.value = 'light'
+  layoutMode.value = 'left'
+  menuStyleMode.value = 'design'
+  tableDensity.value = 'comfortable'
+  persistSettings()
 }
 
 function closePageTab(key: ViewKey) {
@@ -697,13 +762,17 @@ function loadThemeMode() {
   if (typeof window === 'undefined') return
   const stored = window.localStorage.getItem('image-studio-admin-theme')
   themeMode.value = stored === 'dark' ? 'dark' : 'light'
+  const storedLayout = window.localStorage.getItem('image-studio-admin-layout')
+  layoutMode.value = storedLayout === 'compact' || storedLayout === 'wide' ? storedLayout : 'left'
+  const storedMenuStyle = window.localStorage.getItem('image-studio-admin-menu-style')
+  menuStyleMode.value = storedMenuStyle === 'dark' || storedMenuStyle === 'light' ? storedMenuStyle : 'design'
+  const storedDensity = window.localStorage.getItem('image-studio-admin-table-density')
+  tableDensity.value = storedDensity === 'default' || storedDensity === 'compact' ? storedDensity : 'comfortable'
 }
 
 function toggleTheme() {
   themeMode.value = themeMode.value === 'dark' ? 'light' : 'dark'
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem('image-studio-admin-theme', themeMode.value)
-  }
+  persistSettings()
 }
 
 async function toggleFullscreen() {
@@ -1339,7 +1408,7 @@ window.addEventListener('beforeunload', (event) => {
     </el-card>
   </div>
 
-  <div v-else class="admin-shell" :data-theme="themeMode" v-loading="loading">
+  <div v-else class="admin-shell" :data-theme="themeMode" :data-layout="layoutMode" :data-menu-style="menuStyleMode" v-loading="loading">
     <aside class="admin-sidebar">
       <div class="sidebar-brand">
         <div class="brand-logo">IS</div>
@@ -2362,6 +2431,93 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </section>
     </main>
+
+    <el-drawer v-model="settingsPanelVisible" title="" size="420px" destroy-on-close class="art-settings-panel">
+      <div class="setting-panel-header">
+        <div>
+          <span>Art Design Pro</span>
+          <h3>后台外观设置</h3>
+          <p>调整主题、菜单布局和表格密度，保持当前运维上下文不跳页。</p>
+        </div>
+        <el-button :icon="Close" circle @click="closeSettingsPanel" />
+      </div>
+
+      <section class="setting-section">
+        <div class="setting-section-title"><Sunny /><span>主题风格</span></div>
+        <el-segmented v-model="themeMode" :options="[
+          { label: '浅色', value: 'light' },
+          { label: '深色', value: 'dark' },
+        ]" @change="persistSettings" />
+        <div class="setting-option-grid">
+          <button
+            v-for="item in settingsOptions.theme"
+            :key="item.value"
+            type="button"
+            :class="{ active: themeMode === item.value }"
+            @click="applySettingsPreset('theme', item.value)"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.hint }}</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="setting-section">
+        <div class="setting-section-title"><Operation /><span>菜单布局</span></div>
+        <div class="setting-option-grid">
+          <button
+            v-for="item in settingsOptions.layout"
+            :key="item.value"
+            type="button"
+            :class="{ active: layoutMode === item.value }"
+            @click="applySettingsPreset('layout', item.value)"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.hint }}</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="setting-section">
+        <div class="setting-section-title"><MagicStick /><span>菜单风格</span></div>
+        <div class="setting-option-grid">
+          <button
+            v-for="item in settingsOptions.menuStyle"
+            :key="item.value"
+            type="button"
+            :class="{ active: menuStyleMode === item.value }"
+            @click="applySettingsPreset('menuStyle', item.value)"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.hint }}</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="setting-section">
+        <div class="setting-section-title"><Collection /><span>表格密度</span></div>
+        <el-segmented v-model="tableDensity" :options="[
+          { label: '默认', value: 'default' },
+          { label: '舒适', value: 'comfortable' },
+          { label: '紧凑', value: 'compact' },
+        ]" @change="persistSettings" />
+        <div class="setting-density-preview">
+          <span>当前模式</span>
+          <strong>{{ tableDensity }}</strong>
+          <small>接口、上游、日志、成本等表格会同步使用这个密度。</small>
+        </div>
+      </section>
+
+      <template #footer>
+        <div class="setting-actions">
+          <el-button @click="resetSettingsPanel">恢复默认</el-button>
+          <el-button type="primary" @click="closeSettingsPanel">完成</el-button>
+        </div>
+      </template>
+    </el-drawer>
 
     <el-drawer v-model="drawerVisible" :title="drawerTitle()" size="620px" destroy-on-close class="config-drawer">
       <div v-if="drawerContext" class="drawer-overview">

@@ -276,6 +276,63 @@ button,
   --art-code-bg: #0f172a;
 }
 
+.admin-shell[data-layout="compact"] {
+  grid-template-columns: 88px minmax(0, 1fr);
+}
+
+.admin-shell[data-layout="wide"] {
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
+.admin-shell[data-layout="compact"] .sidebar-brand {
+  justify-content: center;
+  padding-inline: 4px;
+}
+
+.admin-shell[data-layout="compact"] .sidebar-brand div:last-child,
+.admin-shell[data-layout="compact"] .sidebar-nav p,
+.admin-shell[data-layout="compact"] .sidebar-nav span,
+.admin-shell[data-layout="compact"] .sidebar-footer span {
+  display: none;
+}
+
+.admin-shell[data-layout="compact"] .sidebar-nav button {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.admin-shell[data-menu-style="light"] .admin-sidebar {
+  border-right: 1px solid var(--art-border);
+  background: var(--art-card);
+  color: var(--art-text);
+}
+
+.admin-shell[data-menu-style="light"] .sidebar-nav p,
+.admin-shell[data-menu-style="light"] .sidebar-brand span {
+  color: var(--art-muted);
+}
+
+.admin-shell[data-menu-style="light"] .sidebar-nav button {
+  color: var(--art-text-soft);
+}
+
+.admin-shell[data-menu-style="light"] .sidebar-nav button:hover,
+.admin-shell[data-menu-style="light"] .sidebar-nav button.active {
+  background: rgba(37, 99, 235, 0.09);
+  color: var(--art-primary);
+}
+
+.admin-shell[data-menu-style="light"] .sidebar-brand,
+.admin-shell[data-menu-style="light"] .sidebar-footer {
+  border-color: var(--art-border);
+  background: var(--art-soft);
+}
+
+.admin-shell[data-menu-style="dark"] .sidebar-nav button.active,
+.admin-shell[data-menu-style="design"] .sidebar-nav button.active {
+  box-shadow: inset 3px 0 0 #60a5fa;
+}
+
 .admin-sidebar {
   position: sticky;
   top: 0;
@@ -517,6 +574,152 @@ button,
 
 .user-entry {
   padding: 0 10px;
+}
+
+.art-settings-panel :deep(.el-drawer__header) {
+  display: none;
+}
+
+.art-settings-panel :deep(.el-drawer__body) {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 20px;
+  background: var(--art-bg);
+}
+
+.art-settings-panel :deep(.el-drawer__footer) {
+  padding: 14px 18px;
+  border-top: 1px solid var(--art-border);
+  background: var(--art-card);
+}
+
+.setting-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  background: var(--art-card);
+  box-shadow: var(--art-shadow);
+}
+
+.setting-panel-header span,
+.setting-section-title span {
+  color: var(--art-primary);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.setting-panel-header h3 {
+  margin: 5px 0;
+  color: var(--art-text);
+  font-size: 19px;
+}
+
+.setting-panel-header p {
+  margin: 0;
+  color: var(--art-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.setting-section {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  background: var(--art-card);
+}
+
+.setting-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--art-text);
+  font-weight: 900;
+}
+
+.setting-section-title svg {
+  width: 17px;
+  height: 17px;
+  color: var(--art-primary);
+}
+
+.setting-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.setting-option-grid button {
+  min-height: 92px;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--art-border);
+  border-radius: 12px;
+  background: var(--art-soft);
+  color: var(--art-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: 180ms ease;
+}
+
+.setting-option-grid button:hover,
+.setting-option-grid button.active {
+  border-color: rgba(37, 99, 235, 0.34);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.setting-option-grid button.active {
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.32);
+}
+
+.setting-option-grid svg {
+  width: 18px;
+  height: 18px;
+  color: var(--art-primary);
+}
+
+.setting-option-grid strong {
+  color: var(--art-text);
+  font-size: 13px;
+}
+
+.setting-option-grid span,
+.setting-density-preview span,
+.setting-density-preview small {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.setting-density-preview {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px dashed var(--art-border);
+  border-radius: 10px;
+  background: var(--art-soft);
+}
+
+.setting-density-preview strong {
+  color: var(--art-text);
+  font-size: 16px;
+}
+
+.setting-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .page-breadcrumb {
