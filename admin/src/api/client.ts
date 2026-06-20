@@ -3,6 +3,7 @@ import type {
   AdminSession,
   ActiveAlert,
   AlertSummary,
+  AlertNotification,
   AlertsConfig,
   AuditRecord,
   BackupRecord,
@@ -113,8 +114,8 @@ export const adminApi = {
     method: 'PUT',
     body: JSON.stringify({ alerts })
   }),
-  activeAlerts: () => requestJSON<{ alerts: ActiveAlert[]; summary: AlertSummary }>('/alerts/active'),
-  acknowledgeAlert: (id: string) => requestJSON<{ ok: boolean; alert: ActiveAlert; alerts: ActiveAlert[]; summary: AlertSummary }>(`/alerts/${encodeURIComponent(id)}/ack`, {
+  activeAlerts: () => requestJSON<{ alerts: ActiveAlert[]; summary: AlertSummary; notification: AlertNotification }>('/alerts/active'),
+  acknowledgeAlert: (id: string) => requestJSON<{ ok: boolean; alert: ActiveAlert; alerts: ActiveAlert[]; summary: AlertSummary; notification: AlertNotification }>(`/alerts/${encodeURIComponent(id)}/ack`, {
     method: 'POST',
     body: '{}'
   }),

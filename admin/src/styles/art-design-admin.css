@@ -404,6 +404,12 @@ button,
   max-width: 720px;
 }
 
+.form-tip {
+  margin-left: 10px;
+  color: var(--art-muted);
+  font-size: 13px;
+}
+
 .system-actions {
   margin-bottom: 14px;
 }

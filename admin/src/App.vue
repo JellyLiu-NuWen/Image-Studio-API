@@ -32,6 +32,7 @@ import type {
   ActiveAlert,
   AdminConfig,
   AlertSummary,
+  AlertNotification,
   AlertsConfig,
   AuditRecord,
   BackupRecord,
@@ -96,6 +97,7 @@ const sessions = ref<SessionRecord[]>([])
 const updateInfo = ref<Record<string, string>>({})
 const activeAlerts = ref<ActiveAlert[]>([])
 const alertSummary = ref<AlertSummary>({ total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 })
+const alertNotification = ref<AlertNotification>({ status: 'idle' })
 const backupStatus = ref('')
 const backupFileInput = ref<HTMLInputElement | null>(null)
 const drawerVisible = ref(false)
@@ -172,6 +174,12 @@ function formatCost(value?: number) {
 
 function formatPercent(value?: number) {
   return `${Number(value || 0).toFixed(2)}%`
+}
+
+function notificationLabel(value?: string) {
+  if (value === 'sent') return '已发送'
+  if (value === 'failed') return '失败'
+  return '待触发'
 }
 
 function metricValue(value?: number) {
@@ -323,7 +331,7 @@ async function refreshAll() {
       adminApi.updateCheck().catch(() => ({ update: {} })),
       adminApi.qualityCases().catch(() => ({ qualityCases: [] })),
       adminApi.upstreamHealth().catch(() => ({ upstreams: [] })),
-      adminApi.activeAlerts().catch(() => ({ alerts: [], summary: { total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 } }))
+      adminApi.activeAlerts().catch(() => ({ alerts: [], summary: { total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 }, notification: { status: 'idle' as const } }))
     ])
     setConfig(configData.config)
     metrics.value = metricData.metrics
@@ -339,6 +347,7 @@ async function refreshAll() {
     upstreamHealth.value = upstreamHealthData.upstreams
     activeAlerts.value = activeAlertData.alerts
     alertSummary.value = activeAlertData.summary
+    alertNotification.value = activeAlertData.notification
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '刷新失败')
   } finally {
@@ -484,9 +493,10 @@ async function saveAlerts() {
   const result = await adminApi.saveAlerts(config.value.alerts)
   config.value.alerts = result.alerts
   markSaved()
-  const active = await adminApi.activeAlerts().catch(() => ({ alerts: [], summary: alertSummary.value }))
+  const active = await adminApi.activeAlerts().catch(() => ({ alerts: [], summary: alertSummary.value, notification: alertNotification.value }))
   activeAlerts.value = active.alerts
   alertSummary.value = active.summary
+  alertNotification.value = active.notification
   ElMessage.success('告警配置已保存')
 }
 
@@ -494,6 +504,7 @@ async function acknowledgeAlert(id: string) {
   const data = await adminApi.acknowledgeAlert(id)
   activeAlerts.value = data.alerts
   alertSummary.value = data.summary
+  alertNotification.value = data.notification
   ElMessage.success('告警已确认')
 }
 
@@ -1056,7 +1067,7 @@ window.addEventListener('beforeunload', (event) => {
           <el-card shadow="never" class="metric-card"><span>活跃告警</span><strong>{{ alertSummary.total }}</strong><small>已确认 {{ alertSummary.acknowledged }}</small></el-card>
           <el-card shadow="never" class="metric-card"><span>严重</span><strong>{{ alertSummary.critical }}</strong><small>Key、配置和可用性风险</small></el-card>
           <el-card shadow="never" class="metric-card"><span>警告</span><strong>{{ alertSummary.warning }}</strong><small>性能和成功率风险</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>通知</span><strong>{{ config?.alerts.webhookEnabled ? '开启' : '关闭' }}</strong><small>{{ config?.alerts.webhookURLSet ? 'Webhook 已保存' : 'Webhook 未配置' }}</small></el-card>
+          <el-card shadow="never" class="metric-card"><span>最近通知</span><strong>{{ notificationLabel(alertNotification.status) }}</strong><small>{{ alertNotification.sentAt ? formatTime(alertNotification.sentAt) : (config?.alerts.webhookURLSet ? '等待新告警' : 'Webhook 未配置') }}</small></el-card>
         </div>
         <el-card shadow="never">
           <template #header>
@@ -1084,6 +1095,10 @@ window.addEventListener('beforeunload', (event) => {
           <el-form v-if="config" :model="alertsForm" label-width="150px" class="narrow-form">
             <el-form-item label="Webhook 通知"><el-switch v-model="config.alerts.webhookEnabled" /></el-form-item>
             <el-form-item label="Webhook URL"><el-input v-model="config.alerts.webhookURL" placeholder="https://hooks.example/a" /></el-form-item>
+            <el-form-item label="最近发送">
+              <el-tag :type="alertNotification.status === 'sent' ? 'success' : alertNotification.status === 'failed' ? 'danger' : 'info'">{{ notificationLabel(alertNotification.status) }}</el-tag>
+              <span class="form-tip">{{ alertNotification.webhookStatus ? `HTTP ${alertNotification.webhookStatus}` : '暂无状态码' }} · {{ alertNotification.alertCount || 0 }} 条告警</span>
+            </el-form-item>
             <el-form-item label="上游失败阈值"><el-input-number v-model="config.alerts.upstreamFailureThreshold" :min="1" /></el-form-item>
             <el-form-item label="成功率阈值"><el-input-number v-model="config.alerts.successRateThreshold" :min="1" :max="100" /></el-form-item>
             <el-form-item label="P95 阈值 ms"><el-input-number v-model="config.alerts.p95LatencyMsThreshold" :min="100" /></el-form-item>

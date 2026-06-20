@@ -126,6 +126,14 @@ export interface AlertSummary {
   acknowledged: number
 }
 
+export interface AlertNotification {
+  status: 'idle' | 'sent' | 'failed'
+  sentAt?: string
+  webhookStatus?: number
+  alertCount?: number
+  errorSummary?: string
+}
+
 export interface SecurityConfig {
   ipAllowlist: string[]
   totpEnabled: boolean

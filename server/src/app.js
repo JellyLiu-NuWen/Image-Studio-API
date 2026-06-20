@@ -321,6 +321,71 @@ function alertSummary(alerts) {
   }, { total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 });
 }
 
+function alertNotificationKey(alerts) {
+  return alerts
+    .filter((alert) => !alert.acknowledged)
+    .map((alert) => alert.id)
+    .sort()
+    .join("|");
+}
+
+function publicAlertNotification(notification) {
+  return notification || { status: "idle" };
+}
+
+async function maybeSendAlertWebhook({ config, alerts, summary, fetchImpl, alertNotifications, auditRecords, username, now }) {
+  const enabled = config.alerts?.webhookEnabled === true && config.alerts?.webhookURL;
+  const key = alertNotificationKey(alerts);
+  if (!enabled || !key) return publicAlertNotification(alertNotifications.last);
+  if (alertNotifications.last?.key === key && alertNotifications.last.status === "sent") {
+    return publicAlertNotification(alertNotifications.last);
+  }
+  const payload = {
+    service: "image-studio-api",
+    createdAt: nowISO(now),
+    summary,
+    alerts: alerts.filter((alert) => !alert.acknowledged).map((alert) => ({
+      id: alert.id,
+      severity: alert.severity,
+      title: alert.title,
+      message: alert.message,
+      details: alert.details,
+    })),
+  };
+  try {
+    const response = await fetchImpl(config.alerts.webhookURL, {
+      method: "POST",
+      headers: new Headers({ "content-type": "application/json" }),
+      body: JSON.stringify(payload),
+    });
+    alertNotifications.last = {
+      key,
+      status: response.ok ? "sent" : "failed",
+      sentAt: nowISO(now),
+      webhookStatus: response.status,
+      alertCount: payload.alerts.length,
+    };
+    appendAudit(auditRecords, response.ok ? "alerts.webhook.sent" : "alerts.webhook.failed", {
+      status: response.status,
+      alertCount: payload.alerts.length,
+    }, username, now);
+  } catch (error) {
+    alertNotifications.last = {
+      key,
+      status: "failed",
+      sentAt: nowISO(now),
+      webhookStatus: 0,
+      alertCount: payload.alerts.length,
+      errorSummary: error?.message || "Webhook request failed",
+    };
+    appendAudit(auditRecords, "alerts.webhook.failed", {
+      errorSummary: alertNotifications.last.errorSummary,
+      alertCount: payload.alerts.length,
+    }, username, now);
+  }
+  return publicAlertNotification(alertNotifications.last);
+}
+
 function deriveActiveAlerts(config, metrics) {
   const alerts = [];
   const thresholds = config.alerts || {};
@@ -749,14 +814,25 @@ async function handleAlerts({ request, store, auditRecords, username, now }) {
   return json({ ok: true, alerts: publicConfig(saved).alerts, config: publicConfig(saved) });
 }
 
-async function handleActiveAlerts({ request, store, generationLogStore, auditRecords, username, now, alertId }) {
+async function handleActiveAlerts({ request, store, generationLogStore, fetchImpl, alertNotifications, auditRecords, username, now, alertId }) {
   const current = normalizeConfig(await store.load());
   const generations = generationLogStore ? await generationLogStore.readRecent(500) : [];
   const metrics = summarizeMetrics({ generations, now });
   const alerts = deriveActiveAlerts(current, metrics);
   if (!alertId) {
     if (request.method !== "GET") return methodNotAllowed();
-    return json({ alerts, summary: alertSummary(alerts) });
+    const summary = alertSummary(alerts);
+    const notification = await maybeSendAlertWebhook({
+      config: current,
+      alerts,
+      summary,
+      fetchImpl,
+      alertNotifications,
+      auditRecords,
+      username,
+      now,
+    });
+    return json({ alerts, summary, notification });
   }
   if (request.method !== "POST") return methodNotAllowed();
   const target = alerts.find((item) => item.id === alertId);
@@ -773,11 +849,13 @@ async function handleActiveAlerts({ request, store, generationLogStore, auditRec
   const saved = await store.save({ ...current, acknowledgedAlerts });
   appendAudit(auditRecords, "alerts.acknowledge", { alertId }, username, now);
   const nextAlerts = deriveActiveAlerts(saved, metrics);
+  const summary = alertSummary(nextAlerts);
   return json({
     ok: true,
     alert: nextAlerts.find((item) => item.id === alertId),
     alerts: nextAlerts,
-    summary: alertSummary(nextAlerts),
+    summary,
+    notification: publicAlertNotification(alertNotifications.last),
   });
 }
 
@@ -823,6 +901,7 @@ export function createSelfHostedApp({
   const auditRecords = [];
   const configVersions = [];
   const backups = [];
+  const alertNotifications = {};
   let activeRequests = 0;
 
   async function handle(request) {
@@ -1091,6 +1170,8 @@ export function createSelfHostedApp({
           request,
           store,
           generationLogStore,
+          fetchImpl,
+          alertNotifications,
           auditRecords,
           username: sessions.get(token)?.username,
           now,

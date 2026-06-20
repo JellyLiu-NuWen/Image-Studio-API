@@ -1345,6 +1345,70 @@ test("admin can review and acknowledge active alerts", async () => {
   assert.equal(store.current().acknowledgedAlerts.some((item) => item.id === "generation.p95-latency"), true);
 });
 
+test("admin active alerts sends webhook notifications once per alert set", async () => {
+  const generationLogStore = createMemoryLogStore();
+  await generationLogStore.append({
+    id: "gen-fail",
+    createdAt: "2026-06-19T01:00:00.000Z",
+    status: "failed",
+    interfaceId: "codex",
+    upstreamId: "primary",
+    model: "gpt-image-2",
+    durationMs: 90000,
+  });
+  const webhookCalls = [];
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "",
+        upstreamIds: ["primary"],
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://primary.example/v1",
+        apiKey: "",
+      }],
+      alerts: {
+        webhookEnabled: true,
+        webhookURL: "https://hooks.example/alert",
+        successRateThreshold: 90,
+        p95LatencyMsThreshold: 30000,
+      },
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async (url, init) => {
+      webhookCalls.push({
+        url: String(url),
+        method: init.method,
+        contentType: init.headers.get("content-type"),
+        body: JSON.parse(await new Response(init.body).text()),
+      });
+      return new Response("ok", { status: 200 });
+    },
+  });
+  const headers = await loginHeaders(app);
+
+  const first = await app.handle(new Request("http://localhost/api/alerts/active", { headers }));
+  const second = await app.handle(new Request("http://localhost/api/alerts/active", { headers }));
+
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(webhookCalls.length, 1);
+  assert.equal(webhookCalls[0].url, "https://hooks.example/alert");
+  assert.equal(webhookCalls[0].method, "POST");
+  assert.equal(webhookCalls[0].contentType, "application/json");
+  assert.equal(webhookCalls[0].body.alerts.some((alert) => alert.id === "config.interface-key.codex"), true);
+  const firstBody = await first.json();
+  assert.equal(firstBody.notification.status, "sent");
+  assert.match(firstBody.notification.sentAt, /^\d{4}-\d{2}-\d{2}T/);
+  const secondBody = await second.json();
+  assert.equal(secondBody.notification.status, "sent");
+});
+
 test("admin can mark generation logs as quality cases and audit the action", async () => {
   const generationLogStore = createMemoryLogStore();
   await generationLogStore.append({
