@@ -490,6 +490,12 @@ button,
   font-size: 12px;
 }
 
+.compact-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .detail-stack {
   display: grid;
   gap: 14px;

@@ -204,6 +204,12 @@ function qualityCaseLabel(label: 'poor' | 'excellent') {
   return label === 'poor' ? '质量差' : '优秀'
 }
 
+function upstreamNames(ids: string[] = []) {
+  if (!ids.length) return '未绑定'
+  const names = ids.map((id) => activeUpstreams.value.find((item) => item.id === id)?.name || id)
+  return names.join(', ')
+}
+
 function upstreamHealthFor(id?: string) {
   return upstreamHealth.value.find((item) => item.id === id)
 }
@@ -1006,15 +1012,31 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column prop="id" label="模型 ID" min-width="160" />
             <el-table-column prop="name" label="名称" min-width="140" />
             <el-table-column prop="capabilities" label="能力" min-width="160">
-              <template #default="{ row }">{{ row.capabilities.join(', ') }}</template>
+              <template #default="{ row }">
+                <div class="compact-tags">
+                  <el-tag v-for="item in row.capabilities" :key="item" size="small">{{ item }}</el-tag>
+                </div>
+              </template>
             </el-table-column>
-            <el-table-column prop="sizes" label="尺寸" min-width="220">
-              <template #default="{ row }">{{ row.sizes.join(', ') }}</template>
+            <el-table-column prop="sizes" label="尺寸" min-width="190" show-overflow-tooltip>
+              <template #default="{ row }">{{ row.sizes.join(', ') || '-' }}</template>
             </el-table-column>
+            <el-table-column prop="qualities" label="质量" min-width="150">
+              <template #default="{ row }">
+                <div class="compact-tags">
+                  <el-tag v-for="item in row.qualities" :key="item" size="small" type="info">{{ item }}</el-tag>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="defaultOutputFormat" label="默认格式" width="110" />
+            <el-table-column prop="upstreamIds" label="绑定上游" min-width="170" show-overflow-tooltip>
+              <template #default="{ row }">{{ upstreamNames(row.upstreamIds) }}</template>
+            </el-table-column>
+            <el-table-column prop="recommendedUse" label="推荐用途" min-width="220" show-overflow-tooltip />
             <el-table-column prop="enabled" label="启用" width="90">
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
-            <el-table-column label="操作" width="170">
+            <el-table-column label="操作" width="170" fixed="right">
               <template #default="{ $index }">
                 <el-button size="small" :icon="Edit" @click="openDrawer('model', $index)">编辑</el-button>
                 <el-button size="small" type="danger" plain @click="removeItem('model', $index)">删除</el-button>
@@ -1467,7 +1489,10 @@ window.addEventListener('beforeunload', (event) => {
           <el-form-item label="能力"><el-select v-model="config.models[drawerIndex].capabilities" multiple allow-create filterable><el-option value="generate" label="generate" /><el-option value="edit" label="edit" /></el-select></el-form-item>
           <el-form-item label="尺寸"><el-select v-model="config.models[drawerIndex].sizes" multiple allow-create filterable><el-option value="1024x1024" label="1024x1024" /><el-option value="1536x1024" label="1536x1024" /><el-option value="1024x1536" label="1024x1536" /></el-select></el-form-item>
           <el-form-item label="质量"><el-select v-model="config.models[drawerIndex].qualities" multiple allow-create filterable><el-option value="high" label="high" /><el-option value="medium" label="medium" /><el-option value="low" label="low" /><el-option value="auto" label="auto" /></el-select></el-form-item>
-          <el-form-item label="推荐用途"><el-input v-model="config.models[drawerIndex].recommendedUse" type="textarea" /></el-form-item>
+          <el-form-item label="默认输出格式"><el-select v-model="config.models[drawerIndex].defaultOutputFormat" allow-create filterable><el-option value="png" label="png" /><el-option value="jpeg" label="jpeg" /><el-option value="webp" label="webp" /></el-select></el-form-item>
+          <el-form-item label="绑定上游"><el-select v-model="config.models[drawerIndex].upstreamIds" multiple filterable><el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+          <el-form-item label="推荐用途"><el-input v-model="config.models[drawerIndex].recommendedUse" type="textarea" :rows="3" /></el-form-item>
+          <el-form-item label="启用"><el-switch v-model="config.models[drawerIndex].enabled" /></el-form-item>
         </el-form>
       </template>
 
