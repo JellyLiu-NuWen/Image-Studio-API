@@ -29,6 +29,7 @@ export const DEFAULT_CONFIG = {
   qualityPresets: [],
   qualityCases: [],
   acknowledgedAlerts: [],
+  configBackups: [],
   alerts: {},
   security: {},
 };
@@ -348,6 +349,28 @@ function normalizeAcknowledgedAlert(raw = {}, index = 0, previous = {}) {
   };
 }
 
+function normalizeConfigBackup(raw = {}, index = 0, previous = {}) {
+  const id = normalizeId(raw.id || previous.id, `backup-${index + 1}`);
+  const rawConfig = raw.rawConfig && typeof raw.rawConfig === "object"
+    ? raw.rawConfig
+    : previous.rawConfig && typeof previous.rawConfig === "object"
+      ? previous.rawConfig
+      : null;
+  const publicSnapshot = raw.config && typeof raw.config === "object"
+    ? raw.config
+    : previous.config && typeof previous.config === "object"
+      ? previous.config
+      : {};
+  return {
+    id,
+    createdAt: String(raw.createdAt || previous.createdAt || "").trim(),
+    username: String(raw.username || previous.username || "admin").trim(),
+    summary: String(raw.summary || previous.summary || "配置备份").trim(),
+    config: publicSnapshot,
+    rawConfig,
+  };
+}
+
 function isMaskedSecretPlaceholder(value) {
   const text = String(value ?? "").trim().toLowerCase();
   if (!text) return false;
@@ -540,6 +563,11 @@ export function normalizeConfig(input = {}, previous = {}) {
     previous.acknowledgedAlerts,
     normalizeAcknowledgedAlert,
   );
+  const configBackups = normalizeCollection(
+    Array.isArray(input.configBackups) ? input.configBackups : (Array.isArray(previous.configBackups) ? previous.configBackups : []),
+    previous.configBackups,
+    normalizeConfigBackup,
+  ).slice(0, 10);
   const primaryInterface = interfaces[0];
   const upstreamById = byId(upstreams);
   const primaryUpstream = upstreamById.get(primaryInterface.upstreamIds[0]) || upstreams[0];
@@ -563,6 +591,7 @@ export function normalizeConfig(input = {}, previous = {}) {
     qualityPresets,
     qualityCases,
     acknowledgedAlerts,
+    configBackups,
     alerts: normalizeAlerts(merged.alerts),
     security: normalizeSecurity(merged.security),
   };
@@ -615,6 +644,7 @@ export function publicConfig(config) {
     qualityPresets: normalized.qualityPresets,
     qualityCases: normalized.qualityCases,
     acknowledgedAlerts: normalized.acknowledgedAlerts,
+    configBackups: normalized.configBackups.map(({ rawConfig: _rawConfig, ...backup }) => backup),
     alerts: {
       ...normalized.alerts,
       webhookURLSet: !!normalized.alerts.webhookURL,
@@ -644,6 +674,9 @@ export function mergeConfigUpdate(current, patch) {
     acknowledgedAlerts: Array.isArray(patch.acknowledgedAlerts)
       ? normalizeCollection(patch.acknowledgedAlerts, normalizedCurrent.acknowledgedAlerts, normalizeAcknowledgedAlert)
       : normalizedCurrent.acknowledgedAlerts,
+    configBackups: Array.isArray(patch.configBackups)
+      ? normalizeCollection(patch.configBackups, normalizedCurrent.configBackups, normalizeConfigBackup).slice(0, 10)
+      : normalizedCurrent.configBackups,
     alerts: patch.alerts ? normalizeAlerts({
       ...normalizedCurrent.alerts,
       ...patch.alerts,

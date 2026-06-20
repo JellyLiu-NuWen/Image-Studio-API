@@ -1278,6 +1278,43 @@ test("admin backups retain raw secrets and keep the latest ten snapshots", async
   assert.equal(store.current().upstreams[0].apiKey, "upstream-key");
 });
 
+test("admin backups persist through app recreation", async () => {
+  const store = memoryStore({
+    interfaces: [{
+      id: "codex",
+      name: "Codex",
+      apiToken: "client-token",
+      upstreamIds: ["primary"],
+    }],
+    upstreams: [{
+      id: "primary",
+      name: "Primary",
+      baseURL: "https://primary.example/v1",
+      apiKey: "upstream-key",
+    }],
+  });
+  const makeApp = () => createSelfHostedApp({
+    store,
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+  const firstApp = makeApp();
+  const firstHeaders = await loginHeaders(firstApp);
+  const backup = await firstApp.handle(jsonRequest("/api/backup", {}, firstHeaders));
+  assert.equal(backup.status, 200);
+  const backupId = (await backup.json()).backup.id;
+
+  const secondApp = makeApp();
+  const secondHeaders = await loginHeaders(secondApp);
+  const list = await secondApp.handle(new Request("http://localhost/api/backup", { headers: secondHeaders }));
+  assert.equal(list.status, 200);
+  const listBody = await list.json();
+  assert.equal(listBody.backups.some((item) => item.id === backupId), true);
+});
+
 test("admin can review and acknowledge active alerts", async () => {
   const generationLogStore = createMemoryLogStore();
   await generationLogStore.append({

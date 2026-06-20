@@ -180,3 +180,28 @@ test("publicConfig exposes operations-console metadata without raw secrets", () 
   assert.equal(Array.isArray(exposed.qualityPresets), true);
   assert.equal(exposed.security.totpEnabled, false);
 });
+
+test("normalizeConfig persists recent config backups and publicConfig hides raw backup secrets", () => {
+  const config = normalizeConfig({
+    configBackups: Array.from({ length: 12 }, (_, index) => ({
+      id: `backup-${index}`,
+      createdAt: `2026-06-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`,
+      username: "admin",
+      summary: `Backup ${index}`,
+      config: { imageApiTokenSet: true },
+      rawConfig: {
+        interfaces: [{ id: "codex", apiToken: `client-token-${index}`, upstreamIds: ["primary"] }],
+        upstreams: [{ id: "primary", apiKey: `upstream-key-${index}` }],
+      },
+    })),
+  });
+
+  assert.equal(config.configBackups.length, 10);
+  assert.equal(config.configBackups[0].id, "backup-0");
+  assert.equal(config.configBackups[0].rawConfig.interfaces[0].apiToken, "client-token-0");
+  const exposed = publicConfig(config);
+  assert.equal(exposed.configBackups.length, 10);
+  assert.equal(exposed.configBackups[0].id, "backup-0");
+  assert.equal(exposed.configBackups[0].rawConfig, undefined);
+  assert.equal(exposed.configBackups[0].config.imageApiTokenSet, true);
+});

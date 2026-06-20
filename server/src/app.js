@@ -727,24 +727,27 @@ async function handleConfigVersions({ request, store, configVersions, versionId,
   return json({ ok: true, config: publicConfig(saved) });
 }
 
-async function handleBackup({ request, store, backups, auditRecords, username, now }) {
+async function handleBackup({ request, store, auditRecords, username, now }) {
+  const current = normalizeConfig(await store.load());
   if (request.method === "GET") {
-    return json({ backups: backups.map(publicBackup) });
+    return json({ backups: current.configBackups.map(publicBackup) });
   }
   if (request.method !== "POST") return methodNotAllowed();
-  const config = normalizeConfig(await store.load());
-  const backup = createConfigBackup(config, username, now);
-  backups.unshift(backup);
-  backups.splice(10);
+  const backup = createConfigBackup(current, username, now);
+  const saved = await store.save({
+    ...current,
+    configBackups: [backup, ...current.configBackups.filter((item) => item.id !== backup.id)].slice(0, 10),
+  });
   appendAudit(auditRecords, "backup.create", { backupId: backup.id }, username, now);
-  return json({ ok: true, backup });
+  return json({ ok: true, backup: saved.configBackups[0] });
 }
 
-async function handleRestore({ request, store, backups, auditRecords, username, now }) {
+async function handleRestore({ request, store, auditRecords, username, now }) {
   if (request.method !== "POST") return methodNotAllowed();
   const body = await request.json().catch(() => ({}));
+  const current = normalizeConfig(await store.load());
   const backupId = String(body.backupId || "").trim();
-  const matched = backupId ? backups.find((item) => item.id === backupId) : null;
+  const matched = backupId ? current.configBackups.find((item) => item.id === backupId) : null;
   const rawConfig = matched?.rawConfig || body.rawConfig || body.backup?.rawConfig || body.config || body.backup?.config || {};
   const restored = await store.save(rawConfig);
   appendAudit(auditRecords, "backup.restore", { backupId: backupId || body.backup?.id || "" }, username, now);
@@ -900,7 +903,6 @@ export function createSelfHostedApp({
   const sessions = new Map();
   const auditRecords = [];
   const configVersions = [];
-  const backups = [];
   const alertNotifications = {};
   let activeRequests = 0;
 
@@ -1342,7 +1344,6 @@ export function createSelfHostedApp({
         response = await handleBackup({
           request,
           store,
-          backups,
           auditRecords,
           username: sessions.get(token)?.username,
           now,
@@ -1361,7 +1362,6 @@ export function createSelfHostedApp({
         response = await handleRestore({
           request,
           store,
-          backups,
           auditRecords,
           username: sessions.get(token)?.username,
           now,
