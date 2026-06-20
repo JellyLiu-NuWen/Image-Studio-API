@@ -165,6 +165,93 @@ const filteredInterfaces = computed(() => filterTableRows(activeInterfaces.value
 const filteredUpstreams = computed(() => filterTableRows(activeUpstreams.value, tableSearch.upstreams))
 const filteredModels = computed(() => filterTableRows(activeModels.value, tableSearch.models))
 const filteredPresets = computed(() => filterTableRows(activePresets.value, tableSearch.quality))
+const drawerContext = computed(() => {
+  if (!config.value || !drawerMode.value) return null
+  if (drawerMode.value === 'interface') {
+    const item = config.value.interfaces[drawerIndex.value]
+    if (!item) return null
+    return {
+      title: item.name || item.id,
+      eyebrow: '接口管理',
+      description: '配置 Skill 调用 Key、默认模型参数、路由上游和请求策略。',
+      enabled: item.enabled,
+      id: item.id,
+      meta: item.defaultImageModel || '未配置模型'
+    }
+  }
+  if (drawerMode.value === 'upstream') {
+    const item = config.value.upstreams[drawerIndex.value]
+    if (!item) return null
+    return {
+      title: item.name || item.id,
+      eyebrow: '上游管理',
+      description: '维护上游中转站地址、密钥、权重和健康检查策略。',
+      enabled: item.enabled,
+      id: item.id,
+      meta: item.baseURL || '未配置 Base URL'
+    }
+  }
+  if (drawerMode.value === 'model') {
+    const item = config.value.models[drawerIndex.value]
+    if (!item) return null
+    return {
+      title: item.name || item.id,
+      eyebrow: '模型目录',
+      description: '维护模型能力、尺寸质量支持、输出格式和绑定上游。',
+      enabled: item.enabled,
+      id: item.id,
+      meta: item.capabilities.join(' / ') || '未配置能力'
+    }
+  }
+  const item = config.value.qualityPresets[drawerIndex.value]
+  if (!item) return null
+  return {
+    title: item.name || item.id,
+    eyebrow: '生图质量',
+    description: '维护质量预设、Prompt 模板和默认出图参数。',
+    enabled: true,
+    id: item.id,
+    meta: `${item.quality || 'auto'} · ${item.size || '默认尺寸'}`
+  }
+})
+const drawerStatusCards = computed(() => {
+  const context = drawerContext.value
+  if (!context || !drawerMode.value || !config.value) return []
+  if (drawerMode.value === 'interface') {
+    const item = config.value.interfaces[drawerIndex.value]
+    return [
+      { label: '状态', value: item.enabled ? '启用' : '禁用', type: item.enabled ? 'success' : 'warning' },
+      { label: 'Key', value: item.apiTokenSet || item.apiToken ? '已配置' : '缺失', type: item.apiTokenSet || item.apiToken ? 'success' : 'critical' },
+      { label: '上游', value: item.upstreamIds.length, type: item.upstreamIds.length ? 'info' : 'warning' },
+      { label: '限流', value: `${item.rateLimitPerMinute}/min`, type: 'info' }
+    ]
+  }
+  if (drawerMode.value === 'upstream') {
+    const item = config.value.upstreams[drawerIndex.value]
+    return [
+      { label: '状态', value: item.enabled ? '参与' : '停用', type: item.enabled ? 'success' : 'warning' },
+      { label: 'Key', value: item.apiKeySet || item.apiKey ? '已配置' : '缺失', type: item.apiKeySet || item.apiKey ? 'success' : 'critical' },
+      { label: '优先级', value: item.priority, type: 'info' },
+      { label: '权重', value: item.weight, type: 'info' }
+    ]
+  }
+  if (drawerMode.value === 'model') {
+    const item = config.value.models[drawerIndex.value]
+    return [
+      { label: '状态', value: item.enabled ? '启用' : '禁用', type: item.enabled ? 'success' : 'warning' },
+      { label: '能力', value: item.capabilities.length, type: 'info' },
+      { label: '尺寸', value: item.sizes.length, type: 'info' },
+      { label: '质量', value: item.qualities.length, type: 'info' }
+    ]
+  }
+  const item = config.value.qualityPresets[drawerIndex.value]
+  return [
+    { label: '质量', value: item.quality || 'auto', type: 'info' },
+    { label: '尺寸', value: item.size || '默认', type: 'info' },
+    { label: '格式', value: item.outputFormat || 'png', type: 'info' },
+    { label: '增强', value: item.promptEnhance ? '开启' : '关闭', type: item.promptEnhance ? 'warning' : 'success' }
+  ]
+})
 const alertsForm = computed<AlertsConfig>(() => config.value?.alerts || {
   webhookEnabled: false,
   webhookURL: '',
@@ -2001,81 +2088,159 @@ window.addEventListener('beforeunload', (event) => {
       </section>
     </main>
 
-    <el-drawer v-model="drawerVisible" :title="drawerTitle()" size="520px" destroy-on-close>
+    <el-drawer v-model="drawerVisible" :title="drawerTitle()" size="620px" destroy-on-close class="config-drawer">
+      <div v-if="drawerContext" class="drawer-overview">
+        <div>
+          <span>{{ drawerContext.eyebrow }}</span>
+          <h3>{{ drawerContext.title }}</h3>
+          <p>{{ drawerContext.description }}</p>
+        </div>
+        <el-tag :type="drawerContext.enabled ? 'success' : 'warning'">{{ drawerContext.enabled ? '启用' : '停用' }}</el-tag>
+      </div>
+      <div class="drawer-status-grid">
+        <div v-for="item in drawerStatusCards" :key="item.label" :class="item.type">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
       <template v-if="config && drawerMode === 'interface' && config.interfaces[drawerIndex]">
-        <el-form :model="config.interfaces[drawerIndex]" label-position="top">
-          <el-form-item label="接口 ID"><el-input v-model="config.interfaces[drawerIndex].id" /></el-form-item>
-          <el-form-item label="名称"><el-input v-model="config.interfaces[drawerIndex].name" /></el-form-item>
-          <el-form-item label="Skill 调用 Key">
-            <div class="secret-line">
-              <el-input v-model="config.interfaces[drawerIndex].apiToken" :placeholder="config.interfaces[drawerIndex].apiTokenSet ? '已保存，留空保持不变' : '请输入 Key'" />
-              <el-button :icon="secretValues[`interface:${config.interfaces[drawerIndex].id}`] ? Hide : View" @click="revealSecret('interface', config.interfaces[drawerIndex].id)">显示</el-button>
-              <el-button :icon="Key" @click="copySecret('interface', config.interfaces[drawerIndex].id)">复制</el-button>
+        <el-form :model="config.interfaces[drawerIndex]" label-position="top" class="drawer-form">
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Connection /><span>基础信息</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="接口 ID"><el-input v-model="config.interfaces[drawerIndex].id" /></el-form-item>
+              <el-form-item label="名称"><el-input v-model="config.interfaces[drawerIndex].name" /></el-form-item>
+              <el-form-item label="启用"><el-switch v-model="config.interfaces[drawerIndex].enabled" /></el-form-item>
+              <el-form-item label="最后使用"><el-input :model-value="formatTime(config.interfaces[drawerIndex].lastUsedAt)" readonly /></el-form-item>
             </div>
-            <el-input v-if="secretValues[`interface:${config.interfaces[drawerIndex].id}`]" :model-value="secretValues[`interface:${config.interfaces[drawerIndex].id}`]" readonly />
-          </el-form-item>
-          <el-form-item label="上游绑定"><el-select v-model="config.interfaces[drawerIndex].upstreamIds" multiple><el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
-          <el-form-item label="默认模型"><el-input v-model="config.interfaces[drawerIndex].defaultImageModel" /></el-form-item>
-          <el-form-item label="尺寸"><el-input v-model="config.interfaces[drawerIndex].defaultSize" /></el-form-item>
-          <el-form-item label="质量"><el-select v-model="config.interfaces[drawerIndex].defaultQuality"><el-option value="high" label="high" /><el-option value="medium" label="medium" /><el-option value="low" label="low" /><el-option value="auto" label="auto" /></el-select></el-form-item>
-          <el-form-item label="输出格式"><el-input v-model="config.interfaces[drawerIndex].defaultOutputFormat" /></el-form-item>
-          <el-form-item label="质量预设"><el-select v-model="config.interfaces[drawerIndex].qualityPresetId"><el-option v-for="item in activePresets" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
-          <el-form-item label="超时秒数"><el-input-number v-model="config.interfaces[drawerIndex].requestTimeoutSeconds" :min="10" :max="900" /></el-form-item>
-          <el-form-item label="并发上限"><el-input-number v-model="config.interfaces[drawerIndex].maxConcurrentRequests" :min="1" :max="10" /></el-form-item>
-          <el-form-item label="每分钟限流"><el-input-number v-model="config.interfaces[drawerIndex].rateLimitPerMinute" :min="1" :max="600" /></el-form-item>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Key /><span>密钥与路由</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="Skill 调用 Key" class="drawer-form-wide">
+                <div class="secret-line">
+                  <el-input v-model="config.interfaces[drawerIndex].apiToken" :placeholder="config.interfaces[drawerIndex].apiTokenSet ? '已保存，留空保持不变' : '请输入 Key'" />
+                  <el-button :icon="secretValues[`interface:${config.interfaces[drawerIndex].id}`] ? Hide : View" @click="revealSecret('interface', config.interfaces[drawerIndex].id)">显示</el-button>
+                  <el-button :icon="Key" @click="copySecret('interface', config.interfaces[drawerIndex].id)">复制</el-button>
+                </div>
+                <el-input v-if="secretValues[`interface:${config.interfaces[drawerIndex].id}`]" :model-value="secretValues[`interface:${config.interfaces[drawerIndex].id}`]" readonly />
+              </el-form-item>
+              <el-form-item label="上游绑定" class="drawer-form-wide"><el-select v-model="config.interfaces[drawerIndex].upstreamIds" multiple><el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+            </div>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><MagicStick /><span>默认出图参数</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="默认模型"><el-input v-model="config.interfaces[drawerIndex].defaultImageModel" /></el-form-item>
+              <el-form-item label="尺寸"><el-input v-model="config.interfaces[drawerIndex].defaultSize" /></el-form-item>
+              <el-form-item label="质量"><el-select v-model="config.interfaces[drawerIndex].defaultQuality"><el-option value="high" label="high" /><el-option value="medium" label="medium" /><el-option value="low" label="low" /><el-option value="auto" label="auto" /></el-select></el-form-item>
+              <el-form-item label="输出格式"><el-input v-model="config.interfaces[drawerIndex].defaultOutputFormat" /></el-form-item>
+              <el-form-item label="质量预设" class="drawer-form-wide"><el-select v-model="config.interfaces[drawerIndex].qualityPresetId"><el-option v-for="item in activePresets" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+            </div>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Timer /><span>请求策略</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="超时秒数"><el-input-number v-model="config.interfaces[drawerIndex].requestTimeoutSeconds" :min="10" :max="900" /></el-form-item>
+              <el-form-item label="并发上限"><el-input-number v-model="config.interfaces[drawerIndex].maxConcurrentRequests" :min="1" :max="10" /></el-form-item>
+              <el-form-item label="每分钟限流"><el-input-number v-model="config.interfaces[drawerIndex].rateLimitPerMinute" :min="1" :max="600" /></el-form-item>
+            </div>
+          </section>
         </el-form>
       </template>
 
       <template v-if="config && drawerMode === 'upstream' && config.upstreams[drawerIndex]">
-        <el-form :model="config.upstreams[drawerIndex]" label-position="top">
-          <el-form-item label="上游 ID"><el-input v-model="config.upstreams[drawerIndex].id" /></el-form-item>
-          <el-form-item label="名称"><el-input v-model="config.upstreams[drawerIndex].name" /></el-form-item>
-          <el-form-item label="Base URL"><el-input v-model="config.upstreams[drawerIndex].baseURL" /></el-form-item>
-          <el-form-item label="上游 API Key">
-            <div class="secret-line">
-              <el-input v-model="config.upstreams[drawerIndex].apiKey" :placeholder="config.upstreams[drawerIndex].apiKeySet ? '已保存，留空保持不变' : '请输入 Key'" />
-              <el-button :icon="secretValues[`upstream:${config.upstreams[drawerIndex].id}`] ? Hide : View" @click="revealSecret('upstream', config.upstreams[drawerIndex].id)">显示</el-button>
-              <el-button :icon="Key" @click="copySecret('upstream', config.upstreams[drawerIndex].id)">复制</el-button>
+        <el-form :model="config.upstreams[drawerIndex]" label-position="top" class="drawer-form">
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Link /><span>基础信息</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="上游 ID"><el-input v-model="config.upstreams[drawerIndex].id" /></el-form-item>
+              <el-form-item label="名称"><el-input v-model="config.upstreams[drawerIndex].name" /></el-form-item>
+              <el-form-item label="Base URL" class="drawer-form-wide"><el-input v-model="config.upstreams[drawerIndex].baseURL" /></el-form-item>
             </div>
-            <el-input v-if="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" :model-value="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" readonly />
-          </el-form-item>
-          <el-form-item label="优先级"><el-input-number v-model="config.upstreams[drawerIndex].priority" :min="1" :max="1000" /></el-form-item>
-          <el-form-item label="权重"><el-input-number v-model="config.upstreams[drawerIndex].weight" :min="1" :max="100" /></el-form-item>
-          <el-form-item label="参与故障转移"><el-switch v-model="config.upstreams[drawerIndex].enabled" /></el-form-item>
-          <el-form-item label="健康检查"><el-switch v-model="config.upstreams[drawerIndex].healthCheckEnabled" /></el-form-item>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Key /><span>认证密钥</span></div>
+            <el-form-item label="上游 API Key">
+              <div class="secret-line">
+                <el-input v-model="config.upstreams[drawerIndex].apiKey" :placeholder="config.upstreams[drawerIndex].apiKeySet ? '已保存，留空保持不变' : '请输入 Key'" />
+                <el-button :icon="secretValues[`upstream:${config.upstreams[drawerIndex].id}`] ? Hide : View" @click="revealSecret('upstream', config.upstreams[drawerIndex].id)">显示</el-button>
+                <el-button :icon="Key" @click="copySecret('upstream', config.upstreams[drawerIndex].id)">复制</el-button>
+              </div>
+              <el-input v-if="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" :model-value="secretValues[`upstream:${config.upstreams[drawerIndex].id}`]" readonly />
+            </el-form-item>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Operation /><span>调度策略</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="优先级"><el-input-number v-model="config.upstreams[drawerIndex].priority" :min="1" :max="1000" /></el-form-item>
+              <el-form-item label="权重"><el-input-number v-model="config.upstreams[drawerIndex].weight" :min="1" :max="100" /></el-form-item>
+              <el-form-item label="参与故障转移"><el-switch v-model="config.upstreams[drawerIndex].enabled" /></el-form-item>
+              <el-form-item label="健康检查"><el-switch v-model="config.upstreams[drawerIndex].healthCheckEnabled" /></el-form-item>
+            </div>
+          </section>
         </el-form>
       </template>
 
       <template v-if="config && drawerMode === 'model' && config.models[drawerIndex]">
-        <el-form :model="config.models[drawerIndex]" label-position="top">
-          <el-form-item label="模型 ID"><el-input v-model="config.models[drawerIndex].id" /></el-form-item>
-          <el-form-item label="名称"><el-input v-model="config.models[drawerIndex].name" /></el-form-item>
-          <el-form-item label="能力"><el-select v-model="config.models[drawerIndex].capabilities" multiple allow-create filterable><el-option value="generate" label="generate" /><el-option value="edit" label="edit" /></el-select></el-form-item>
-          <el-form-item label="尺寸"><el-select v-model="config.models[drawerIndex].sizes" multiple allow-create filterable><el-option value="1024x1024" label="1024x1024" /><el-option value="1536x1024" label="1536x1024" /><el-option value="1024x1536" label="1024x1536" /></el-select></el-form-item>
-          <el-form-item label="质量"><el-select v-model="config.models[drawerIndex].qualities" multiple allow-create filterable><el-option value="high" label="high" /><el-option value="medium" label="medium" /><el-option value="low" label="low" /><el-option value="auto" label="auto" /></el-select></el-form-item>
-          <el-form-item label="默认输出格式"><el-select v-model="config.models[drawerIndex].defaultOutputFormat" allow-create filterable><el-option value="png" label="png" /><el-option value="jpeg" label="jpeg" /><el-option value="webp" label="webp" /></el-select></el-form-item>
-          <el-form-item label="绑定上游"><el-select v-model="config.models[drawerIndex].upstreamIds" multiple filterable><el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
-          <el-form-item label="推荐用途"><el-input v-model="config.models[drawerIndex].recommendedUse" type="textarea" :rows="3" /></el-form-item>
-          <el-form-item label="启用"><el-switch v-model="config.models[drawerIndex].enabled" /></el-form-item>
+        <el-form :model="config.models[drawerIndex]" label-position="top" class="drawer-form">
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Box /><span>模型信息</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="模型 ID"><el-input v-model="config.models[drawerIndex].id" /></el-form-item>
+              <el-form-item label="名称"><el-input v-model="config.models[drawerIndex].name" /></el-form-item>
+              <el-form-item label="启用"><el-switch v-model="config.models[drawerIndex].enabled" /></el-form-item>
+              <el-form-item label="默认输出格式"><el-select v-model="config.models[drawerIndex].defaultOutputFormat" allow-create filterable><el-option value="png" label="png" /><el-option value="jpeg" label="jpeg" /><el-option value="webp" label="webp" /></el-select></el-form-item>
+            </div>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><MagicStick /><span>能力目录</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="能力"><el-select v-model="config.models[drawerIndex].capabilities" multiple allow-create filterable><el-option value="generate" label="generate" /><el-option value="edit" label="edit" /></el-select></el-form-item>
+              <el-form-item label="尺寸"><el-select v-model="config.models[drawerIndex].sizes" multiple allow-create filterable><el-option value="1024x1024" label="1024x1024" /><el-option value="1536x1024" label="1536x1024" /><el-option value="1024x1536" label="1024x1536" /></el-select></el-form-item>
+              <el-form-item label="质量"><el-select v-model="config.models[drawerIndex].qualities" multiple allow-create filterable><el-option value="high" label="high" /><el-option value="medium" label="medium" /><el-option value="low" label="low" /><el-option value="auto" label="auto" /></el-select></el-form-item>
+              <el-form-item label="绑定上游"><el-select v-model="config.models[drawerIndex].upstreamIds" multiple filterable><el-option v-for="item in activeUpstreams" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+            </div>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Document /><span>推荐用途</span></div>
+            <el-form-item label="推荐用途"><el-input v-model="config.models[drawerIndex].recommendedUse" type="textarea" :rows="3" /></el-form-item>
+          </section>
         </el-form>
       </template>
 
       <template v-if="config && drawerMode === 'quality' && config.qualityPresets[drawerIndex]">
-        <el-form :model="config.qualityPresets[drawerIndex]" label-position="top">
-          <el-form-item label="预设 ID"><el-input v-model="config.qualityPresets[drawerIndex].id" /></el-form-item>
-          <el-form-item label="名称"><el-input v-model="config.qualityPresets[drawerIndex].name" /></el-form-item>
-          <el-form-item label="质量"><el-select v-model="config.qualityPresets[drawerIndex].quality"><el-option value="high" label="high" /><el-option value="medium" label="medium" /><el-option value="low" label="low" /><el-option value="auto" label="auto" /></el-select></el-form-item>
-          <el-form-item label="尺寸"><el-input v-model="config.qualityPresets[drawerIndex].size" /></el-form-item>
-          <el-form-item label="输出格式"><el-input v-model="config.qualityPresets[drawerIndex].outputFormat" /></el-form-item>
-          <el-form-item label="Prompt 自动增强"><el-switch v-model="config.qualityPresets[drawerIndex].promptEnhance" /></el-form-item>
-          <el-form-item label="用途"><el-input v-model="config.qualityPresets[drawerIndex].useCase" /></el-form-item>
-          <el-form-item label="Prompt 模板"><el-input v-model="config.qualityPresets[drawerIndex].template" type="textarea" :rows="6" /></el-form-item>
+        <el-form :model="config.qualityPresets[drawerIndex]" label-position="top" class="drawer-form">
+          <section class="drawer-section">
+            <div class="drawer-section-title"><MagicStick /><span>预设信息</span></div>
+            <div class="drawer-form-grid">
+              <el-form-item label="预设 ID"><el-input v-model="config.qualityPresets[drawerIndex].id" /></el-form-item>
+              <el-form-item label="名称"><el-input v-model="config.qualityPresets[drawerIndex].name" /></el-form-item>
+              <el-form-item label="质量"><el-select v-model="config.qualityPresets[drawerIndex].quality"><el-option value="high" label="high" /><el-option value="medium" label="medium" /><el-option value="low" label="low" /><el-option value="auto" label="auto" /></el-select></el-form-item>
+              <el-form-item label="尺寸"><el-input v-model="config.qualityPresets[drawerIndex].size" /></el-form-item>
+              <el-form-item label="输出格式"><el-input v-model="config.qualityPresets[drawerIndex].outputFormat" /></el-form-item>
+              <el-form-item label="Prompt 自动增强"><el-switch v-model="config.qualityPresets[drawerIndex].promptEnhance" /></el-form-item>
+              <el-form-item label="用途" class="drawer-form-wide"><el-input v-model="config.qualityPresets[drawerIndex].useCase" /></el-form-item>
+            </div>
+          </section>
+          <section class="drawer-section">
+            <div class="drawer-section-title"><Document /><span>Prompt 模板</span></div>
+            <el-form-item label="Prompt 模板"><el-input v-model="config.qualityPresets[drawerIndex].template" type="textarea" :rows="6" /></el-form-item>
+          </section>
         </el-form>
       </template>
 
       <template #footer>
-        <el-button @click="closeDrawer">取消</el-button>
-        <el-button type="primary" @click="saveDrawer">保存</el-button>
+        <div class="drawer-footer-actions">
+          <div>
+            <strong>{{ drawerContext?.title || drawerTitle() }}</strong>
+            <span>{{ drawerContext?.id || '未选择' }} · {{ drawerContext?.meta || '等待配置' }}</span>
+          </div>
+          <div>
+            <el-button @click="closeDrawer">取消</el-button>
+            <el-button type="primary" :icon="Finished" @click="saveDrawer">保存</el-button>
+          </div>
+        </div>
       </template>
     </el-drawer>
 

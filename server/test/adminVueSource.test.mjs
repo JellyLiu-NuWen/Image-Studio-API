@@ -168,6 +168,30 @@ test("Vue management tables use an Art Design Pro style table workspace", async 
   assert.match(styleSource, /\.toolbar-meta/, "Styles should include compact table meta styling");
 });
 
+test("Vue config drawer uses an Art Design Pro form workspace", async () => {
+  const source = await readAppSource();
+  const drawerSection = sourceBetween(
+    source,
+    "<el-drawer v-model=\"drawerVisible\"",
+    "<el-drawer v-model=\"logDetailVisible\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /drawerContext/, "Config drawer should compute the edited item context");
+  assert.match(source, /drawerStatusCards/, "Config drawer should compute status summary cards");
+  assert.match(drawerSection, /config-drawer/, "Config drawer should apply a dedicated workspace class");
+  assert.match(drawerSection, /drawer-overview/, "Config drawer should render an overview header");
+  assert.match(drawerSection, /drawer-status-grid/, "Config drawer should render status cards");
+  assert.match(drawerSection, /drawer-section/, "Config drawer should group fields into sections");
+  assert.match(drawerSection, /drawer-form-grid/, "Config drawer should use a structured field grid");
+  assert.match(drawerSection, /drawer-footer-actions/, "Config drawer should render a sticky action bar");
+  assert.match(styleSource, /\.config-drawer/, "Styles should include config drawer styling");
+  assert.match(styleSource, /\.drawer-overview/, "Styles should include drawer overview styling");
+  assert.match(styleSource, /\.drawer-status-grid/, "Styles should include drawer status card styling");
+  assert.match(styleSource, /\.drawer-form-grid/, "Styles should include drawer form grid styling");
+  assert.match(styleSource, /\.drawer-footer-actions/, "Styles should include drawer footer action styling");
+});
+
 test("Vue logs page uses an Art Design Pro query and results workspace", async () => {
   const source = await readAppSource();
   const logSection = sourceBetween(
