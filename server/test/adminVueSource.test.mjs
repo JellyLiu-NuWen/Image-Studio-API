@@ -431,6 +431,53 @@ test("Vue management tables use the ArtTableHeader card pattern", async () => {
   assert.match(styleSource, /\.table-tool-button/, "Styles should include compact table tool buttons");
 });
 
+test("Vue management table headers expose ArtTable column visibility settings", async () => {
+  const source = await readAppSource();
+  const interfaceSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'interfaces'\"",
+    "<section v-if=\"activeView === 'upstreams'\"",
+  );
+  const upstreamSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'upstreams'\"",
+    "<section v-if=\"activeView === 'models'\"",
+  );
+  const modelSection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'models'\"",
+    "<section v-if=\"activeView === 'quality'\"",
+  );
+  const qualitySection = sourceBetween(
+    source,
+    "<section v-if=\"activeView === 'quality'\"",
+    "<section v-if=\"activeView === 'logs'\"",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /tableColumnSettingsVisible/, "Column settings popover should track visibility");
+  assert.match(source, /tableColumnOptions/, "Column settings should define per-module column options");
+  assert.match(source, /visibleTableColumnOptions/, "Column settings should derive visible options for active table");
+  assert.match(source, /isTableColumnVisible/, "Tables should check per-column visibility");
+  assert.match(source, /toggleTableColumn/, "Column settings should toggle column visibility");
+  assert.match(source, /resetTableColumns/, "Column settings should restore default columns");
+  assert.match(source, /column-settings-popover/, "Template should render a column settings popover");
+  assert.match(source, /column-option-list/, "Template should render column option rows");
+  assert.match(source, /@update:model-value=".*toggleTableColumn/, "Column checkboxes should update visibility");
+
+  assert.match(interfaceSection, /isTableColumnVisible\('interfaces', 'apiToken'\)/, "Interface API Key column should be hideable");
+  assert.match(interfaceSection, /isTableColumnVisible\('interfaces', 'lastUsedAt'\)/, "Interface last-used column should be hideable");
+  assert.match(upstreamSection, /isTableColumnVisible\('upstreams', 'baseURL'\)/, "Upstream Base URL column should be hideable");
+  assert.match(upstreamSection, /isTableColumnVisible\('upstreams', 'health'\)/, "Upstream health column should be hideable");
+  assert.match(modelSection, /isTableColumnVisible\('models', 'capabilities'\)/, "Model capabilities column should be hideable");
+  assert.match(modelSection, /isTableColumnVisible\('models', 'recommendedUse'\)/, "Model use-case column should be hideable");
+  assert.match(qualitySection, /isTableColumnVisible\('quality', 'quality'\)/, "Quality preset quality column should be hideable");
+  assert.match(qualitySection, /isTableColumnVisible\('quality', 'useCase'\)/, "Quality preset use-case column should be hideable");
+  assert.match(styleSource, /\.column-settings-popover/, "Styles should include column settings popover");
+  assert.match(styleSource, /\.column-option-list/, "Styles should include column option list");
+  assert.match(styleSource, /\.column-option-row/, "Styles should include column option rows");
+});
+
 test("Vue tables expose Art Design Pro empty states", async () => {
   const source = await readAppSource();
   const managementSection = sourceBetween(

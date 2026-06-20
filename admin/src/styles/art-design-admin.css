@@ -1518,6 +1518,68 @@ button,
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
+.column-settings-anchor {
+  position: fixed;
+  top: 76px;
+  right: 28px;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.column-settings-popover {
+  border-radius: 8px;
+}
+
+.column-settings-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.column-settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.column-settings-head strong {
+  color: var(--art-text);
+  font-size: 14px;
+}
+
+.column-option-list {
+  max-height: 380px;
+  display: grid;
+  gap: 4px;
+  overflow: auto;
+}
+
+.column-option-row {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 7px;
+  transition: background 180ms ease;
+}
+
+.column-option-row:hover {
+  background: var(--art-soft);
+}
+
+.column-option-row.fixed-column {
+  opacity: 0.72;
+}
+
+.column-option-row .drag-icon {
+  color: var(--art-muted);
+  font-size: 13px;
+  letter-spacing: -2px;
+  user-select: none;
+}
+
 .toolbar-meta {
   margin-top: 5px;
   color: var(--art-muted);

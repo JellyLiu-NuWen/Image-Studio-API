@@ -73,6 +73,7 @@ type TableDensity = 'default' | 'comfortable' | 'compact'
 type SettingOptionGroup = 'theme' | 'layout' | 'menuStyle' | 'density'
 type WorkTabActionKey = 'refresh' | 'fixed' | 'left' | 'right' | 'other' | 'all'
 type TableHeaderToolKey = 'search' | 'refresh' | 'density' | 'columns'
+type TableModuleKey = 'interfaces' | 'upstreams' | 'models' | 'quality'
 
 const navGroups: Array<{ title: string; items: Array<{ key: ViewKey; label: string; icon: unknown }> }> = [
   { title: '监控', items: [
@@ -158,6 +159,7 @@ const tableSearch = reactive<Record<'interfaces' | 'upstreams' | 'models' | 'qua
   quality: ''
 })
 const tableDensity = ref<TableDensity>('comfortable')
+const tableColumnSettingsVisible = ref(false)
 const logFilter = reactive({
   keyword: '',
   status: '',
@@ -240,6 +242,63 @@ const tableSize = computed(() => {
   if (tableDensity.value === 'default') return 'large'
   return 'default'
 })
+const tableColumnOptions: Record<TableModuleKey, Array<{ key: string; label: string; fixed?: boolean }>> = {
+  interfaces: [
+    { key: 'name', label: '名称', fixed: true },
+    { key: 'apiToken', label: 'API Key' },
+    { key: 'defaultImageModel', label: '模型' },
+    { key: 'sizeQuality', label: '尺寸/质量' },
+    { key: 'upstreamIds', label: '绑定上游' },
+    { key: 'rateLimitPerMinute', label: '限流' },
+    { key: 'enabled', label: '状态' },
+    { key: 'lastUsedAt', label: '最后使用' }
+  ],
+  upstreams: [
+    { key: 'name', label: '名称', fixed: true },
+    { key: 'baseURL', label: 'Base URL' },
+    { key: 'apiKey', label: 'API Key' },
+    { key: 'priority', label: '优先级' },
+    { key: 'weight', label: '权重' },
+    { key: 'health', label: '健康' },
+    { key: 'lastCheckedAt', label: '最近检测' },
+    { key: 'lastFailureReason', label: '最近失败原因' },
+    { key: 'healthCheckEnabled', label: '健康检查' },
+    { key: 'enabled', label: '状态' }
+  ],
+  models: [
+    { key: 'id', label: '模型 ID', fixed: true },
+    { key: 'name', label: '名称' },
+    { key: 'capabilities', label: '能力' },
+    { key: 'sizes', label: '尺寸' },
+    { key: 'qualities', label: '质量' },
+    { key: 'defaultOutputFormat', label: '默认格式' },
+    { key: 'upstreamIds', label: '绑定上游' },
+    { key: 'recommendedUse', label: '推荐用途' },
+    { key: 'enabled', label: '启用' }
+  ],
+  quality: [
+    { key: 'id', label: '预设 ID', fixed: true },
+    { key: 'name', label: '名称' },
+    { key: 'quality', label: '质量' },
+    { key: 'size', label: '尺寸' },
+    { key: 'outputFormat', label: '格式' },
+    { key: 'promptEnhance', label: '增强' },
+    { key: 'useCase', label: '用途' }
+  ]
+}
+const tableColumnVisibility = reactive<Record<TableModuleKey, Record<string, boolean>>>({
+  interfaces: Object.fromEntries(tableColumnOptions.interfaces.map((item) => [item.key, true])),
+  upstreams: Object.fromEntries(tableColumnOptions.upstreams.map((item) => [item.key, true])),
+  models: Object.fromEntries(tableColumnOptions.models.map((item) => [item.key, true])),
+  quality: Object.fromEntries(tableColumnOptions.quality.map((item) => [item.key, true]))
+})
+const activeTableModule = computed<TableModuleKey>(() => {
+  if (activeView.value === 'upstreams') return 'upstreams'
+  if (activeView.value === 'models') return 'models'
+  if (activeView.value === 'quality') return 'quality'
+  return 'interfaces'
+})
+const visibleTableColumnOptions = computed(() => tableColumnOptions[activeTableModule.value])
 const tableHeaderTools = computed(() => [
   { key: 'search', icon: Search, active: true },
   { key: 'refresh', icon: Refresh, active: false },
@@ -1076,7 +1135,23 @@ function handleTableHeaderTool(key: TableHeaderToolKey) {
     return
   }
   if (key === 'columns') {
-    ElMessage.info('列设置会在后续模板化步骤中接入。')
+    tableColumnSettingsVisible.value = true
+  }
+}
+
+function isTableColumnVisible(module: TableModuleKey, key: string) {
+  return tableColumnVisibility[module]?.[key] !== false
+}
+
+function toggleTableColumn(key: string, value: boolean | string | number) {
+  const option = visibleTableColumnOptions.value.find((item) => item.key === key)
+  if (option?.fixed) return
+  tableColumnVisibility[activeTableModule.value][key] = !!value
+}
+
+function resetTableColumns() {
+  for (const item of visibleTableColumnOptions.value) {
+    tableColumnVisibility[activeTableModule.value][item.key] = true
   }
 }
 
@@ -1961,8 +2036,8 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button type="primary" :icon="Plus" @click="addInterface">新增接口</el-button>
               </div>
             </template>
-            <el-table-column prop="name" label="名称" min-width="150" />
-            <el-table-column prop="apiTokenSet" label="API Key" width="150">
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'name')" prop="name" label="名称" min-width="150" />
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'apiToken')" prop="apiTokenSet" label="API Key" width="150">
               <template #default="{ row }">
                 <div class="key-preview">
                   <el-tag :type="row.apiTokenSet ? 'success' : 'danger'">{{ row.apiTokenSet ? '已配置' : '未配置' }}</el-tag>
@@ -1970,18 +2045,18 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="defaultImageModel" label="模型" min-width="140" />
-            <el-table-column label="尺寸/质量" min-width="150">
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'defaultImageModel')" prop="defaultImageModel" label="模型" min-width="140" />
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'sizeQuality')" label="尺寸/质量" min-width="150">
               <template #default="{ row }">{{ row.defaultSize }} · {{ row.defaultQuality }}</template>
             </el-table-column>
-            <el-table-column prop="upstreamIds" label="绑定上游" min-width="160">
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'upstreamIds')" prop="upstreamIds" label="绑定上游" min-width="160">
               <template #default="{ row }">{{ row.upstreamIds.join(', ') || '-' }}</template>
             </el-table-column>
-            <el-table-column prop="rateLimitPerMinute" label="限流" width="90" />
-            <el-table-column prop="enabled" label="状态" width="100">
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'rateLimitPerMinute')" prop="rateLimitPerMinute" label="限流" width="90" />
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'enabled')" prop="enabled" label="状态" width="100">
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
-            <el-table-column prop="lastUsedAt" label="最后使用" min-width="160">
+            <el-table-column v-if="isTableColumnVisible('interfaces', 'lastUsedAt')" prop="lastUsedAt" label="最后使用" min-width="160">
               <template #default="{ row }">{{ formatTime(row.lastUsedAt) }}</template>
             </el-table-column>
             <el-table-column label="操作" width="360" fixed="right">
@@ -2036,9 +2111,9 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button type="primary" :icon="Plus" @click="addUpstream">新增上游</el-button>
               </div>
             </template>
-            <el-table-column prop="name" label="名称" min-width="160" />
-            <el-table-column prop="baseURL" label="Base URL" min-width="260" show-overflow-tooltip />
-            <el-table-column prop="apiKeySet" label="API Key" width="150">
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'name')" prop="name" label="名称" min-width="160" />
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'baseURL')" prop="baseURL" label="Base URL" min-width="260" show-overflow-tooltip />
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'apiKey')" prop="apiKeySet" label="API Key" width="150">
               <template #default="{ row }">
                 <div class="key-preview">
                   <el-tag :type="row.apiKeySet ? 'success' : 'danger'">{{ row.apiKeySet ? '已配置' : '未配置' }}</el-tag>
@@ -2046,9 +2121,9 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="priority" label="优先级" width="90" />
-            <el-table-column prop="weight" label="权重" width="80" />
-            <el-table-column label="健康" min-width="210">
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'priority')" prop="priority" label="优先级" width="90" />
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'weight')" prop="weight" label="权重" width="80" />
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'health')" label="健康" min-width="210">
               <template #default="{ row }">
                 <div class="health-inline">
                   <el-tag :type="(upstreamHealthFor(row.id)?.metrics.successRate || 0) >= 90 ? 'success' : 'warning'">
@@ -2059,16 +2134,16 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="最近检测" min-width="160">
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'lastCheckedAt')" label="最近检测" min-width="160">
               <template #default="{ row }">{{ formatTime(upstreamHealthFor(row.id)?.metrics.lastCheckedAt) }}</template>
             </el-table-column>
-            <el-table-column label="最近失败原因" min-width="220" show-overflow-tooltip>
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'lastFailureReason')" label="最近失败原因" min-width="220" show-overflow-tooltip>
               <template #default="{ row }">{{ upstreamHealthFor(row.id)?.metrics.lastFailureReason || '-' }}</template>
             </el-table-column>
-            <el-table-column prop="healthCheckEnabled" label="健康检查" width="110">
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'healthCheckEnabled')" prop="healthCheckEnabled" label="健康检查" width="110">
               <template #default="{ row }"><el-switch v-model="row.healthCheckEnabled" /></template>
             </el-table-column>
-            <el-table-column prop="enabled" label="状态" width="100">
+            <el-table-column v-if="isTableColumnVisible('upstreams', 'enabled')" prop="enabled" label="状态" width="100">
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
             <el-table-column label="操作" width="260" fixed="right">
@@ -2112,31 +2187,31 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button type="primary" :icon="Plus" @click="addModel">新增模型</el-button>
               </div>
             </template>
-            <el-table-column prop="id" label="模型 ID" min-width="160" />
-            <el-table-column prop="name" label="名称" min-width="140" />
-            <el-table-column prop="capabilities" label="能力" min-width="160">
+            <el-table-column v-if="isTableColumnVisible('models', 'id')" prop="id" label="模型 ID" min-width="160" />
+            <el-table-column v-if="isTableColumnVisible('models', 'name')" prop="name" label="名称" min-width="140" />
+            <el-table-column v-if="isTableColumnVisible('models', 'capabilities')" prop="capabilities" label="能力" min-width="160">
               <template #default="{ row }">
                 <div class="compact-tags">
                   <el-tag v-for="item in row.capabilities" :key="item" size="small">{{ item }}</el-tag>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="sizes" label="尺寸" min-width="190" show-overflow-tooltip>
+            <el-table-column v-if="isTableColumnVisible('models', 'sizes')" prop="sizes" label="尺寸" min-width="190" show-overflow-tooltip>
               <template #default="{ row }">{{ row.sizes.join(', ') || '-' }}</template>
             </el-table-column>
-            <el-table-column prop="qualities" label="质量" min-width="150">
+            <el-table-column v-if="isTableColumnVisible('models', 'qualities')" prop="qualities" label="质量" min-width="150">
               <template #default="{ row }">
                 <div class="compact-tags">
                   <el-tag v-for="item in row.qualities" :key="item" size="small" type="info">{{ item }}</el-tag>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column prop="defaultOutputFormat" label="默认格式" width="110" />
-            <el-table-column prop="upstreamIds" label="绑定上游" min-width="170" show-overflow-tooltip>
+            <el-table-column v-if="isTableColumnVisible('models', 'defaultOutputFormat')" prop="defaultOutputFormat" label="默认格式" width="110" />
+            <el-table-column v-if="isTableColumnVisible('models', 'upstreamIds')" prop="upstreamIds" label="绑定上游" min-width="170" show-overflow-tooltip>
               <template #default="{ row }">{{ upstreamNames(row.upstreamIds) }}</template>
             </el-table-column>
-            <el-table-column prop="recommendedUse" label="推荐用途" min-width="220" show-overflow-tooltip />
-            <el-table-column prop="enabled" label="启用" width="90">
+            <el-table-column v-if="isTableColumnVisible('models', 'recommendedUse')" prop="recommendedUse" label="推荐用途" min-width="220" show-overflow-tooltip />
+            <el-table-column v-if="isTableColumnVisible('models', 'enabled')" prop="enabled" label="启用" width="90">
               <template #default="{ row }"><el-switch v-model="row.enabled" /></template>
             </el-table-column>
             <el-table-column label="操作" width="170" fixed="right">
@@ -2221,15 +2296,15 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button type="primary" :icon="Plus" @click="addPreset">新增预设</el-button>
               </div>
             </template>
-            <el-table-column prop="id" label="预设 ID" min-width="180" />
-            <el-table-column prop="name" label="名称" min-width="160" />
-            <el-table-column prop="quality" label="质量" width="100" />
-            <el-table-column prop="size" label="尺寸" min-width="130" />
-            <el-table-column prop="outputFormat" label="格式" width="90" />
-            <el-table-column prop="promptEnhance" label="增强" width="100">
+            <el-table-column v-if="isTableColumnVisible('quality', 'id')" prop="id" label="预设 ID" min-width="180" />
+            <el-table-column v-if="isTableColumnVisible('quality', 'name')" prop="name" label="名称" min-width="160" />
+            <el-table-column v-if="isTableColumnVisible('quality', 'quality')" prop="quality" label="质量" width="100" />
+            <el-table-column v-if="isTableColumnVisible('quality', 'size')" prop="size" label="尺寸" min-width="130" />
+            <el-table-column v-if="isTableColumnVisible('quality', 'outputFormat')" prop="outputFormat" label="格式" width="90" />
+            <el-table-column v-if="isTableColumnVisible('quality', 'promptEnhance')" prop="promptEnhance" label="增强" width="100">
               <template #default="{ row }"><el-tag :type="row.promptEnhance ? 'success' : 'info'">{{ row.promptEnhance ? '开启' : '关闭' }}</el-tag></template>
             </el-table-column>
-            <el-table-column prop="useCase" label="用途" min-width="220" show-overflow-tooltip />
+            <el-table-column v-if="isTableColumnVisible('quality', 'useCase')" prop="useCase" label="用途" min-width="220" show-overflow-tooltip />
             <el-table-column label="操作" width="170" fixed="right">
               <template #default="{ row }">
                 <el-button size="small" :icon="Edit" @click="openDrawer('quality', rowIndex(activePresets, row))">编辑</el-button>
@@ -2796,6 +2871,36 @@ window.addEventListener('beforeunload', (event) => {
         <div v-show="showPageTransitionMask" class="page-transition-mask"></div>
       </div>
     </main>
+
+    <el-popover
+      v-model:visible="tableColumnSettingsVisible"
+      placement="bottom-end"
+      trigger="manual"
+      width="260"
+      popper-class="column-settings-popover"
+    >
+      <div class="column-settings-panel">
+        <div class="column-settings-head">
+          <strong>列设置</strong>
+          <el-button link type="primary" @click="resetTableColumns">恢复默认</el-button>
+        </div>
+        <div class="column-option-list">
+          <div v-for="item in visibleTableColumnOptions" :key="item.key" class="column-option-row" :class="{ 'fixed-column': item.fixed }">
+            <span class="drag-icon">⋮⋮</span>
+            <el-checkbox
+              :model-value="isTableColumnVisible(activeTableModule, item.key)"
+              :disabled="item.fixed"
+              @update:model-value="(value: boolean | string | number) => toggleTableColumn(item.key, value)"
+            >
+              {{ item.label }}
+            </el-checkbox>
+          </div>
+        </div>
+      </div>
+      <template #reference>
+        <span class="column-settings-anchor" aria-hidden="true"></span>
+      </template>
+    </el-popover>
 
     <div v-if="notificationPanelVisible" class="art-notification-panel" @click.stop>
       <div class="notification-panel-head">
