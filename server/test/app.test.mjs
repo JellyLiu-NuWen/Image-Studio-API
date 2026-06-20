@@ -752,6 +752,37 @@ test("image proxy returns structured json when upstream fetch fails", async () =
   assert.match(body.error.raw, /upstream socket closed/);
 });
 
+test("image generation logs include the upstream failure summary", async () => {
+  const generationLogStore = createMemoryLogStore();
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => new Response(JSON.stringify({
+      error: { message: "upstream gateway timed out after billing" },
+    }), {
+      status: 502,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "slow paid request",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 502);
+  const records = await generationLogStore.readRecent(10);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].status, "failed");
+  assert.match(records[0].errorSummary, /upstream gateway timed out after billing/);
+});
+
 test("admin config updates non-secret values and keeps blank secrets unchanged", async () => {
   const store = memoryStore({
     imageApiToken: "old-client-token",

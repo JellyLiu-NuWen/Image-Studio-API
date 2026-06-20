@@ -231,6 +231,7 @@ async function forwardRawWithRetry({
     },
   }, { status: lastStatus || 502 });
   failure.headers.set("x-image-studio-upstream-id", upstream.id);
+  failure.headers.set("x-image-studio-error-summary", encodeHeaderValue(describeProblem(lastRaw).slice(0, 500)));
   return failure;
 }
 
@@ -352,6 +353,10 @@ function imageWorkTimeoutSeconds(pathname, configuredSeconds) {
   const resolvedMinimum = Math.max(300, Number.isFinite(minimum) && minimum > 0 ? minimum : 300);
   if (!Number.isFinite(configured) || configured <= 0) return resolvedMinimum;
   return Math.max(configured, resolvedMinimum);
+}
+
+function encodeHeaderValue(value) {
+  return Buffer.from(String(value || ""), "utf8").toString("base64url");
 }
 
 export async function forwardOpenAIPath({ request, config, fetchImpl }) {

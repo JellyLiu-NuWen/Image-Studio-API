@@ -516,6 +516,15 @@ function errorSummaryFromResponse(response) {
   return response.statusText || `HTTP ${response.status}`;
 }
 
+function decodeHeaderValue(value) {
+  if (!value) return "";
+  try {
+    return Buffer.from(String(value), "base64url").toString("utf8");
+  } catch {
+    return "";
+  }
+}
+
 async function appendLogSafely(logStore, record) {
   if (!logStore) return;
   try {
@@ -1620,6 +1629,7 @@ export function createSelfHostedApp({
           retryCount: Number(response.headers.get("x-image-studio-retry-count") || 0),
           failoverChain: (response.headers.get("x-image-studio-failover-chain") || "").split(",").filter(Boolean),
           durationMs: Math.max(0, now() - startedAt),
+          errorSummary: decodeHeaderValue(response.headers.get("x-image-studio-error-summary")) || errorSummary,
         });
       }
       if (apiLogStore) {
