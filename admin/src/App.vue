@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   Aim,
+  Avatar,
   Bell,
   Box,
   Close,
@@ -13,6 +14,7 @@ import {
   Download,
   Edit,
   Finished,
+  FullScreen,
   Hide,
   House,
   Key,
@@ -25,6 +27,8 @@ import {
   Operation,
   Plus,
   Refresh,
+  Search,
+  Setting,
   Sunny,
   SwitchButton,
   Timer,
@@ -118,6 +122,7 @@ const logDetailVisible = ref(false)
 const selectedLog = ref<LogRecord | null>(null)
 const activeLogTab = ref<'generations' | 'api'>('generations')
 const secretValues = reactive<Record<string, string>>({})
+const headerSearchKeyword = ref('')
 const tableSearch = reactive<Record<'interfaces' | 'upstreams' | 'models' | 'quality', string>>({
   interfaces: '',
   upstreams: '',
@@ -152,6 +157,15 @@ const breadcrumbItems = computed(() => [
 const openedPageTabs = computed(() => pageTabs.value
   .map((key) => flatNavItems.value.find((item) => item.key === key))
   .filter(Boolean) as Array<{ key: ViewKey; label: string; icon: unknown; group: string }>)
+const headerSearchResults = computed(() => {
+  const keyword = headerSearchKeyword.value.trim().toLowerCase()
+  const items = flatNavItems.value.map((item) => ({
+    ...item,
+    hint: `${item.group} / ${item.label}`,
+  }))
+  if (!keyword) return items.slice(0, 6)
+  return items.filter((item) => `${item.group} ${item.label} ${item.key}`.toLowerCase().includes(keyword)).slice(0, 8)
+})
 const activeInterfaces = computed(() => config.value?.interfaces || [])
 const activeUpstreams = computed(() => config.value?.upstreams || [])
 const activeModels = computed(() => config.value?.models || [])
@@ -603,6 +617,19 @@ function navigateTo(key: ViewKey) {
   }
 }
 
+function selectHeaderSearch(key: ViewKey) {
+  navigateTo(key)
+  headerSearchKeyword.value = ''
+}
+
+function openNotifications() {
+  navigateTo('alerts')
+}
+
+function openSettings() {
+  navigateTo('system')
+}
+
 function closePageTab(key: ViewKey) {
   if (key === 'dashboard') return
   const nextTabs = pageTabs.value.filter((item) => item !== key)
@@ -622,6 +649,19 @@ function toggleTheme() {
   themeMode.value = themeMode.value === 'dark' ? 'light' : 'dark'
   if (typeof window !== 'undefined') {
     window.localStorage.setItem('image-studio-admin-theme', themeMode.value)
+  }
+}
+
+async function toggleFullscreen() {
+  if (typeof document === 'undefined') return
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+    } else {
+      await document.documentElement.requestFullscreen()
+    }
+  } catch {
+    ElMessage.warning('当前浏览器不支持全屏切换')
   }
 }
 
@@ -1281,12 +1321,57 @@ window.addEventListener('beforeunload', (event) => {
           <h1>{{ currentTitle }}</h1>
           <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="dirty-hint">有未保存的配置变更</small>
         </div>
-        <div class="topbar-actions">
-          <el-button :icon="themeMode === 'dark' ? Sunny : Moon" @click="toggleTheme">
-            {{ themeMode === 'dark' ? '浅色主题' : '深色主题' }}
-          </el-button>
-          <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
-          <el-button :icon="SwitchButton" type="danger" plain @click="logout">退出登录</el-button>
+        <div class="topbar-actions header-tools">
+          <el-popover placement="bottom-end" width="320" trigger="click" popper-class="global-search-popper">
+            <template #reference>
+              <div class="global-search">
+                <el-icon><Search /></el-icon>
+                <span>搜索模块</span>
+                <kbd>Ctrl K</kbd>
+              </div>
+            </template>
+            <div class="global-search-panel">
+              <el-input v-model="headerSearchKeyword" :prefix-icon="Search" clearable placeholder="搜索页面、配置、日志" />
+              <div class="global-search-results">
+                <button v-for="item in headerSearchResults" :key="item.key" type="button" @click="selectHeaderSearch(item.key)">
+                  <el-icon><component :is="item.icon" /></el-icon>
+                  <span>{{ item.label }}</span>
+                  <small>{{ item.hint }}</small>
+                </button>
+                <div v-if="!headerSearchResults.length" class="global-search-empty">没有匹配的模块</div>
+              </div>
+            </div>
+          </el-popover>
+          <button type="button" class="header-tool notification-entry" @click="openNotifications" aria-label="告警通知">
+            <el-badge :value="pendingAlertCount" :hidden="!pendingAlertCount" type="danger">
+              <Bell />
+            </el-badge>
+          </button>
+          <button type="button" class="header-tool" @click="refreshAll" aria-label="刷新">
+            <Refresh />
+          </button>
+          <button type="button" class="header-tool" @click="toggleFullscreen" aria-label="全屏">
+            <FullScreen />
+          </button>
+          <button type="button" class="header-tool settings-entry" @click="openSettings" aria-label="系统设置">
+            <Setting />
+          </button>
+          <button type="button" class="header-tool" @click="toggleTheme" :aria-label="themeMode === 'dark' ? '浅色主题' : '深色主题'">
+            <component :is="themeMode === 'dark' ? Sunny : Moon" />
+          </button>
+          <el-dropdown trigger="click">
+            <button type="button" class="user-entry">
+              <el-icon><Avatar /></el-icon>
+              <span>{{ username }}</span>
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="navigateTo('security')">账号与安全</el-dropdown-item>
+                <el-dropdown-item @click="navigateTo('system')">系统设置</el-dropdown-item>
+                <el-dropdown-item divided @click="logout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </header>
 

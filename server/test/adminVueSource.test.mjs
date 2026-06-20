@@ -140,6 +140,30 @@ test("Vue shell exposes Art Design Pro workspace navigation and quick actions", 
   assert.match(styleSource, /\.risk-board/, "Styles should include risk board layout");
 });
 
+test("Vue topbar exposes Art Design Pro header tools", async () => {
+  const source = await readAppSource();
+  const topbarSection = sourceBetween(
+    source,
+    "<header class=\"admin-topbar\">",
+    "</header>",
+  );
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(source, /headerSearchKeyword/, "Topbar should keep a global search keyword");
+  assert.match(source, /headerSearchResults/, "Topbar should compute global search results");
+  assert.match(source, /toggleFullscreen/, "Topbar should expose fullscreen switching");
+  assert.match(topbarSection, /header-tools/, "Topbar should render a template-style tools group");
+  assert.match(topbarSection, /global-search/, "Topbar should render a global search control");
+  assert.match(topbarSection, /notification-entry/, "Topbar should render a notification entry");
+  assert.match(topbarSection, /settings-entry/, "Topbar should render a settings entry");
+  assert.match(topbarSection, /user-entry/, "Topbar should render a user entry");
+  assert.match(styleSource, /\.header-tools/, "Styles should include header tools layout");
+  assert.match(styleSource, /\.global-search/, "Styles should include global search layout");
+  assert.match(styleSource, /\.notification-entry/, "Styles should include notification entry styling");
+  assert.match(styleSource, /\.settings-entry/, "Styles should include settings entry styling");
+  assert.match(styleSource, /\.user-entry/, "Styles should include user entry styling");
+});
+
 test("Vue management tables use an Art Design Pro style table workspace", async () => {
   const source = await readAppSource();
   const interfaceSection = sourceBetween(
