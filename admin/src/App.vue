@@ -806,6 +806,36 @@ const riskItems = computed(() => [
 ])
 const poorQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'poor'))
 const excellentQualityCases = computed(() => qualityCases.value.filter((item) => item.label === 'excellent'))
+const qualitySummaryCards = computed(() => [
+  {
+    label: '质量预设',
+    value: activePresets.value.length,
+    hint: '可绑定到接口默认参数',
+    icon: MagicStick,
+    tone: 'primary'
+  },
+  {
+    label: '质量差案例',
+    value: poorQualityCases.value.length,
+    hint: '用于修正模板与参数',
+    icon: WarningFilled,
+    tone: 'danger'
+  },
+  {
+    label: '优秀案例',
+    value: excellentQualityCases.value.length,
+    hint: '用于沉淀高质量提示词',
+    icon: Finished,
+    tone: 'success'
+  },
+  {
+    label: '增强开关',
+    value: activePresets.value.filter((item) => item.promptEnhance).length,
+    hint: '默认关闭，按预设启用',
+    icon: SwitchButton,
+    tone: 'warning'
+  }
+] as Array<{ label: string; value: number; hint: string; icon: unknown; tone: 'primary' | 'danger' | 'success' | 'warning' }>)
 const qualityCaseByRecordId = computed(() => {
   const map = new Map<string, QualityCase[]>()
   for (const item of qualityCases.value) {
@@ -2424,27 +2454,20 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'quality'" class="view-stack">
-        <div class="metric-grid">
-          <el-card shadow="never" class="metric-card">
-            <span>质量预设</span>
-            <strong>{{ activePresets.length }}</strong>
-            <small>可绑定到接口默认参数</small>
-          </el-card>
-          <el-card shadow="never" class="metric-card">
-            <span>质量差案例</span>
-            <strong>{{ poorQualityCases.length }}</strong>
-            <small>用于修正模板与参数</small>
-          </el-card>
-          <el-card shadow="never" class="metric-card">
-            <span>优秀案例</span>
-            <strong>{{ excellentQualityCases.length }}</strong>
-            <small>用于沉淀高质量提示词</small>
-          </el-card>
-          <el-card shadow="never" class="metric-card">
-            <span>增强开关</span>
-            <strong>{{ activePresets.filter((item) => item.promptEnhance).length }}</strong>
-            <small>默认关闭，按预设启用</small>
-          </el-card>
+        <div class="art-quality-stats-grid">
+          <div v-for="item in qualitySummaryCards" :key="item.label" class="quality-stat-card art-card" :class="`tone-${item.tone}`">
+            <div class="quality-stat-body">
+              <p>{{ item.label }}</p>
+              <strong>{{ item.value }}</strong>
+              <span>{{ item.hint }}</span>
+            </div>
+            <div class="quality-stat-icon">
+              <component :is="item.icon" />
+            </div>
+            <div class="quality-stat-arrow">
+              <ArrowUpBold />
+            </div>
+          </div>
         </div>
         <el-card shadow="never" class="table-workspace art-table-card">
           <div class="table-toolbar art-table-header">

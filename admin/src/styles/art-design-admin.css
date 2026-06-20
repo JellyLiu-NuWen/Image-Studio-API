@@ -2224,6 +2224,100 @@ button,
   color: #15803d;
 }
 
+.art-quality-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.quality-stat-card {
+  min-height: 128px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+  border: 1px solid var(--art-border);
+  border-radius: 14px;
+  padding: 18px;
+  background: var(--art-card);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.04);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.quality-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+}
+
+.quality-stat-body {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  flex: 1;
+}
+
+.quality-stat-body p,
+.quality-stat-body span {
+  margin: 0;
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quality-stat-body strong {
+  color: var(--art-text);
+  font-size: 30px;
+  line-height: 1.05;
+}
+
+.quality-stat-icon {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.11);
+  color: var(--art-primary);
+  flex: 0 0 auto;
+}
+
+.quality-stat-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.quality-stat-arrow {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  display: inline-flex;
+  color: color-mix(in srgb, var(--art-muted) 62%, transparent);
+}
+
+.quality-stat-arrow svg {
+  width: 13px;
+  height: 13px;
+  transform: rotate(45deg);
+}
+
+.quality-stat-card.tone-danger .quality-stat-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--art-danger);
+}
+
+.quality-stat-card.tone-success .quality-stat-icon {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--art-success);
+}
+
+.quality-stat-card.tone-warning .quality-stat-icon {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--art-warning);
+}
+
 .log-workspace :deep(.el-card__body) {
   display: grid;
   gap: 14px;
