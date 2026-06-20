@@ -189,20 +189,73 @@ function appendAudit(auditRecords, action, details, username, now) {
   auditRecords.splice(200);
 }
 
+const DEFAULT_IMAGE_COST_USD = {
+  "gpt-image-2": 0.02,
+};
+
+function roundCurrency(value) {
+  return Math.round((Number(value) || 0) * 1_000_000) / 1_000_000;
+}
+
+function usageImageCount(record) {
+  const explicit = Number(record?.imageCount ?? record?.images ?? record?.n);
+  if (Number.isFinite(explicit) && explicit > 0) return Math.floor(explicit);
+  return 1;
+}
+
+function usageCostUSD(record, imageCount) {
+  const explicit = Number(record?.costUSD ?? record?.estimatedCostUSD);
+  if (Number.isFinite(explicit) && explicit >= 0) return explicit;
+  const status = String(record?.status || "").toLowerCase();
+  const upstreamStatus = Number(record?.upstreamStatus);
+  const shouldEstimate = status === "success" || (upstreamStatus >= 200 && upstreamStatus < 300);
+  if (!shouldEstimate) return 0;
+  const model = String(record?.model || "").trim().toLowerCase();
+  const unitCost = DEFAULT_IMAGE_COST_USD[model] || 0;
+  return unitCost * imageCount;
+}
+
+function usageDateKey(record) {
+  const createdAt = String(record?.createdAt || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(createdAt)) return createdAt.slice(0, 10);
+  return "unknown";
+}
+
+function finalizeUsageBucket(bucket) {
+  return {
+    ...bucket,
+    estimatedCostUSD: roundCurrency(bucket.estimatedCostUSD),
+    averageDurationMs: bucket.total ? Math.round(bucket.durationMs / bucket.total) : 0,
+    successRate: bucket.total ? Math.round((bucket.success / bucket.total) * 10000) / 100 : 0,
+  };
+}
+
 function summarizeUsage(records) {
-  const createBucket = () => ({ total: 0, success: 0, failed: 0, durationMs: 0 });
+  const createBucket = () => ({
+    total: 0,
+    success: 0,
+    failed: 0,
+    durationMs: 0,
+    imageCount: 0,
+    estimatedCostUSD: 0,
+  });
   const usage = {
     total: createBucket(),
     byInterface: {},
     byUpstream: {},
     byModel: {},
+    byDate: {},
   };
   for (const record of records) {
     const failed = record?.status === "failed" || Number(record?.status) >= 400;
     const durationMs = Number(record?.durationMs) || 0;
+    const imageCount = usageImageCount(record);
+    const costUSD = usageCostUSD(record, imageCount);
     const add = (bucket) => {
       bucket.total += 1;
       bucket.durationMs += durationMs;
+      bucket.imageCount += imageCount;
+      bucket.estimatedCostUSD += costUSD;
       if (failed) bucket.failed += 1;
       else bucket.success += 1;
     };
@@ -211,9 +264,16 @@ function summarizeUsage(records) {
       [usage.byInterface, record?.interfaceId || "unknown"],
       [usage.byUpstream, record?.upstreamId || "unknown"],
       [usage.byModel, record?.model || "unknown"],
+      [usage.byDate, usageDateKey(record)],
     ]) {
       if (!group[key]) group[key] = createBucket();
       add(group[key]);
+    }
+  }
+  usage.total = finalizeUsageBucket(usage.total);
+  for (const group of [usage.byInterface, usage.byUpstream, usage.byModel, usage.byDate]) {
+    for (const [key, bucket] of Object.entries(group)) {
+      group[key] = finalizeUsageBucket(bucket);
     }
   }
   return usage;

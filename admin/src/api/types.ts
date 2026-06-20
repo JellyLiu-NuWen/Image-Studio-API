@@ -202,6 +202,10 @@ export interface UsageBucket {
   success: number
   failed: number
   durationMs: number
+  imageCount: number
+  estimatedCostUSD: number
+  averageDurationMs: number
+  successRate: number
 }
 
 export interface UsageResponse {
@@ -210,6 +214,7 @@ export interface UsageResponse {
     byInterface: Record<string, UsageBucket>
     byUpstream: Record<string, UsageBucket>
     byModel: Record<string, UsageBucket>
+    byDate: Record<string, UsageBucket>
   }
 }
 

@@ -1136,12 +1136,12 @@ test("admin can manage models quality presets alerts sessions usage and backup",
 
   const usage = await app.handle(new Request("http://localhost/api/usage", { headers }));
   assert.equal(usage.status, 200);
-  assert.deepEqual((await usage.json()).usage.byInterface.codex, {
-    total: 1,
-    success: 1,
-    failed: 0,
-    durationMs: 1000,
-  });
+  const usageBody = await usage.json();
+  assert.equal(usageBody.usage.byInterface.codex.total, 1);
+  assert.equal(usageBody.usage.byInterface.codex.success, 1);
+  assert.equal(usageBody.usage.byInterface.codex.failed, 0);
+  assert.equal(usageBody.usage.byInterface.codex.durationMs, 1000);
+  assert.equal(usageBody.usage.byInterface.codex.estimatedCostUSD, 0.02);
 
   const sessions = await app.handle(new Request("http://localhost/api/sessions", { headers }));
   assert.equal(sessions.status, 200);
@@ -1153,6 +1153,67 @@ test("admin can manage models quality presets alerts sessions usage and backup",
   assert.equal(backup.status, 200);
   const backupBody = await backup.json();
   assert.equal(backupBody.backup.config.interfaces[0].id, "codex");
+});
+
+test("admin usage summarizes estimated cost and daily buckets", async () => {
+  const generationLogStore = createMemoryLogStore();
+  await generationLogStore.append({
+    id: "gen-success",
+    createdAt: "2026-06-19T01:00:00.000Z",
+    status: "success",
+    interfaceId: "codex",
+    upstreamId: "primary",
+    model: "gpt-image-2",
+    durationMs: 1200,
+    imageCount: 2,
+  });
+  await generationLogStore.append({
+    id: "gen-billed-failed-proxy",
+    createdAt: "2026-06-19T02:00:00.000Z",
+    status: "failed",
+    upstreamStatus: 200,
+    interfaceId: "codex",
+    upstreamId: "primary",
+    model: "gpt-image-2",
+    durationMs: 71000,
+    imageCount: 1,
+  });
+  await generationLogStore.append({
+    id: "gen-explicit-cost",
+    createdAt: "2026-06-20T01:00:00.000Z",
+    status: "success",
+    interfaceId: "designer",
+    upstreamId: "backup",
+    model: "custom-image",
+    durationMs: 900,
+    costUSD: 0.1234,
+  });
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+  const headers = await loginHeaders(app);
+
+  const response = await app.handle(new Request("http://localhost/api/usage", { headers }));
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.usage.total.total, 3);
+  assert.equal(body.usage.total.imageCount, 4);
+  assert.equal(body.usage.total.estimatedCostUSD, 0.1834);
+  assert.equal(body.usage.byModel["gpt-image-2"].estimatedCostUSD, 0.06);
+  assert.equal(body.usage.byDate["2026-06-19"].total, 2);
+  assert.equal(body.usage.byDate["2026-06-19"].estimatedCostUSD, 0.06);
+  assert.equal(body.usage.byDate["2026-06-20"].estimatedCostUSD, 0.1234);
 });
 
 test("admin can review and acknowledge active alerts", async () => {

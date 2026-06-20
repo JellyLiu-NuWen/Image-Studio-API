@@ -44,6 +44,7 @@ import type {
   StudioModel,
   StudioUpstream,
   UpstreamHealthRecord,
+  UsageBucket,
   UsageResponse
 } from '@/api/types'
 
@@ -136,6 +137,10 @@ const securityForm = computed(() => config.value?.security || {
 })
 const filteredGenerationLogs = computed(() => filterLogs(generationLogs.value))
 const filteredApiLogs = computed(() => filterLogs(apiLogs.value))
+const usageInterfaceRows = computed(() => usageRows(usage.value?.byInterface))
+const usageModelRows = computed(() => usageRows(usage.value?.byModel))
+const usageUpstreamRows = computed(() => usageRows(usage.value?.byUpstream))
+const usageDateRows = computed(() => usageRows(usage.value?.byDate).sort((left, right) => right.name.localeCompare(left.name)))
 const qualityCaseByRecordId = computed(() => {
   const map = new Map<string, QualityCase[]>()
   for (const item of qualityCases.value) {
@@ -159,8 +164,20 @@ function formatDuration(value?: number) {
   return `${ms}ms`
 }
 
+function formatCost(value?: number) {
+  return `$${Number(value || 0).toFixed(4)}`
+}
+
+function formatPercent(value?: number) {
+  return `${Number(value || 0).toFixed(2)}%`
+}
+
 function metricValue(value?: number) {
   return Number.isFinite(Number(value)) ? String(value) : '0'
+}
+
+function usageRows(group?: Record<string, UsageBucket>) {
+  return Object.entries(group || {}).map(([name, value]) => ({ name, ...value }))
 }
 
 function qualityCaseTag(recordId: string, label: 'poor' | 'excellent') {
@@ -962,15 +979,57 @@ window.addEventListener('beforeunload', (event) => {
       <section v-if="activeView === 'usage'" class="view-stack">
         <div class="metric-grid">
           <el-card shadow="never" class="metric-card"><span>总调用</span><strong>{{ usage?.total.total || 0 }}</strong><small>成功 {{ usage?.total.success || 0 }}</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>失败</span><strong>{{ usage?.total.failed || 0 }}</strong><small>估算成本后续接入</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>累计耗时</span><strong>{{ formatDuration(usage?.total.durationMs) }}</strong><small>按日志统计</small></el-card>
-          <el-card shadow="never" class="metric-card"><span>模型数</span><strong>{{ Object.keys(usage?.byModel || {}).length }}</strong><small>已使用模型</small></el-card>
+          <el-card shadow="never" class="metric-card"><span>估算成本</span><strong>{{ formatCost(usage?.total.estimatedCostUSD) }}</strong><small>图片 {{ usage?.total.imageCount || 0 }} 张</small></el-card>
+          <el-card shadow="never" class="metric-card"><span>成功率</span><strong>{{ formatPercent(usage?.total.successRate) }}</strong><small>失败 {{ usage?.total.failed || 0 }}</small></el-card>
+          <el-card shadow="never" class="metric-card"><span>平均耗时</span><strong>{{ formatDuration(usage?.total.averageDurationMs) }}</strong><small>累计 {{ formatDuration(usage?.total.durationMs) }}</small></el-card>
         </div>
         <el-card shadow="never">
+          <template #header>
+            <div class="section-actions">
+              <div class="card-title"><DataAnalysis />用量明细</div>
+              <el-button :icon="Refresh" @click="refreshAll">刷新</el-button>
+            </div>
+          </template>
           <el-tabs>
-            <el-tab-pane label="按接口"><el-table :data="Object.entries(usage?.byInterface || {}).map(([name, value]) => ({ name, ...value }))"><el-table-column prop="name" label="接口" /><el-table-column prop="total" label="调用" /><el-table-column prop="success" label="成功" /><el-table-column prop="failed" label="失败" /></el-table></el-tab-pane>
-            <el-tab-pane label="按模型"><el-table :data="Object.entries(usage?.byModel || {}).map(([name, value]) => ({ name, ...value }))"><el-table-column prop="name" label="模型" /><el-table-column prop="total" label="调用" /><el-table-column prop="success" label="成功" /><el-table-column prop="failed" label="失败" /></el-table></el-tab-pane>
-            <el-tab-pane label="按上游"><el-table :data="Object.entries(usage?.byUpstream || {}).map(([name, value]) => ({ name, ...value }))"><el-table-column prop="name" label="上游" /><el-table-column prop="total" label="调用" /><el-table-column prop="success" label="成功" /><el-table-column prop="failed" label="失败" /></el-table></el-tab-pane>
+            <el-tab-pane label="按日期">
+              <el-table :data="usageDateRows" empty-text="暂无日期用量">
+                <el-table-column prop="name" label="日期" min-width="130" />
+                <el-table-column prop="total" label="调用" width="90" />
+                <el-table-column prop="imageCount" label="图片" width="90" />
+                <el-table-column prop="successRate" label="成功率" width="110"><template #default="{ row }">{{ formatPercent(row.successRate) }}</template></el-table-column>
+                <el-table-column prop="estimatedCostUSD" label="估算成本" width="130"><template #default="{ row }">{{ formatCost(row.estimatedCostUSD) }}</template></el-table-column>
+                <el-table-column prop="averageDurationMs" label="平均耗时" width="120"><template #default="{ row }">{{ formatDuration(row.averageDurationMs) }}</template></el-table-column>
+              </el-table>
+            </el-tab-pane>
+            <el-tab-pane label="按接口">
+              <el-table :data="usageInterfaceRows" empty-text="暂无接口用量">
+                <el-table-column prop="name" label="接口" min-width="140" />
+                <el-table-column prop="total" label="调用" width="90" />
+                <el-table-column prop="success" label="成功" width="90" />
+                <el-table-column prop="failed" label="失败" width="90" />
+                <el-table-column prop="imageCount" label="图片" width="90" />
+                <el-table-column prop="estimatedCostUSD" label="估算成本" width="130"><template #default="{ row }">{{ formatCost(row.estimatedCostUSD) }}</template></el-table-column>
+              </el-table>
+            </el-tab-pane>
+            <el-tab-pane label="按模型">
+              <el-table :data="usageModelRows" empty-text="暂无模型用量">
+                <el-table-column prop="name" label="模型" min-width="160" />
+                <el-table-column prop="total" label="调用" width="90" />
+                <el-table-column prop="imageCount" label="图片" width="90" />
+                <el-table-column prop="successRate" label="成功率" width="110"><template #default="{ row }">{{ formatPercent(row.successRate) }}</template></el-table-column>
+                <el-table-column prop="estimatedCostUSD" label="估算成本" width="130"><template #default="{ row }">{{ formatCost(row.estimatedCostUSD) }}</template></el-table-column>
+              </el-table>
+            </el-tab-pane>
+            <el-tab-pane label="按上游">
+              <el-table :data="usageUpstreamRows" empty-text="暂无上游用量">
+                <el-table-column prop="name" label="上游" min-width="140" />
+                <el-table-column prop="total" label="调用" width="90" />
+                <el-table-column prop="success" label="成功" width="90" />
+                <el-table-column prop="failed" label="失败" width="90" />
+                <el-table-column prop="successRate" label="成功率" width="110"><template #default="{ row }">{{ formatPercent(row.successRate) }}</template></el-table-column>
+                <el-table-column prop="estimatedCostUSD" label="估算成本" width="130"><template #default="{ row }">{{ formatCost(row.estimatedCostUSD) }}</template></el-table-column>
+              </el-table>
+            </el-tab-pane>
           </el-tabs>
         </el-card>
       </section>
