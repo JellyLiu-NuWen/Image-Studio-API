@@ -67,6 +67,7 @@ jobs:
 
           container="image-studio-api"
           docker inspect "$container" >/dev/null
+          curl -fsS "http://127.0.0.1:80/healthz"
 
           echo "Before:"
           docker exec "$container" sh -lc '
@@ -102,5 +103,4 @@ jobs:
             set -eu
             wc -c /data/logs/api-calls.jsonl /data/logs/generations.jsonl
           '
-          curl -fsS "http://127.0.0.1:80/healthz"
           REMOTE
