@@ -337,7 +337,17 @@ async function forwardRawAsSSE({
             }
           } else {
             const raw = await response.text();
-            enqueue(encoder.encode(`data: ${raw}\n\n`));
+            if (response.ok) {
+              enqueue(encoder.encode(`data: ${raw}\n\n`));
+            } else {
+              enqueue(encoder.encode(`data: ${JSON.stringify({
+                error: {
+                  message: describeProblem(raw),
+                  upstreamStatus: response.status,
+                  raw: raw.slice(0, 1500),
+                },
+              })}\n\n`));
+            }
           }
         } catch (error) {
           if (!closed) {

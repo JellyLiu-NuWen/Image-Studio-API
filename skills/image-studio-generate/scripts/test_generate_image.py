@@ -228,7 +228,7 @@ class GenerateImageScriptTest(TestCase):
                 data = json.loads(result.stdout)
                 self.assertTrue(data["ok"])
                 self.assertEqual(Handler.seen["body"]["stream"], True)
-                self.assertEqual(Handler.seen["body"]["partial_images"], 1)
+                self.assertEqual(Handler.seen["body"]["partial_images"], 0)
                 self.assertEqual(Handler.seen["accept"], "text/event-stream")
                 self.assertEqual(Path(data["files"][0]).read_bytes(), b"fake-png")
                 metadata = json.loads(Path(data["metadata_file"]).read_text(encoding="utf-8"))
@@ -323,6 +323,115 @@ class GenerateImageScriptTest(TestCase):
                 self.assertFalse(data["ok"])
                 self.assertIn("上游请求失败:Bad Gateway", data["error"]["message"])
                 self.assertEqual(data["error"]["status"], 502)
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_streaming_partial_only_response_is_not_success(self):
+        class PartialOnlyStreamHandler(Handler):
+            def do_POST(self):
+                raw = (
+                    ": image-studio keepalive\n\n"
+                    + "data: "
+                    + json.dumps({
+                        "type": "image_generation.partial_image",
+                        "b64_json": base64.b64encode(b"partial-preview").decode("ascii"),
+                    })
+                    + "\n\n"
+                    + "data: [DONE]\n\n"
+                ).encode("utf-8")
+                self.send_response(200)
+                self.send_header("content-type", "text/event-stream")
+                self.send_header("content-length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+
+        server = HTTPServer(("127.0.0.1", 0), PartialOnlyStreamHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                env = {
+                    **os.environ,
+                    "IMAGE_STUDIO_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
+                    "IMAGE_STUDIO_API_TOKEN": "client-token",
+                }
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--prompt",
+                        "a partial only stream",
+                        "--output-dir",
+                        temp_dir,
+                    ],
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 1, result.stderr)
+                data = json.loads(result.stdout)
+                self.assertFalse(data["ok"])
+                self.assertIn("without a completed image", data["error"]["message"])
+                self.assertEqual(list(Path(temp_dir).glob("*.png")), [])
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_streaming_nested_completed_item_saves_final_image(self):
+        class NestedCompletedStreamHandler(Handler):
+            def do_POST(self):
+                raw = (
+                    "data: "
+                    + json.dumps({
+                        "type": "image_edit.completed",
+                        "item": {
+                            "image": {
+                                "b64_json": base64.b64encode(b"nested-final").decode("ascii"),
+                                "mime_type": "image/png",
+                            }
+                        },
+                    })
+                    + "\n\n"
+                    + "data: [DONE]\n\n"
+                ).encode("utf-8")
+                self.send_response(200)
+                self.send_header("content-type", "text/event-stream")
+                self.send_header("content-length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+
+        server = HTTPServer(("127.0.0.1", 0), NestedCompletedStreamHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                env = {
+                    **os.environ,
+                    "IMAGE_STUDIO_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
+                    "IMAGE_STUDIO_API_TOKEN": "client-token",
+                }
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--prompt",
+                        "a nested completed stream",
+                        "--output-dir",
+                        temp_dir,
+                    ],
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                data = json.loads(result.stdout)
+                self.assertTrue(data["ok"])
+                self.assertEqual(Path(data["files"][0]).read_bytes(), b"nested-final")
         finally:
             server.shutdown()
             server.server_close()

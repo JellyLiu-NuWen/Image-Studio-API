@@ -15,7 +15,7 @@ from pathlib import Path
 
 DEFAULT_QUALITY = "high"
 DEFAULT_STREAM = True
-DEFAULT_PARTIAL_IMAGES = 1
+DEFAULT_PARTIAL_IMAGES = 0
 
 
 def read_config_file():
@@ -185,6 +185,13 @@ def event_image_item(event):
     if not isinstance(event, dict):
         return None
     item = event.get("item")
+    if isinstance(item, dict):
+        for key in ["image", "output", "result"]:
+            child = item.get(key)
+            if isinstance(child, dict):
+                nested = event_image_item(child)
+                if nested:
+                    return nested
     if isinstance(item, dict) and item.get("result"):
         return {
             "b64_json": item.get("result"),
@@ -230,10 +237,10 @@ def parse_sse_image_response(raw):
             continue
         if "partial" in event_type:
             partials.append(item)
-        else:
+        elif "completed" in event_type or "complete" in event_type or "final" in event_type or not event_type:
             completed.append(item)
     return {
-        "data": completed or partials,
+        "data": completed,
         "_stream": {
             "partial_count": len(partials),
             "completed_count": len(completed),

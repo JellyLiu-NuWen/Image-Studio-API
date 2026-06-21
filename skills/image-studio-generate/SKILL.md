@@ -38,7 +38,7 @@ Optional environment variables:
 
 Never ask the user for, print, or store the upstream model API key. Only the self-hosted server should know `UPSTREAM_API_KEY`.
 
-The script sends Images API requests with `stream=true` and `partial_images=1` by default. This keeps long image generation and edit jobs active through reverse proxies that otherwise time out after about 60 seconds of silence. Use `--no-stream` only when the upstream does not support image streaming.
+The script sends Images API requests with `stream=true` and `partial_images=0` by default. This keeps long image generation and edit jobs active through reverse proxies that otherwise time out after about 60 seconds of silence, while waiting for the final image instead of saving a paid partial preview. Use `--partial-images 1` only when you explicitly need preview events, and use `--no-stream` only when the upstream does not support image streaming.
 
 ## Workflow
 

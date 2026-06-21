@@ -748,6 +748,36 @@ test("image stream proxy sends a heartbeat before upstream responds", async () =
   assert.equal((await reader.read()).done, true);
 });
 
+test("image stream proxy reports upstream http errors as sse error events", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => new Response("Bad Gateway", {
+      status: 502,
+      headers: { "content-type": "text/plain" },
+    }),
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/edits", {
+    prompt: "streaming edit failure",
+    stream: true,
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "text/event-stream; charset=utf-8");
+  const text = await response.text();
+  assert.match(text, /: image-studio keepalive/);
+  assert.match(text, /"upstreamStatus":502/);
+  assert.match(text, /Bad Gateway/);
+  assert.match(text, /data: \[DONE\]/);
+});
+
 test("image stream proxy aborts the upstream request when the client cancels", async () => {
   const previousHeartbeat = process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS;
   process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = "10";
