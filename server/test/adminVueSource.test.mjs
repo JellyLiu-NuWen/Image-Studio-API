@@ -1356,18 +1356,28 @@ test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
   assert.match(source, /usageSummaryCards/, "Usage page should compute compact KPI summary cards");
   assert.match(source, /usageCostLeaders/, "Usage page should compute cost leader rows");
   assert.match(source, /usageEfficiencyRows/, "Usage page should compute efficiency diagnostics");
-  assert.match(usageSection, /usage-workspace/, "Usage page should render a workspace wrapper");
-  assert.match(usageSection, /usage-summary-grid/, "Usage page should render compact usage summary cards");
-  assert.match(usageSection, /usage-analytics-grid/, "Usage page should render an analytics grid");
-  assert.match(usageSection, /usage-trend-workspace/, "Usage page should render a dedicated trend workspace");
-  assert.match(usageSection, /usage-breakdown-workspace/, "Usage page should render a breakdown table workspace");
+  assert.match(usageSection, /art-usage-workspace/, "Usage page should render an Art usage workspace wrapper");
+  assert.match(usageSection, /art-usage-summary-grid/, "Usage page should render compact Art usage summary cards");
+  assert.match(usageSection, /art-usage-analytics-grid/, "Usage page should render an Art analytics grid");
+  assert.match(usageSection, /art-usage-trend-workspace/, "Usage page should render a dedicated Art trend workspace");
+  assert.match(usageSection, /art-usage-breakdown-workspace/, "Usage page should render an Art breakdown table workspace");
   assert.match(usageSection, /art-result-toolbar/, "Usage page should render an Art result toolbar above tables");
   assert.doesNotMatch(usageSection, /(?<![A-Za-z0-9_-])result-toolbar(?![A-Za-z0-9_-])/, "Usage page should not keep the generic result-toolbar class");
   assert.match(usageSection, /:size="tableSize"/, "Usage tables should respect shared density size");
-  assert.match(styleSource, /\.usage-workspace/, "Styles should include usage workspace layout");
-  assert.match(styleSource, /\.usage-summary-grid/, "Styles should include usage summary layout");
-  assert.match(styleSource, /\.usage-analytics-grid/, "Styles should include usage analytics grid layout");
-  assert.match(styleSource, /\.usage-breakdown-workspace/, "Styles should include usage breakdown workspace styling");
+  assert.match(styleSource, /\.art-usage-workspace/, "Styles should include Art usage workspace layout");
+  assert.match(styleSource, /\.art-usage-summary-grid/, "Styles should include Art usage summary layout");
+  assert.match(styleSource, /\.art-usage-analytics-grid/, "Styles should include Art usage analytics grid layout");
+  assert.match(styleSource, /\.art-usage-breakdown-workspace/, "Styles should include Art usage breakdown workspace styling");
+  for (const oldToken of [
+    "usage-workspace",
+    "usage-summary-grid",
+    "usage-analytics-grid",
+    "usage-trend-workspace",
+    "usage-breakdown-workspace",
+  ]) {
+    assert.doesNotMatch(usageSection, classTokenPattern(oldToken), `Usage page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue usage analytics cards use Art Design Pro panel headers", async () => {
@@ -1380,15 +1390,27 @@ test("Vue usage analytics cards use Art Design Pro panel headers", async () => {
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(usageSection, /art-usage-panel/, "Usage analytics cards should share an Art usage panel class");
-  assert.match(usageSection, /usage-panel-header/, "Usage analytics cards should render a structured panel header");
-  assert.match(usageSection, /usage-panel-title/, "Usage analytics cards should expose a title block");
-  assert.match(usageSection, /usage-panel-meta/, "Usage analytics cards should expose right-side metadata");
-  assert.match(usageSection, /usage-panel-body/, "Usage analytics cards should wrap content in a panel body");
-  assert.match(usageSection, /usage-breakdown-panel/, "Usage breakdown should use the shared Art usage panel shell");
+  assert.match(usageSection, /art-usage-panel-header/, "Usage analytics cards should render a structured panel header");
+  assert.match(usageSection, /art-usage-panel-title/, "Usage analytics cards should expose a title block");
+  assert.match(usageSection, /art-usage-panel-meta/, "Usage analytics cards should expose right-side metadata");
+  assert.match(usageSection, /art-usage-panel-body/, "Usage analytics cards should wrap content in a panel body");
+  assert.match(usageSection, /art-usage-breakdown-panel/, "Usage breakdown should use the shared Art usage panel shell");
   assert.doesNotMatch(usageSection, /<template #header><div class="card-title"/, "Usage page should not use legacy one-line card titles");
   assert.match(styleSource, /\.art-usage-panel/, "Styles should include the Art usage panel shell");
-  assert.match(styleSource, /\.usage-panel-header/, "Styles should include the structured usage panel header");
-  assert.match(styleSource, /\.usage-panel-body/, "Styles should include the usage panel body");
+  assert.match(styleSource, /\.art-usage-panel-header/, "Styles should include the structured usage panel header");
+  assert.match(styleSource, /\.art-usage-panel-body/, "Styles should include the usage panel body");
+  for (const oldToken of [
+    "usage-cost-workspace",
+    "usage-efficiency-workspace",
+    "usage-panel-header",
+    "usage-panel-title",
+    "usage-panel-meta",
+    "usage-panel-body",
+    "usage-breakdown-panel",
+  ]) {
+    assert.doesNotMatch(usageSection, classTokenPattern(oldToken), `Usage page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue security page uses an Art Design Pro security workspace", async () => {

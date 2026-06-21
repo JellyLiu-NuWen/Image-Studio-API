@@ -2778,28 +2778,28 @@ window.addEventListener('beforeunload', (event) => {
         </el-card>
       </section>
 
-      <section v-if="activeView === 'usage'" class="view-stack usage-workspace">
-        <div class="usage-summary-grid">
+      <section v-if="activeView === 'usage'" class="view-stack art-usage-workspace">
+        <div class="art-usage-summary-grid">
           <button v-for="item in usageSummaryCards" :key="item.label" :class="item.type" type="button">
             <span>{{ item.label }}</span>
             <strong>{{ item.value }}</strong>
             <small>{{ item.hint }}</small>
           </button>
         </div>
-        <div class="usage-analytics-grid">
-          <el-card shadow="never" class="usage-trend-workspace art-usage-panel">
+        <div class="art-usage-analytics-grid">
+          <el-card shadow="never" class="art-usage-trend-workspace art-usage-panel">
             <template #header>
-              <div class="usage-panel-header">
-                <div class="usage-panel-title">
+              <div class="art-usage-panel-header">
+                <div class="art-usage-panel-title">
                   <h4><DataAnalysis />近 7 日消耗趋势</h4>
                   <p>观察近期生成量波动和峰值日期。</p>
                 </div>
-                <div class="usage-panel-meta">
+                <div class="art-usage-panel-meta">
                   <span>{{ usageTrendBars.length }} 天</span>
                 </div>
               </div>
             </template>
-            <div class="usage-panel-body">
+            <div class="art-usage-panel-body">
               <div class="art-trend-chart" aria-label="近 7 日用量趋势">
                 <div v-for="item in usageTrendBars" :key="item.name" class="art-trend-bar">
                   <span>{{ item.total }}</span>
@@ -2810,21 +2810,21 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </div>
           </el-card>
-          <el-card shadow="never" class="usage-cost-workspace art-usage-panel">
+          <el-card shadow="never" class="art-usage-cost-workspace art-usage-panel">
             <template #header>
-              <div class="usage-panel-header">
-                <div class="usage-panel-title">
+              <div class="art-usage-panel-header">
+                <div class="art-usage-panel-title">
                   <h4><Timer />成本排行</h4>
                   <p>按模型、接口和上游聚合估算支出。</p>
                 </div>
-                <div class="usage-panel-meta">
+                <div class="art-usage-panel-meta">
                   <span>Top {{ usageCostLeaders.length }}</span>
                 </div>
               </div>
             </template>
-            <div class="usage-panel-body">
-              <div class="usage-leader-list">
-                <div v-for="item in usageCostLeaders" :key="item.scope + item.name" class="usage-leader-row">
+            <div class="art-usage-panel-body">
+              <div class="art-usage-leader-list">
+                <div v-for="item in usageCostLeaders" :key="item.scope + item.name" class="art-usage-leader-row">
                   <div>
                     <span>{{ item.scope }}</span>
                     <strong>{{ item.name }}</strong>
@@ -2836,21 +2836,21 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </div>
           </el-card>
-          <el-card shadow="never" class="usage-efficiency-workspace art-usage-panel">
+          <el-card shadow="never" class="art-usage-efficiency-workspace art-usage-panel">
             <template #header>
-              <div class="usage-panel-header">
-                <div class="usage-panel-title">
+              <div class="art-usage-panel-header">
+                <div class="art-usage-panel-title">
                   <h4><Monitor />效率诊断</h4>
                   <p>按成功率和平均耗时定位慢路径。</p>
                 </div>
-                <div class="usage-panel-meta">
+                <div class="art-usage-panel-meta">
                   <span>{{ usageEfficiencyRows.length }} 项</span>
                 </div>
               </div>
             </template>
-            <div class="usage-panel-body">
-              <div class="usage-efficiency-list">
-                <div v-for="item in usageEfficiencyRows" :key="item.name" class="usage-efficiency-row">
+            <div class="art-usage-panel-body">
+              <div class="art-usage-efficiency-list">
+                <div v-for="item in usageEfficiencyRows" :key="item.name" class="art-usage-efficiency-row">
                   <div>
                     <strong>{{ item.name }}</strong>
                     <span>{{ formatDuration(item.averageDurationMs) }} 平均耗时</span>
@@ -2863,14 +2863,14 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
-        <el-card shadow="never" class="usage-breakdown-workspace art-usage-panel usage-breakdown-panel">
+        <el-card shadow="never" class="art-usage-breakdown-workspace art-usage-panel art-usage-breakdown-panel">
           <template #header>
-            <div class="art-result-toolbar usage-panel-header">
-              <div class="usage-panel-title">
+            <div class="art-result-toolbar art-usage-panel-header">
+              <div class="art-usage-panel-title">
                 <h4><DataAnalysis />用量明细</h4>
                 <p>按日期、接口、模型和上游拆分调用量、成功率、耗时与估算成本。</p>
               </div>
-              <div class="usage-panel-meta art-toolbar-actions">
+              <div class="art-usage-panel-meta art-toolbar-actions">
                 <el-segmented v-model="tableDensity" :options="[
                   { label: '默认', value: 'default' },
                   { label: '舒适', value: 'comfortable' },
