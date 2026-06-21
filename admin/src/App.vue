@@ -3013,10 +3013,10 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </section>
 
-      <section v-if="activeView === 'security'" class="view-stack security-workspace">
-        <div class="security-overview">
-          <el-card shadow="never" class="security-score-card">
-            <div class="score-shell">
+      <section v-if="activeView === 'security'" class="view-stack art-security-center">
+        <div class="art-security-overview">
+          <el-card shadow="never" class="art-security-score-card">
+            <div class="art-security-score-shell">
               <div>
                 <span>安全评分</span>
                 <strong>{{ securityScore }}</strong>
@@ -3024,13 +3024,13 @@ window.addEventListener('beforeunload', (event) => {
               </div>
               <el-progress type="dashboard" :percentage="securityScore" :width="116" :stroke-width="10" />
             </div>
-            <div class="score-hints">
+            <div class="art-security-score-hints">
               <el-tag :type="securityForm.totpEnabled ? 'success' : 'warning'">TOTP {{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
               <el-tag :type="securityForm.failedLoginLockoutEnabled ? 'success' : 'danger'">失败锁定 {{ securityForm.failedLoginLockoutEnabled ? '开启' : '关闭' }}</el-tag>
               <el-tag :type="securityForm.ipAllowlist.length ? 'success' : 'info'">白名单 {{ securityForm.ipAllowlist.length }} 条</el-tag>
             </div>
           </el-card>
-          <div class="security-summary-grid">
+          <div class="art-security-summary-grid">
             <button v-for="item in securitySummaryCards" :key="item.label" :class="item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'info'" type="button">
               <span>{{ item.label }}</span>
               <strong>{{ item.value }}</strong>
@@ -3038,35 +3038,35 @@ window.addEventListener('beforeunload', (event) => {
             </button>
           </div>
         </div>
-        <div class="security-policy-grid">
-          <el-card shadow="never" class="art-security-panel security-account-panel">
+        <div class="art-security-policy-grid">
+          <el-card shadow="never" class="art-security-panel art-security-account-panel">
             <template #header>
-              <div class="security-panel-header">
-                <div class="security-panel-title">
+              <div class="art-security-panel-header">
+                <div class="art-security-panel-title">
                   <h4><Lock />账号与安全</h4>
                   <p>限制后台入口来源，并保持失败登录自动锁定。</p>
                 </div>
               </div>
             </template>
-            <div class="security-panel-body">
+            <div class="art-security-panel-body">
               <el-form v-if="config" label-width="140px" class="art-security-form">
                 <el-form-item label="IP 白名单"><el-input :model-value="securityForm.ipAllowlist.join('\n')" type="textarea" :rows="5" placeholder="每行一个 IP，例如 203.0.113.10" @update:model-value="(value: string) => config && (config.security.ipAllowlist = value.split('\n').map((item) => item.trim()).filter(Boolean))" /></el-form-item>
                 <el-form-item label="失败登录锁定"><el-switch v-model="config.security.failedLoginLockoutEnabled" /></el-form-item>
-                <el-form-item><el-button type="primary" class="security-panel-action" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
+                <el-form-item><el-button type="primary" class="art-security-panel-action" @click="saveConfig('安全配置已保存')">保存安全配置</el-button></el-form-item>
               </el-form>
             </div>
           </el-card>
-          <el-card shadow="never" class="art-security-panel security-totp-panel">
+          <el-card shadow="never" class="art-security-panel art-security-totp-panel">
             <template #header>
-              <div class="security-panel-header">
-                <div class="security-panel-title">
+              <div class="art-security-panel-header">
+                <div class="art-security-panel-title">
                   <h4><Key />TOTP 二次验证</h4>
                   <p>用认证器验证码保护后台登录。</p>
                 </div>
                 <el-tag :type="securityForm.totpEnabled ? 'success' : 'info'">{{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
               </div>
             </template>
-            <div class="security-panel-body totp-panel">
+            <div class="art-security-panel-body art-security-totp-panel-body">
               <div class="art-security-status-row">
                 <span>当前状态</span>
                 <el-tag :type="securityForm.totpEnabled ? 'success' : 'info'">{{ securityForm.totpEnabled ? '已启用' : '未启用' }}</el-tag>
@@ -3082,44 +3082,44 @@ window.addEventListener('beforeunload', (event) => {
                   <el-input v-model="totpCode" maxlength="6" placeholder="认证器中的 6 位验证码" />
                 </el-form-item>
                 <el-form-item>
-                  <el-button v-if="!securityForm.totpEnabled" class="security-panel-action" @click="setupTOTP">生成 TOTP 密钥</el-button>
-                  <el-button v-if="!securityForm.totpEnabled" type="primary" class="security-panel-action" :disabled="!securityForm.totpConfigured && !totpSetup" @click="enableTOTP">启用 TOTP</el-button>
-                  <el-button v-else type="danger" plain class="security-panel-action" @click="disableTOTP">禁用 TOTP</el-button>
+                  <el-button v-if="!securityForm.totpEnabled" class="art-security-panel-action" @click="setupTOTP">生成 TOTP 密钥</el-button>
+                  <el-button v-if="!securityForm.totpEnabled" type="primary" class="art-security-panel-action" :disabled="!securityForm.totpConfigured && !totpSetup" @click="enableTOTP">启用 TOTP</el-button>
+                  <el-button v-else type="danger" plain class="art-security-panel-action" @click="disableTOTP">禁用 TOTP</el-button>
                 </el-form-item>
               </el-form>
             </div>
           </el-card>
-          <el-card shadow="never" class="art-security-panel security-password-panel">
+          <el-card shadow="never" class="art-security-panel art-security-password-panel">
             <template #header>
-              <div class="security-panel-header">
-                <div class="security-panel-title">
+              <div class="art-security-panel-header">
+                <div class="art-security-panel-title">
                   <h4><Key />修改账号密码</h4>
                   <p>更新管理员账号和后台登录密码。</p>
                 </div>
               </div>
             </template>
-            <div class="security-panel-body">
+            <div class="art-security-panel-body">
               <el-form :model="accountForm" label-width="120px" class="art-security-form">
                 <el-form-item label="账号"><el-input v-model="accountForm.username" /></el-form-item>
                 <el-form-item label="当前密码"><el-input v-model="accountForm.currentPassword" type="password" show-password /></el-form-item>
                 <el-form-item label="新密码"><el-input v-model="accountForm.newPassword" type="password" show-password /></el-form-item>
-                <el-form-item><el-button type="primary" class="security-panel-action" @click="saveAccount">保存账号</el-button></el-form-item>
+                <el-form-item><el-button type="primary" class="art-security-panel-action" @click="saveAccount">保存账号</el-button></el-form-item>
               </el-form>
             </div>
           </el-card>
         </div>
-        <div class="session-workspace">
-          <el-card shadow="never" class="art-security-panel session-list-panel">
+        <div class="art-session-workspace">
+          <el-card shadow="never" class="art-security-panel art-session-list-panel">
             <template #header>
-              <div class="security-panel-header">
-                <div class="security-panel-title">
+              <div class="art-security-panel-header">
+                <div class="art-security-panel-title">
                   <h4><Collection />当前会话</h4>
                   <p>查看当前登录会话并清理其他设备。</p>
                 </div>
-                <el-button size="small" type="warning" plain class="security-panel-action" @click="revokeOtherSessions">退出其他会话</el-button>
+                <el-button size="small" type="warning" plain class="art-security-panel-action" @click="revokeOtherSessions">退出其他会话</el-button>
               </div>
             </template>
-            <div class="security-panel-body">
+            <div class="art-security-panel-body">
               <el-table :data="sessions" :size="tableSize">
                 <template #empty>
                   <div class="art-empty-state">
@@ -3136,16 +3136,16 @@ window.addEventListener('beforeunload', (event) => {
               </el-table>
             </div>
           </el-card>
-          <el-card shadow="never" class="art-security-panel login-history-panel">
+          <el-card shadow="never" class="art-security-panel art-login-history-panel">
             <template #header>
-              <div class="security-panel-header">
-                <div class="security-panel-title">
+              <div class="art-security-panel-header">
+                <div class="art-security-panel-title">
                   <h4><Document />登录历史</h4>
                   <p>最近后台认证事件，用于排查异常登录。</p>
                 </div>
               </div>
             </template>
-            <div class="security-panel-body">
+            <div class="art-security-panel-body">
               <el-table :data="loginHistoryRows" :size="tableSize" height="280">
                 <el-table-column prop="createdAt" label="时间"><template #default="{ row }">{{ formatTime(row.createdAt) }}</template></el-table-column>
                 <el-table-column prop="username" label="账号" />
@@ -3154,17 +3154,17 @@ window.addEventListener('beforeunload', (event) => {
             </div>
           </el-card>
         </div>
-        <el-card shadow="never" class="audit-workspace art-security-panel audit-log-panel">
+        <el-card shadow="never" class="art-audit-workspace art-security-panel art-audit-log-panel">
           <template #header>
-            <div class="audit-panel-header">
-              <div class="audit-panel-title">
+            <div class="art-audit-panel-header">
+              <div class="art-audit-panel-title">
                 <h4><Document />审计日志</h4>
                 <p>记录登录、配置保存、密钥查看、恢复配置等关键操作。</p>
               </div>
-              <el-button size="small" class="audit-panel-action" :icon="Refresh" @click="refreshAll">刷新审计</el-button>
+              <el-button size="small" class="art-audit-panel-action" :icon="Refresh" @click="refreshAll">刷新审计</el-button>
             </div>
           </template>
-          <div class="audit-panel-body">
+          <div class="art-audit-panel-body">
             <el-table :data="auditLogs" :size="tableSize" height="360">
               <template #empty>
                 <div class="art-empty-state">

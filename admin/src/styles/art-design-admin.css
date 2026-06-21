@@ -1542,8 +1542,8 @@ button,
 .log-workspace :deep(.el-table__empty-block),
 .usage-breakdown-workspace :deep(.el-table__empty-block),
 .alert-queue-workspace :deep(.el-table__empty-block),
-.session-workspace :deep(.el-table__empty-block),
-.audit-workspace :deep(.el-table__empty-block),
+.art-session-workspace :deep(.el-table__empty-block),
+.art-audit-workspace :deep(.el-table__empty-block),
 .backup-workspace :deep(.el-table__empty-block),
 .version-workspace :deep(.el-table__empty-block) {
   min-height: 240px;
@@ -3190,7 +3190,7 @@ button,
   overflow-wrap: anywhere;
 }
 
-.totp-panel {
+.art-security-totp-panel-body {
   display: grid;
   gap: 14px;
 }
@@ -3371,64 +3371,64 @@ button,
   white-space: nowrap;
 }
 
-.security-workspace {
+.art-security-center {
   gap: 14px;
 }
 
-.security-overview {
+.art-security-overview {
   display: grid;
   grid-template-columns: minmax(300px, 0.34fr) minmax(0, 1fr);
   gap: 14px;
 }
 
-.security-score-card {
+.art-security-score-card {
   border: 1px solid var(--art-border);
   border-radius: 14px;
 }
 
-.security-score-card :deep(.el-card__body) {
+.art-security-score-card :deep(.el-card__body) {
   display: grid;
   gap: 14px;
 }
 
-.score-shell {
+.art-security-score-shell {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
 }
 
-.score-shell div {
+.art-security-score-shell div {
   display: grid;
   gap: 8px;
 }
 
-.score-shell span,
-.score-shell small {
+.art-security-score-shell span,
+.art-security-score-shell small {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
-.score-shell strong {
+.art-security-score-shell strong {
   color: var(--art-text);
   font-size: 44px;
   line-height: 1;
 }
 
-.score-hints {
+.art-security-score-hints {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.security-summary-grid {
+.art-security-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
-.security-summary-grid button {
+.art-security-summary-grid button {
   min-height: 114px;
   display: grid;
   gap: 6px;
@@ -3443,47 +3443,47 @@ button,
   transition: 180ms ease;
 }
 
-.security-summary-grid button:hover {
+.art-security-summary-grid button:hover {
   transform: translateY(-1px);
   border-color: rgba(37, 99, 235, 0.28);
 }
 
-.security-summary-grid span,
-.security-summary-grid small {
+.art-security-summary-grid span,
+.art-security-summary-grid small {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
-.security-summary-grid strong {
+.art-security-summary-grid strong {
   color: var(--art-text);
   font-size: 24px;
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
 
-.security-summary-grid button.success {
+.art-security-summary-grid button.success {
   border-color: rgba(22, 163, 74, 0.22);
   background: rgba(22, 163, 74, 0.07);
 }
 
-.security-summary-grid button.warning {
+.art-security-summary-grid button.warning {
   border-color: rgba(217, 119, 6, 0.28);
   background: rgba(217, 119, 6, 0.08);
 }
 
-.security-summary-grid button.info {
+.art-security-summary-grid button.info {
   border-color: rgba(37, 99, 235, 0.16);
 }
 
-.security-policy-grid {
+.art-security-policy-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.82fr) minmax(300px, 0.72fr);
   gap: 14px;
   align-items: start;
 }
 
-.session-workspace {
+.art-session-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.7fr);
   gap: 14px;
@@ -3513,20 +3513,20 @@ button,
   padding: 10px 18px 18px;
 }
 
-.security-panel-header {
+.art-security-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
 }
 
-.security-panel-title {
+.art-security-panel-title {
   min-width: 0;
   display: grid;
   gap: 5px;
 }
 
-.security-panel-title h4 {
+.art-security-panel-title h4 {
   margin: 0;
   display: inline-flex;
   align-items: center;
@@ -3536,52 +3536,52 @@ button,
   font-weight: 900;
 }
 
-.security-panel-title h4 svg {
+.art-security-panel-title h4 svg {
   width: 18px;
   height: 18px;
   color: var(--art-primary);
 }
 
-.security-panel-title p {
+.art-security-panel-title p {
   margin: 0;
   color: var(--art-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.security-panel-body {
+.art-security-panel-body {
   display: grid;
   gap: 12px;
 }
 
-.security-panel-body .el-table {
+.art-security-panel-body .el-table {
   border-radius: 10px;
 }
 
-.security-panel-action {
+.art-security-panel-action {
   font-weight: 800;
 }
 
-.audit-log-panel {
+.art-audit-log-panel {
   border: 1px solid var(--art-border);
   border-radius: 14px;
   box-shadow: none;
 }
 
-.audit-panel-header {
+.art-audit-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
 }
 
-.audit-panel-title {
+.art-audit-panel-title {
   min-width: 0;
   display: grid;
   gap: 5px;
 }
 
-.audit-panel-title h4 {
+.art-audit-panel-title h4 {
   margin: 0;
   display: inline-flex;
   align-items: center;
@@ -3591,34 +3591,34 @@ button,
   font-weight: 900;
 }
 
-.audit-panel-title h4 svg {
+.art-audit-panel-title h4 svg {
   width: 18px;
   height: 18px;
   color: var(--art-primary);
 }
 
-.audit-panel-title p {
+.art-audit-panel-title p {
   margin: 0;
   color: var(--art-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.audit-panel-body {
+.art-audit-panel-body {
   display: grid;
   gap: 12px;
 }
 
-.audit-panel-body .el-table {
+.art-audit-panel-body .el-table {
   border-radius: 10px;
 }
 
-.audit-panel-action {
+.art-audit-panel-action {
   font-weight: 800;
 }
 
-.session-workspace :deep(.el-card__body),
-.audit-workspace :deep(.el-card__body) {
+.art-session-workspace :deep(.el-card__body),
+.art-audit-workspace :deep(.el-card__body) {
   display: grid;
   gap: 12px;
 }
@@ -3987,9 +3987,9 @@ button,
   .admin-shell,
   .art-console-section-grid,
   .alerts-workspace-grid,
-  .security-overview,
-  .security-policy-grid,
-  .session-workspace,
+  .art-security-overview,
+  .art-security-policy-grid,
+  .art-session-workspace,
   .system-workspace-grid,
   .usage-analytics-grid,
   .art-operations-panel {
@@ -4019,7 +4019,7 @@ button,
   .art-preset-grid,
   .alerts-summary-grid,
   .log-summary-grid,
-  .security-summary-grid,
+  .art-security-summary-grid,
   .system-summary-grid,
   .usage-summary-grid,
   .art-auth-signal-grid,
@@ -4114,7 +4114,7 @@ button,
   .art-preset-grid,
   .alerts-summary-grid,
   .log-summary-grid,
-  .security-summary-grid,
+  .art-security-summary-grid,
   .system-summary-grid,
   .usage-summary-grid,
   .art-auth-signal-grid,

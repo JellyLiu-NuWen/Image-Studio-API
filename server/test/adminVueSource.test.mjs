@@ -16,6 +16,18 @@ function sourceBetween(source, start, end) {
   return source.slice(startIndex, endIndex);
 }
 
+function classTokenPattern(token) {
+  return new RegExp(`class="[^"]*(?<![A-Za-z0-9_-])${escapeRegExp(token)}(?![A-Za-z0-9_-])`);
+}
+
+function cssClassSelectorPattern(token) {
+  return new RegExp(`\\.${escapeRegExp(token)}(?![A-Za-z0-9_-])`);
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 test("Vue model catalog exposes the complete model capability fields", async () => {
   const source = await readAppSource();
   const modelSection = sourceBetween(
@@ -129,8 +141,8 @@ test("Vue login page uses an Art Design Pro access workspace", async () => {
     "login-access-panel",
     "login-security-strip",
   ]) {
-    assert.doesNotMatch(loginSection, new RegExp(oldToken), `Login page should not keep old ${oldToken} token`);
-    assert.doesNotMatch(styleSource, new RegExp(`\\.${oldToken}`), `Styles should not keep old ${oldToken} selector`);
+    assert.doesNotMatch(loginSection, classTokenPattern(oldToken), `Login page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
   }
 });
 
@@ -1371,19 +1383,31 @@ test("Vue security page uses an Art Design Pro security workspace", async () => 
   assert.match(source, /securityScore/, "Security page should compute an overall security score");
   assert.match(source, /securitySummaryCards/, "Security page should compute security summary cards");
   assert.match(source, /loginHistoryRows/, "Security page should compute recent login history rows");
-  assert.match(securitySection, /security-workspace/, "Security page should render a workspace wrapper");
-  assert.match(securitySection, /security-overview/, "Security page should render a security overview area");
-  assert.match(securitySection, /security-score-card/, "Security page should render a score card");
-  assert.match(securitySection, /security-summary-grid/, "Security page should render summary cards");
-  assert.match(securitySection, /security-policy-grid/, "Security page should render policy controls in a grid");
-  assert.match(securitySection, /session-workspace/, "Security page should render session workspace");
-  assert.match(securitySection, /audit-workspace/, "Security page should render audit workspace");
+  assert.match(securitySection, /art-security-center/, "Security page should render an Art security center wrapper");
+  assert.match(securitySection, /art-security-overview/, "Security page should render an Art security overview area");
+  assert.match(securitySection, /art-security-score-card/, "Security page should render an Art score card");
+  assert.match(securitySection, /art-security-summary-grid/, "Security page should render Art summary cards");
+  assert.match(securitySection, /art-security-policy-grid/, "Security page should render policy controls in an Art grid");
+  assert.match(securitySection, /art-session-workspace/, "Security page should render an Art session workspace");
+  assert.match(securitySection, /art-audit-workspace/, "Security page should render an Art audit workspace");
   assert.match(securitySection, /:size="tableSize"/, "Security tables should respect shared density size");
-  assert.match(styleSource, /\.security-workspace/, "Styles should include security workspace layout");
-  assert.match(styleSource, /\.security-overview/, "Styles should include security overview layout");
-  assert.match(styleSource, /\.security-summary-grid/, "Styles should include security summary grid layout");
-  assert.match(styleSource, /\.security-policy-grid/, "Styles should include security policy grid layout");
-  assert.match(styleSource, /\.session-workspace/, "Styles should include session workspace styling");
+  assert.match(styleSource, /\.art-security-center/, "Styles should include Art security center layout");
+  assert.match(styleSource, /\.art-security-overview/, "Styles should include Art security overview layout");
+  assert.match(styleSource, /\.art-security-summary-grid/, "Styles should include Art security summary grid layout");
+  assert.match(styleSource, /\.art-security-policy-grid/, "Styles should include Art security policy grid layout");
+  assert.match(styleSource, /\.art-session-workspace/, "Styles should include Art session workspace styling");
+  for (const oldToken of [
+    "security-workspace",
+    "security-overview",
+    "security-score-card",
+    "security-summary-grid",
+    "security-policy-grid",
+    "session-workspace",
+    "audit-workspace",
+  ]) {
+    assert.doesNotMatch(securitySection, classTokenPattern(oldToken), `Security page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue security policy and session cards use Art Design Pro panels", async () => {
@@ -1396,27 +1420,41 @@ test("Vue security policy and session cards use Art Design Pro panels", async ()
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(securitySection, /art-security-panel/g, "Security cards should use a reusable Art panel shell");
-  assert.match(securitySection, /security-account-panel/, "Security page should style the account policy card");
-  assert.match(securitySection, /security-totp-panel/, "Security page should style the TOTP card");
-  assert.match(securitySection, /security-password-panel/, "Security page should style the password card");
-  assert.match(securitySection, /session-list-panel/, "Security page should style the session card");
-  assert.match(securitySection, /login-history-panel/, "Security page should style the login history card");
-  assert.match(securitySection, /security-panel-header/g, "Security panels should use structured headers");
-  assert.match(securitySection, /security-panel-title/g, "Security panels should expose title and helper copy");
-  assert.match(securitySection, /security-panel-body/g, "Security panels should wrap body content consistently");
-  assert.match(securitySection, /security-panel-action/, "Security panels should use compact action affordances");
+  assert.match(securitySection, /art-security-account-panel/, "Security page should style the account policy card");
+  assert.match(securitySection, /art-security-totp-panel/, "Security page should style the TOTP card");
+  assert.match(securitySection, /art-security-password-panel/, "Security page should style the password card");
+  assert.match(securitySection, /art-session-list-panel/, "Security page should style the session card");
+  assert.match(securitySection, /art-login-history-panel/, "Security page should style the login history card");
+  assert.match(securitySection, /art-security-panel-header/g, "Security panels should use structured headers");
+  assert.match(securitySection, /art-security-panel-title/g, "Security panels should expose title and helper copy");
+  assert.match(securitySection, /art-security-panel-body/g, "Security panels should wrap body content consistently");
+  assert.match(securitySection, /art-security-panel-action/, "Security panels should use compact action affordances");
   assert.match(securitySection, /art-security-form/g, "Security policy forms should use a dedicated Art form layout");
   assert.match(securitySection, /art-security-status-row/, "TOTP status should use a dedicated Art status row");
   assert.doesNotMatch(securitySection, /class="narrow-form"/, "Security panels should not keep the generic narrow-form class");
   assert.doesNotMatch(securitySection, /class="status-row"/, "Security panels should not keep the generic status-row class");
   assert.match(styleSource, /\.art-security-panel/, "Styles should include security panel shell");
-  assert.match(styleSource, /\.security-panel-header/, "Styles should include security panel header");
-  assert.match(styleSource, /\.security-panel-body/, "Styles should include security panel body layout");
-  assert.match(styleSource, /\.security-panel-action/, "Styles should include security panel actions");
+  assert.match(styleSource, /\.art-security-panel-header/, "Styles should include security panel header");
+  assert.match(styleSource, /\.art-security-panel-body/, "Styles should include security panel body layout");
+  assert.match(styleSource, /\.art-security-panel-action/, "Styles should include security panel actions");
   assert.match(styleSource, /\.art-security-form/, "Styles should include security form layout");
   assert.match(styleSource, /\.art-security-status-row/, "Styles should include security status row layout");
   assert.doesNotMatch(styleSource, /\.narrow-form\b/, "Styles should remove the legacy narrow-form selector");
   assert.doesNotMatch(styleSource, /\.status-row\b/, "Styles should remove the legacy status-row selector");
+  for (const oldToken of [
+    "security-account-panel",
+    "security-totp-panel",
+    "security-password-panel",
+    "session-list-panel",
+    "login-history-panel",
+    "security-panel-header",
+    "security-panel-title",
+    "security-panel-body",
+    "security-panel-action",
+  ]) {
+    assert.doesNotMatch(securitySection, classTokenPattern(oldToken), `Security panels should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue audit log uses an Art Design Pro security panel", async () => {
@@ -1428,14 +1466,24 @@ test("Vue audit log uses an Art Design Pro security panel", async () => {
   );
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
-  assert.match(securitySection, /audit-log-panel/, "Audit logs should use a dedicated Art security panel");
-  assert.match(securitySection, /audit-panel-header/, "Audit log panel should use a structured header");
-  assert.match(securitySection, /audit-panel-title/, "Audit log panel should expose title and helper copy");
-  assert.match(securitySection, /audit-panel-body/, "Audit log panel should wrap table content");
-  assert.match(securitySection, /audit-panel-action/, "Audit log panel should expose a compact refresh action");
-  assert.match(styleSource, /\.audit-log-panel/, "Styles should include audit log panel shell");
-  assert.match(styleSource, /\.audit-panel-header/, "Styles should include audit panel header");
-  assert.match(styleSource, /\.audit-panel-body/, "Styles should include audit panel body layout");
+  assert.match(securitySection, /art-audit-log-panel/, "Audit logs should use a dedicated Art security panel");
+  assert.match(securitySection, /art-audit-panel-header/, "Audit log panel should use a structured header");
+  assert.match(securitySection, /art-audit-panel-title/, "Audit log panel should expose title and helper copy");
+  assert.match(securitySection, /art-audit-panel-body/, "Audit log panel should wrap table content");
+  assert.match(securitySection, /art-audit-panel-action/, "Audit log panel should expose a compact refresh action");
+  assert.match(styleSource, /\.art-audit-log-panel/, "Styles should include audit log panel shell");
+  assert.match(styleSource, /\.art-audit-panel-header/, "Styles should include audit panel header");
+  assert.match(styleSource, /\.art-audit-panel-body/, "Styles should include audit panel body layout");
+  for (const oldToken of [
+    "audit-log-panel",
+    "audit-panel-header",
+    "audit-panel-title",
+    "audit-panel-body",
+    "audit-panel-action",
+  ]) {
+    assert.doesNotMatch(securitySection, classTokenPattern(oldToken), `Audit panel should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue system page uses an Art Design Pro backup and update workspace", async () => {
