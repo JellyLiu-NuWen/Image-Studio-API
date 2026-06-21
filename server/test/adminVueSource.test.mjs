@@ -556,14 +556,33 @@ test("Vue topbar settings open an Art Design Pro settings panel", async () => {
   assert.match(topbarSection, /@click="openSettings"/, "Settings entry should open the settings panel");
   assert.doesNotMatch(sourceBetween(source, "function openSettings()", "function closePageTab"), /navigateTo\('system'\)/, "Opening settings should not navigate away from the current page");
   assert.match(settingsDrawer, /art-settings-panel/, "Settings should render an Art Design settings panel drawer");
-  assert.match(settingsDrawer, /setting-panel-header/, "Settings panel should render a template-style header");
-  assert.match(settingsDrawer, /setting-section/g, "Settings panel should group preferences into sections");
-  assert.match(settingsDrawer, /setting-option-grid/, "Settings panel should render selectable option cards");
+  assert.match(settingsDrawer, /art-setting-panel-header/, "Settings panel should render an Art header");
+  assert.match(settingsDrawer, /art-setting-section/g, "Settings panel should group preferences into Art sections");
+  assert.match(settingsDrawer, /art-setting-section-title/, "Settings sections should render Art section titles");
+  assert.match(settingsDrawer, /art-setting-option-grid/, "Settings panel should render Art selectable option cards");
+  assert.match(settingsDrawer, /art-setting-density-preview/, "Settings panel should render an Art density preview");
+  assert.match(settingsDrawer, /art-setting-actions/, "Settings footer should use Art actions");
+  assert.doesNotMatch(settingsDrawer, /(?<![A-Za-z0-9_-])setting-panel-header(?![A-Za-z0-9_-])/, "Settings panel should not keep the generic setting-panel-header class");
+  assert.doesNotMatch(settingsDrawer, /(?<![A-Za-z0-9_-])setting-section(?![A-Za-z0-9_-])/, "Settings panel should not keep the generic setting-section class");
+  assert.doesNotMatch(settingsDrawer, /(?<![A-Za-z0-9_-])setting-section-title(?![A-Za-z0-9_-])/, "Settings panel should not keep the generic setting-section-title class");
+  assert.doesNotMatch(settingsDrawer, /(?<![A-Za-z0-9_-])setting-option-grid(?![A-Za-z0-9_-])/, "Settings panel should not keep the generic setting-option-grid class");
+  assert.doesNotMatch(settingsDrawer, /(?<![A-Za-z0-9_-])setting-density-preview(?![A-Za-z0-9_-])/, "Settings panel should not keep the generic setting-density-preview class");
+  assert.doesNotMatch(settingsDrawer, /(?<![A-Za-z0-9_-])setting-actions(?![A-Za-z0-9_-])/, "Settings panel should not keep the generic setting-actions class");
   assert.match(settingsDrawer, /v-model="themeMode"/, "Settings panel should control the shell theme");
   assert.match(settingsDrawer, /v-model="tableDensity"/, "Settings panel should control table density");
   assert.match(styleSource, /\.art-settings-panel/, "Styles should include the settings panel shell");
-  assert.match(styleSource, /\.setting-option-grid/, "Styles should include settings option card layout");
-  assert.match(styleSource, /\.setting-panel-header/, "Styles should include settings panel header styling");
+  assert.match(styleSource, /\.art-setting-panel-header/, "Styles should include Art settings panel header styling");
+  assert.match(styleSource, /\.art-setting-section/, "Styles should include Art settings sections");
+  assert.match(styleSource, /\.art-setting-section-title/, "Styles should include Art settings section titles");
+  assert.match(styleSource, /\.art-setting-option-grid/, "Styles should include Art settings option card layout");
+  assert.match(styleSource, /\.art-setting-density-preview/, "Styles should include Art density preview styling");
+  assert.match(styleSource, /\.art-setting-actions/, "Styles should include Art settings actions");
+  assert.doesNotMatch(styleSource, /\.setting-panel-header(?![A-Za-z0-9_-])/, "Styles should remove the generic setting-panel-header selector");
+  assert.doesNotMatch(styleSource, /\.setting-section(?![A-Za-z0-9_-])/, "Styles should remove the generic setting-section selector");
+  assert.doesNotMatch(styleSource, /\.setting-section-title(?![A-Za-z0-9_-])/, "Styles should remove the generic setting-section-title selector");
+  assert.doesNotMatch(styleSource, /\.setting-option-grid(?![A-Za-z0-9_-])/, "Styles should remove the generic setting-option-grid selector");
+  assert.doesNotMatch(styleSource, /\.setting-density-preview(?![A-Za-z0-9_-])/, "Styles should remove the generic setting-density-preview selector");
+  assert.doesNotMatch(styleSource, /\.setting-actions(?![A-Za-z0-9_-])/, "Styles should remove the generic setting-actions selector");
 });
 
 test("Vue management tables use an Art Design Pro style table workspace", async () => {

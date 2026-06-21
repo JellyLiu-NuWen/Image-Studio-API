@@ -958,7 +958,7 @@ button,
   background: var(--art-card);
 }
 
-.setting-panel-header {
+.art-setting-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -970,27 +970,27 @@ button,
   box-shadow: var(--art-shadow);
 }
 
-.setting-panel-header span,
-.setting-section-title span {
+.art-setting-panel-header span,
+.art-setting-section-title span {
   color: var(--art-primary);
   font-size: 12px;
   font-weight: 900;
 }
 
-.setting-panel-header h3 {
+.art-setting-panel-header h3 {
   margin: 5px 0;
   color: var(--art-text);
   font-size: 19px;
 }
 
-.setting-panel-header p {
+.art-setting-panel-header p {
   margin: 0;
   color: var(--art-muted);
   font-size: 13px;
   line-height: 1.55;
 }
 
-.setting-section {
+.art-setting-section {
   display: grid;
   gap: 12px;
   padding: 16px;
@@ -999,7 +999,7 @@ button,
   background: var(--art-card);
 }
 
-.setting-section-title {
+.art-setting-section-title {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1007,19 +1007,19 @@ button,
   font-weight: 900;
 }
 
-.setting-section-title svg {
+.art-setting-section-title svg {
   width: 17px;
   height: 17px;
   color: var(--art-primary);
 }
 
-.setting-option-grid {
+.art-setting-option-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
-.setting-option-grid button {
+.art-setting-option-grid button {
   min-height: 92px;
   display: grid;
   align-content: start;
@@ -1035,37 +1035,37 @@ button,
   transition: 180ms ease;
 }
 
-.setting-option-grid button:hover,
-.setting-option-grid button.active {
+.art-setting-option-grid button:hover,
+.art-setting-option-grid button.active {
   border-color: rgba(37, 99, 235, 0.34);
   background: rgba(37, 99, 235, 0.08);
 }
 
-.setting-option-grid button.active {
+.art-setting-option-grid button.active {
   box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.32);
 }
 
-.setting-option-grid svg {
+.art-setting-option-grid svg {
   width: 18px;
   height: 18px;
   color: var(--art-primary);
 }
 
-.setting-option-grid strong {
+.art-setting-option-grid strong {
   color: var(--art-text);
   font-size: 13px;
 }
 
-.setting-option-grid span,
-.setting-density-preview span,
-.setting-density-preview small {
+.art-setting-option-grid span,
+.art-setting-density-preview span,
+.art-setting-density-preview small {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.45;
 }
 
-.setting-density-preview {
+.art-setting-density-preview {
   display: grid;
   gap: 4px;
   padding: 12px;
@@ -1074,12 +1074,12 @@ button,
   background: var(--art-soft);
 }
 
-.setting-density-preview strong {
+.art-setting-density-preview strong {
   color: var(--art-text);
   font-size: 16px;
 }
 
-.setting-actions {
+.art-setting-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;

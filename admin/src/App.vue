@@ -3404,7 +3404,7 @@ window.addEventListener('beforeunload', (event) => {
     </el-dialog>
 
     <el-drawer v-model="settingsPanelVisible" title="" size="420px" destroy-on-close class="art-settings-panel">
-      <div class="setting-panel-header">
+      <div class="art-setting-panel-header">
         <div>
           <span>Art Design Pro</span>
           <h3>后台外观设置</h3>
@@ -3413,13 +3413,13 @@ window.addEventListener('beforeunload', (event) => {
         <el-button :icon="Close" circle @click="closeSettingsPanel" />
       </div>
 
-      <section class="setting-section">
-        <div class="setting-section-title"><Sunny /><span>主题风格</span></div>
+      <section class="art-setting-section">
+        <div class="art-setting-section-title"><Sunny /><span>主题风格</span></div>
         <el-segmented v-model="themeMode" :options="[
           { label: '浅色', value: 'light' },
           { label: '深色', value: 'dark' },
         ]" @change="persistSettings" />
-        <div class="setting-option-grid">
+        <div class="art-setting-option-grid">
           <button
             v-for="item in settingsOptions.theme"
             :key="item.value"
@@ -3434,9 +3434,9 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </section>
 
-      <section class="setting-section">
-        <div class="setting-section-title"><Operation /><span>菜单布局</span></div>
-        <div class="setting-option-grid">
+      <section class="art-setting-section">
+        <div class="art-setting-section-title"><Operation /><span>菜单布局</span></div>
+        <div class="art-setting-option-grid">
           <button
             v-for="item in settingsOptions.layout"
             :key="item.value"
@@ -3451,9 +3451,9 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </section>
 
-      <section class="setting-section">
-        <div class="setting-section-title"><MagicStick /><span>菜单风格</span></div>
-        <div class="setting-option-grid">
+      <section class="art-setting-section">
+        <div class="art-setting-section-title"><MagicStick /><span>菜单风格</span></div>
+        <div class="art-setting-option-grid">
           <button
             v-for="item in settingsOptions.menuStyle"
             :key="item.value"
@@ -3468,14 +3468,14 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </section>
 
-      <section class="setting-section">
-        <div class="setting-section-title"><Collection /><span>表格密度</span></div>
+      <section class="art-setting-section">
+        <div class="art-setting-section-title"><Collection /><span>表格密度</span></div>
         <el-segmented v-model="tableDensity" :options="[
           { label: '默认', value: 'default' },
           { label: '舒适', value: 'comfortable' },
           { label: '紧凑', value: 'compact' },
         ]" @change="persistSettings" />
-        <div class="setting-density-preview">
+        <div class="art-setting-density-preview">
           <span>当前模式</span>
           <strong>{{ tableDensity }}</strong>
           <small>接口、上游、日志、成本等表格会同步使用这个密度。</small>
@@ -3483,7 +3483,7 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <template #footer>
-        <div class="setting-actions">
+        <div class="art-setting-actions">
           <el-button @click="resetSettingsPanel">恢复默认</el-button>
           <el-button type="primary" @click="closeSettingsPanel">完成</el-button>
         </div>
