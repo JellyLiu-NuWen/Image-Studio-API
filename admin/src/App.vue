@@ -2643,25 +2643,25 @@ window.addEventListener('beforeunload', (event) => {
       </section>
 
       <section v-if="activeView === 'logs'" class="view-stack">
-        <el-card shadow="never" class="log-workspace">
-          <div class="log-summary-grid">
+        <el-card shadow="never" class="art-log-workspace">
+          <div class="art-log-summary-grid">
             <button v-for="item in logSummaryCards" :key="item.label" :class="item.type">
               <span>{{ item.label }}</span>
               <strong>{{ item.value }}</strong>
               <small>{{ item.hint }}</small>
             </button>
           </div>
-          <div class="art-query-panel art-search-bar art-card-xs art-log-panel log-query-panel" :class="{ 'is-expanded': logSearchExpanded }">
-            <div class="art-query-panel-heading log-panel-header">
-              <div class="log-panel-title">
+          <div class="art-query-panel art-search-bar art-card-xs art-log-panel art-log-query-panel" :class="{ 'is-expanded': logSearchExpanded }">
+            <div class="art-query-panel-heading art-log-panel-header">
+              <div class="art-log-panel-title">
                 <h4><Document />日志查询</h4>
                 <p>按接口、上游、模型、状态、耗时和请求 ID 组合筛选。</p>
               </div>
-              <div class="log-panel-meta">
+              <div class="art-log-panel-meta">
                 <span>{{ visibleLogSearchFields.length }} 个条件</span>
               </div>
             </div>
-            <div class="art-search-form-grid log-panel-body">
+            <div class="art-search-form-grid art-log-panel-body">
               <div
                 v-for="field in visibleLogSearchFields"
                 :key="field.key"
@@ -2707,13 +2707,13 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </div>
           </div>
-          <div class="art-log-panel log-result-panel">
-            <div class="art-result-toolbar log-panel-header">
-              <div class="log-panel-title">
+          <div class="art-log-panel art-log-result-panel">
+            <div class="art-result-toolbar art-log-panel-header">
+              <div class="art-log-panel-title">
                 <h4><DataAnalysis />日志结果</h4>
                 <p>查看调用明细、质量标记、导出文件和脱敏重放命令。</p>
               </div>
-              <div class="log-panel-meta art-toolbar-actions">
+              <div class="art-log-panel-meta art-toolbar-actions">
                 <span>生图 {{ filteredGenerationLogs.length }} / API {{ filteredApiLogs.length }}</span>
                 <el-segmented v-model="tableDensity" :options="['default', 'comfortable', 'compact']" />
                 <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
@@ -2721,7 +2721,7 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button :icon="Download" @click="exportLogs('csv')">导出 CSV</el-button>
               </div>
             </div>
-            <div class="log-panel-body">
+            <div class="art-log-panel-body">
               <el-tabs v-model="activeLogTab">
                 <el-tab-pane label="生图日志" name="generations">
                   <el-table :data="filteredGenerationLogs" :size="tableSize" height="520">
@@ -3646,7 +3646,7 @@ window.addEventListener('beforeunload', (event) => {
       </template>
     </el-drawer>
 
-    <el-drawer v-model="logDetailVisible" title="请求详情" size="620px" destroy-on-close class="log-detail-drawer">
+    <el-drawer v-model="logDetailVisible" title="请求详情" size="620px" destroy-on-close class="art-log-detail-drawer">
       <template v-if="selectedLog">
         <div class="art-detail-stack">
           <div class="art-detail-overview">

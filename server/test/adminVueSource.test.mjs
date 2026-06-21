@@ -1150,8 +1150,8 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
 
   assert.match(source, /logSummaryCards/, "Logs page should compute summary cards for generation and API logs");
   assert.match(source, /activeLogTab/, "Logs page should keep the active log tab state");
-  assert.match(logSection, /log-workspace/, "Logs page should render a workspace wrapper");
-  assert.match(logSection, /log-summary-grid/, "Logs page should render compact summary cards");
+  assert.match(logSection, /art-log-workspace/, "Logs page should render an Art log workspace wrapper");
+  assert.match(logSection, /art-log-summary-grid/, "Logs page should render compact Art summary cards");
   assert.match(logSection, /art-query-panel/, "Logs page should render an Art query panel");
   assert.match(logSection, /art-query-panel-heading/, "Logs query panel should render an Art query heading");
   assert.match(logSection, /art-search-form-grid/, "Query panel should use an ArtSearchBar form grid layout");
@@ -1172,11 +1172,18 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(logSection, /v-model="activeLogTab"/, "Logs tabs should bind the active tab");
   assert.match(logSection, /:size="tableSize"/, "Logs tables should respect shared density size");
   assert.match(logSection, /刷新日志/, "Result toolbar should include a clear refresh action");
-  assert.match(styleSource, /\.log-workspace/, "Styles should include log workspace layout");
-  assert.match(styleSource, /\.log-summary-grid/, "Styles should include log summary layout");
+  assert.match(styleSource, /\.art-log-workspace/, "Styles should include Art log workspace layout");
+  assert.match(styleSource, /\.art-log-summary-grid/, "Styles should include Art log summary layout");
   assert.match(styleSource, /\.art-query-panel/, "Styles should include Art query panel layout");
   assert.match(styleSource, /\.art-result-toolbar/, "Styles should include Art result toolbar layout");
   assert.match(styleSource, /\.art-search-form-item/, "Styles should include Art search form item layout");
+  for (const oldToken of [
+    "log-workspace",
+    "log-summary-grid",
+  ]) {
+    assert.doesNotMatch(logSection, classTokenPattern(oldToken), `Logs page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
   for (const legacyClass of [
     "query-panel",
     "query-panel-heading",
@@ -1247,17 +1254,28 @@ test("Vue logs page panels use Art Design Pro panel headers", async () => {
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(logSection, /art-log-panel/, "Logs query and result areas should use the Art log panel shell");
-  assert.match(logSection, /log-panel-header/, "Logs panels should render structured headers");
-  assert.match(logSection, /log-panel-title/, "Logs panels should expose title blocks");
-  assert.match(logSection, /log-panel-meta/, "Logs panels should expose metadata/actions in headers");
-  assert.match(logSection, /log-panel-body/, "Logs panels should wrap fields and tables in panel bodies");
-  assert.match(logSection, /log-query-panel/, "Logs query area should use the shared Art panel shell");
-  assert.match(logSection, /log-result-panel/, "Logs result area should use the shared Art panel shell");
+  assert.match(logSection, /art-log-panel-header/, "Logs panels should render structured headers");
+  assert.match(logSection, /art-log-panel-title/, "Logs panels should expose title blocks");
+  assert.match(logSection, /art-log-panel-meta/, "Logs panels should expose metadata/actions in headers");
+  assert.match(logSection, /art-log-panel-body/, "Logs panels should wrap fields and tables in panel bodies");
+  assert.match(logSection, /art-log-query-panel/, "Logs query area should use the shared Art panel shell");
+  assert.match(logSection, /art-log-result-panel/, "Logs result area should use the shared Art panel shell");
   assert.doesNotMatch(logSection, /<div class="card-title"><Document \/>日志查询<\/div>/, "Logs query panel should not use the legacy card title");
   assert.doesNotMatch(logSection, /<div class="card-title"><DataAnalysis \/>日志结果<\/div>/, "Logs result panel should not use the legacy card title");
   assert.match(styleSource, /\.art-log-panel/, "Styles should include the Art log panel shell");
-  assert.match(styleSource, /\.log-panel-header/, "Styles should include log panel header styling");
-  assert.match(styleSource, /\.log-panel-body/, "Styles should include log panel body styling");
+  assert.match(styleSource, /\.art-log-panel-header/, "Styles should include log panel header styling");
+  assert.match(styleSource, /\.art-log-panel-body/, "Styles should include log panel body styling");
+  for (const oldToken of [
+    "log-query-panel",
+    "log-result-panel",
+    "log-panel-header",
+    "log-panel-title",
+    "log-panel-meta",
+    "log-panel-body",
+  ]) {
+    assert.doesNotMatch(logSection, classTokenPattern(oldToken), `Logs page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue log detail drawer uses an Art Design Pro detail workspace", async () => {
@@ -1271,7 +1289,7 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
 
   assert.match(source, /logDetailSummaryCards/, "Log detail drawer should compute compact summary cards");
   assert.match(source, /logDetailRouteSteps/, "Log detail drawer should compute route step data");
-  assert.match(detailDrawer, /log-detail-drawer/, "Log detail drawer should apply a dedicated workspace class");
+  assert.match(detailDrawer, /art-log-detail-drawer/, "Log detail drawer should apply a dedicated Art workspace class");
   assert.match(detailDrawer, /art-detail-stack/, "Log detail drawer should render an Art detail stack");
   assert.match(detailDrawer, /art-detail-overview/, "Log detail drawer should render an Art overview header");
   assert.match(detailDrawer, /art-detail-summary-grid/, "Log detail drawer should render Art summary cards");
@@ -1281,7 +1299,7 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-overview(?![A-Za-z0-9_-])/, "Log detail drawer should not keep the generic detail-overview class");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-summary-grid(?![A-Za-z0-9_-])/, "Log detail drawer should not keep the generic detail-summary-grid class");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-action-bar(?![A-Za-z0-9_-])/, "Log detail drawer should not keep the generic detail-action-bar class");
-  assert.match(styleSource, /\.log-detail-drawer/, "Styles should include log detail drawer styling");
+  assert.match(styleSource, /\.art-log-detail-drawer/, "Styles should include log detail drawer styling");
   assert.match(styleSource, /\.art-detail-stack/, "Styles should include Art detail stack styling");
   assert.match(styleSource, /\.art-detail-overview/, "Styles should include Art detail overview styling");
   assert.match(styleSource, /\.art-detail-summary-grid/, "Styles should include Art detail summary styling");
@@ -1291,6 +1309,8 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.doesNotMatch(styleSource, /\.detail-overview(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-overview selector");
   assert.doesNotMatch(styleSource, /\.detail-summary-grid(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-summary-grid selector");
   assert.doesNotMatch(styleSource, /\.detail-action-bar(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-action-bar selector");
+  assert.doesNotMatch(detailDrawer, classTokenPattern("log-detail-drawer"), "Log detail drawer should not keep old log-detail-drawer token");
+  assert.doesNotMatch(styleSource, cssClassSelectorPattern("log-detail-drawer"), "Styles should not keep old log-detail-drawer selector");
 });
 
 test("Vue log detail diagnostic cards use Art Design Pro panels", async () => {
