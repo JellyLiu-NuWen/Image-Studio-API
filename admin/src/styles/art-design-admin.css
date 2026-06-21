@@ -1086,7 +1086,7 @@ button,
   gap: 10px;
 }
 
-.page-breadcrumb {
+.art-page-breadcrumb {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -1096,19 +1096,19 @@ button,
   font-weight: 800;
 }
 
-.page-breadcrumb span {
+.art-page-breadcrumb span {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
 
-.page-breadcrumb span:not(:last-child)::after {
+.art-page-breadcrumb span:not(:last-child)::after {
   content: "/";
   margin-left: 8px;
   color: #94a3b8;
 }
 
-.page-tabs,
+.art-worktab-bar,
 .art-work-tab {
   min-height: 46px;
   display: flex;
@@ -1123,7 +1123,7 @@ button,
   box-shadow: var(--art-shadow);
 }
 
-.worktab-scroll {
+.art-worktab-scroll {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -1132,8 +1132,8 @@ button,
   scrollbar-width: thin;
 }
 
-.page-tabs button,
-.worktab-action-trigger {
+.art-worktab-bar button,
+.art-worktab-action-trigger {
   height: 30px;
   display: inline-flex;
   align-items: center;
@@ -1150,47 +1150,47 @@ button,
   transition: 180ms ease;
 }
 
-.page-tabs button:hover,
-.worktab-action-trigger:hover {
+.art-worktab-bar button:hover,
+.art-worktab-action-trigger:hover {
   border-color: var(--art-border);
   background: var(--art-soft);
   color: var(--art-text);
 }
 
-.page-tabs button.active {
+.art-worktab-bar button.active {
   border-color: rgba(37, 99, 235, 0.22);
   background: rgba(37, 99, 235, 0.1);
   color: var(--art-primary);
 }
 
-.page-tabs button.fixed {
+.art-worktab-bar button.fixed {
   padding-left: 11px;
   border-style: solid;
 }
 
-.page-tabs button.fixed .el-icon:first-child {
+.art-worktab-bar button.fixed .el-icon:first-child {
   color: var(--art-primary);
 }
 
-.worktab-action-trigger {
+.art-worktab-action-trigger {
   width: 32px;
   justify-content: center;
   flex: 0 0 auto;
   background: var(--art-soft);
 }
 
-.worktab-action-trigger svg {
+.art-worktab-action-trigger svg {
   width: 16px;
   height: 16px;
 }
 
-.tab-close {
+.art-worktab-close {
   width: 15px;
   height: 15px;
   border-radius: 50%;
 }
 
-.tab-close:hover {
+.art-worktab-close:hover {
   background: rgba(100, 116, 139, 0.18);
 }
 

@@ -300,21 +300,26 @@ test("Vue shell exposes Art Design Pro workspace navigation and quick actions", 
   assert.match(source, /breadcrumbItems/, "Shell should compute breadcrumb items for the active module");
   assert.match(source, /quickActions/, "Shell should expose high-frequency admin quick actions");
   assert.match(source, /riskItems/, "Shell should expose operational risk summaries");
-  assert.match(shellSection, /page-breadcrumb/, "Shell should render an Art Design Pro style breadcrumb row");
-  assert.match(shellSection, /page-tabs/, "Shell should render route-like page tabs");
+  assert.match(shellSection, /art-page-breadcrumb/, "Shell should render an Art Design Pro style breadcrumb row");
+  assert.match(shellSection, /art-worktab-bar/, "Shell should render route-like Art work tabs");
   assert.match(shellSection, /art-operations-panel/, "Shell should render an Art operations panel below the topbar");
   assert.match(shellSection, /art-operations-heading/, "Operations panel should render an Art heading");
   assert.match(shellSection, /art-quick-actions/, "Operations panel should render Art quick action buttons");
   assert.match(shellSection, /art-risk-board/, "Operations panel should render the Art risk summary board");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])page-breadcrumb(?![A-Za-z0-9_-])/, "Shell should not keep the generic page-breadcrumb class");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])page-tabs(?![A-Za-z0-9_-])/, "Shell should not keep the generic page-tabs class");
   assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])operations-panel(?![A-Za-z0-9_-])/, "Shell should not keep the generic operations-panel class");
   assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])panel-heading(?![A-Za-z0-9_-])/, "Shell should not keep the generic panel-heading class");
   assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])quick-actions(?![A-Za-z0-9_-])/, "Shell should not keep the generic quick-actions class");
   assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])risk-board(?![A-Za-z0-9_-])/, "Shell should not keep the generic risk-board class");
-  assert.match(styleSource, /\.page-tabs/, "Styles should include page tab layout");
+  assert.match(styleSource, /\.art-page-breadcrumb/, "Styles should include Art breadcrumb layout");
+  assert.match(styleSource, /\.art-worktab-bar/, "Styles should include Art worktab layout");
   assert.match(styleSource, /\.art-operations-panel/, "Styles should include the Art operations panel layout");
   assert.match(styleSource, /\.art-operations-heading/, "Styles should include the Art operations panel heading");
   assert.match(styleSource, /\.art-quick-actions/, "Styles should include Art quick action layout");
   assert.match(styleSource, /\.art-risk-board/, "Styles should include Art risk board layout");
+  assert.doesNotMatch(styleSource, /\.page-breadcrumb(?![A-Za-z0-9_-])/, "Styles should remove the generic page-breadcrumb selector");
+  assert.doesNotMatch(styleSource, /\.page-tabs(?![A-Za-z0-9_-])/, "Styles should remove the generic page-tabs selector");
   assert.doesNotMatch(styleSource, /\.operations-panel(?![A-Za-z0-9_-])/, "Styles should remove the legacy operations-panel selector");
   assert.doesNotMatch(styleSource, /\.panel-heading(?![A-Za-z0-9_-])/, "Styles should remove the legacy panel-heading selector");
   assert.doesNotMatch(styleSource, /\.quick-actions(?![A-Za-z0-9_-])/, "Styles should remove the legacy quick-actions selector");
@@ -325,7 +330,7 @@ test("Vue page tabs behave like an Art Design Pro worktab bar", async () => {
   const source = await readAppSource();
   const tabSection = sourceBetween(
     source,
-    "<nav class=\"page-tabs art-work-tab\"",
+    "<nav class=\"art-worktab-bar art-work-tab\"",
     "<section class=\"art-operations-panel\"",
   );
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
@@ -339,14 +344,22 @@ test("Vue page tabs behave like an Art Design Pro worktab bar", async () => {
   assert.match(source, /toggleFixedPageTab/, "Worktab should toggle fixed tabs");
   assert.match(source, /refreshCurrentPageTab/, "Worktab should refresh the active module");
   assert.match(tabSection, /art-work-tab/, "Page tabs should use the Art Design worktab shell class");
-  assert.match(tabSection, /worktab-scroll/, "Worktab should keep scrollable tab content");
-  assert.match(tabSection, /worktab-action-trigger/, "Worktab should expose a dropdown trigger");
+  assert.match(tabSection, /art-worktab-scroll/, "Worktab should keep Art scrollable tab content");
+  assert.match(tabSection, /art-worktab-action-trigger/, "Worktab should expose an Art dropdown trigger");
+  assert.match(tabSection, /art-worktab-close/, "Worktab should use an Art close icon token");
   assert.match(tabSection, /@contextmenu\.prevent/, "Worktab should support a context menu action on tabs");
   assert.match(tabSection, /isPageTabFixed/, "Worktab should show fixed state");
   assert.match(tabSection, /workTabActions/, "Worktab dropdown should render bulk actions");
+  assert.doesNotMatch(tabSection, /(?<![A-Za-z0-9_-])worktab-scroll(?![A-Za-z0-9_-])/, "Worktab should not keep the generic worktab-scroll class");
+  assert.doesNotMatch(tabSection, /(?<![A-Za-z0-9_-])worktab-action-trigger(?![A-Za-z0-9_-])/, "Worktab should not keep the generic worktab-action-trigger class");
+  assert.doesNotMatch(tabSection, /(?<![A-Za-z0-9_-])tab-close(?![A-Za-z0-9_-])/, "Worktab should not keep the generic tab-close class");
   assert.match(styleSource, /\.art-work-tab/, "Styles should include Art Design worktab shell");
-  assert.match(styleSource, /\.worktab-scroll/, "Styles should include worktab scroll area");
-  assert.match(styleSource, /\.worktab-action-trigger/, "Styles should include worktab action trigger");
+  assert.match(styleSource, /\.art-worktab-scroll/, "Styles should include Art worktab scroll area");
+  assert.match(styleSource, /\.art-worktab-action-trigger/, "Styles should include Art worktab action trigger");
+  assert.match(styleSource, /\.art-worktab-close/, "Styles should include Art worktab close affordance");
+  assert.doesNotMatch(styleSource, /\.worktab-scroll(?![A-Za-z0-9_-])/, "Styles should remove the generic worktab-scroll selector");
+  assert.doesNotMatch(styleSource, /\.worktab-action-trigger(?![A-Za-z0-9_-])/, "Styles should remove the generic worktab-action-trigger selector");
+  assert.doesNotMatch(styleSource, /\.tab-close(?![A-Za-z0-9_-])/, "Styles should remove the generic tab-close selector");
 });
 
 test("Vue page modules render inside an Art Design Pro page content container", async () => {

@@ -1927,7 +1927,7 @@ window.addEventListener('beforeunload', (event) => {
     <main class="admin-main">
       <header class="admin-topbar">
         <div>
-          <nav class="page-breadcrumb" aria-label="当前位置">
+          <nav class="art-page-breadcrumb" aria-label="当前位置">
             <span v-for="(item, index) in breadcrumbItems" :key="`${item.label}-${index}`">
               <el-icon v-if="item.icon"><component :is="item.icon" /></el-icon>
               {{ item.label }}
@@ -1978,8 +1978,8 @@ window.addEventListener('beforeunload', (event) => {
         </div>
       </header>
 
-      <nav class="page-tabs art-work-tab" aria-label="打开的模块">
-        <div class="worktab-scroll">
+      <nav class="art-worktab-bar art-work-tab" aria-label="打开的模块">
+        <div class="art-worktab-scroll">
           <button
             v-for="tab in openedPageTabs"
             :key="tab.key"
@@ -1989,11 +1989,11 @@ window.addEventListener('beforeunload', (event) => {
           >
             <el-icon><component :is="tab.fixed ? Position : tab.icon" /></el-icon>
             <span>{{ tab.label }}</span>
-            <el-icon v-if="!isPageTabFixed(tab.key)" class="tab-close" @click.stop="closePageTab(tab.key)"><Close /></el-icon>
+            <el-icon v-if="!isPageTabFixed(tab.key)" class="art-worktab-close" @click.stop="closePageTab(tab.key)"><Close /></el-icon>
           </button>
         </div>
         <el-dropdown trigger="click" @command="(key: WorkTabActionKey) => runWorkTabAction(key)">
-          <button type="button" class="worktab-action-trigger" @click="setWorkTabTarget(activeView)" aria-label="标签操作">
+          <button type="button" class="art-worktab-action-trigger" @click="setWorkTabTarget(activeView)" aria-label="标签操作">
             <More />
           </button>
           <template #dropdown>
