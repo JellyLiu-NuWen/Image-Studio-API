@@ -1841,7 +1841,7 @@ window.addEventListener('beforeunload', (event) => {
   <div v-if="!authenticated" class="login-page login-workspace" v-loading="loading">
     <section class="login-status-panel">
       <div class="brand-orbit">
-        <div class="brand-logo">IS</div>
+        <div class="art-sidebar-logo">IS</div>
         <div>
           <strong>Image Studio API</strong>
           <span>Self-hosted operations console</span>
@@ -1901,14 +1901,14 @@ window.addEventListener('beforeunload', (event) => {
     v-loading="loading"
   >
     <aside class="admin-sidebar layout-sidebar" :class="[menuOpen ? 'menu-left-open' : 'menu-left-close']">
-      <div class="sidebar-brand">
-        <div class="brand-logo">IS</div>
+      <div class="art-sidebar-brand">
+        <div class="art-sidebar-logo">IS</div>
         <div>
           <strong>Image Studio</strong>
           <span>Art Design Pro Console</span>
         </div>
       </div>
-      <nav class="sidebar-nav">
+      <nav class="art-sidebar-nav">
         <section v-for="group in navGroups" :key="group.title">
           <p>{{ group.title }}</p>
           <button v-for="item in group.items" :key="item.key" :class="{ active: activeView === item.key }" @click="navigateTo(item.key)">
@@ -1917,7 +1917,7 @@ window.addEventListener('beforeunload', (event) => {
           </button>
         </section>
       </nav>
-      <div class="sidebar-footer">
+      <div class="art-sidebar-footer">
         <el-tag type="success" effect="dark">在线</el-tag>
         <span>{{ username }}</span>
       </div>

@@ -78,13 +78,13 @@ button,
 }
 
 .brand-orbit,
-.sidebar-brand {
+.art-sidebar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.brand-logo {
+.art-sidebar-logo {
   width: 44px;
   height: 44px;
   display: grid;
@@ -97,14 +97,14 @@ button,
 }
 
 .brand-orbit strong,
-.sidebar-brand strong {
+.art-sidebar-brand strong {
   display: block;
   font-size: 16px;
   line-height: 1.25;
 }
 
 .brand-orbit span,
-.sidebar-brand span {
+.art-sidebar-brand span {
   display: block;
   margin-top: 3px;
   color: var(--art-muted);
@@ -288,36 +288,36 @@ button,
   grid-template-columns: 88px minmax(0, 1fr);
 }
 
-.admin-shell[data-menu-open="false"] .sidebar-brand {
+.admin-shell[data-menu-open="false"] .art-sidebar-brand {
   justify-content: center;
   padding-inline: 4px;
 }
 
-.admin-shell[data-menu-open="false"] .sidebar-brand div:last-child,
-.admin-shell[data-menu-open="false"] .sidebar-nav p,
-.admin-shell[data-menu-open="false"] .sidebar-nav span,
-.admin-shell[data-menu-open="false"] .sidebar-footer span {
+.admin-shell[data-menu-open="false"] .art-sidebar-brand div:last-child,
+.admin-shell[data-menu-open="false"] .art-sidebar-nav p,
+.admin-shell[data-menu-open="false"] .art-sidebar-nav span,
+.admin-shell[data-menu-open="false"] .art-sidebar-footer span {
   display: none;
 }
 
-.admin-shell[data-menu-open="false"] .sidebar-nav button {
+.admin-shell[data-menu-open="false"] .art-sidebar-nav button {
   justify-content: center;
   padding-inline: 0;
 }
 
-.admin-shell[data-layout="compact"] .sidebar-brand {
+.admin-shell[data-layout="compact"] .art-sidebar-brand {
   justify-content: center;
   padding-inline: 4px;
 }
 
-.admin-shell[data-layout="compact"] .sidebar-brand div:last-child,
-.admin-shell[data-layout="compact"] .sidebar-nav p,
-.admin-shell[data-layout="compact"] .sidebar-nav span,
-.admin-shell[data-layout="compact"] .sidebar-footer span {
+.admin-shell[data-layout="compact"] .art-sidebar-brand div:last-child,
+.admin-shell[data-layout="compact"] .art-sidebar-nav p,
+.admin-shell[data-layout="compact"] .art-sidebar-nav span,
+.admin-shell[data-layout="compact"] .art-sidebar-footer span {
   display: none;
 }
 
-.admin-shell[data-layout="compact"] .sidebar-nav button {
+.admin-shell[data-layout="compact"] .art-sidebar-nav button {
   justify-content: center;
   padding-inline: 0;
 }
@@ -328,29 +328,29 @@ button,
   color: var(--art-text);
 }
 
-.admin-shell[data-menu-style="light"] .sidebar-nav p,
-.admin-shell[data-menu-style="light"] .sidebar-brand span {
+.admin-shell[data-menu-style="light"] .art-sidebar-nav p,
+.admin-shell[data-menu-style="light"] .art-sidebar-brand span {
   color: var(--art-muted);
 }
 
-.admin-shell[data-menu-style="light"] .sidebar-nav button {
+.admin-shell[data-menu-style="light"] .art-sidebar-nav button {
   color: var(--art-text-soft);
 }
 
-.admin-shell[data-menu-style="light"] .sidebar-nav button:hover,
-.admin-shell[data-menu-style="light"] .sidebar-nav button.active {
+.admin-shell[data-menu-style="light"] .art-sidebar-nav button:hover,
+.admin-shell[data-menu-style="light"] .art-sidebar-nav button.active {
   background: rgba(37, 99, 235, 0.09);
   color: var(--art-primary);
 }
 
-.admin-shell[data-menu-style="light"] .sidebar-brand,
-.admin-shell[data-menu-style="light"] .sidebar-footer {
+.admin-shell[data-menu-style="light"] .art-sidebar-brand,
+.admin-shell[data-menu-style="light"] .art-sidebar-footer {
   border-color: var(--art-border);
   background: var(--art-soft);
 }
 
-.admin-shell[data-menu-style="dark"] .sidebar-nav button.active,
-.admin-shell[data-menu-style="design"] .sidebar-nav button.active {
+.admin-shell[data-menu-style="dark"] .art-sidebar-nav button.active,
+.admin-shell[data-menu-style="design"] .art-sidebar-nav button.active {
   box-shadow: inset 3px 0 0 #60a5fa;
 }
 
@@ -385,23 +385,23 @@ button,
   color: #e2e8f0;
 }
 
-.sidebar-brand {
+.art-sidebar-brand {
   padding: 6px 8px 18px;
   border-bottom: 1px solid var(--art-sidebar-border);
 }
 
-.sidebar-nav {
+.art-sidebar-nav {
   display: grid;
   align-content: start;
   gap: 18px;
 }
 
-.sidebar-nav section {
+.art-sidebar-nav section {
   display: grid;
   gap: 6px;
 }
 
-.sidebar-nav p {
+.art-sidebar-nav p {
   margin: 0;
   padding: 0 10px;
   color: #64748b;
@@ -409,7 +409,7 @@ button,
   font-weight: 800;
 }
 
-.sidebar-nav button {
+.art-sidebar-nav button {
   width: 100%;
   height: 42px;
   display: flex;
@@ -426,18 +426,18 @@ button,
   transition: 180ms ease;
 }
 
-.sidebar-nav button:hover {
+.art-sidebar-nav button:hover {
   background: rgba(148, 163, 184, 0.1);
   color: #fff;
 }
 
-.sidebar-nav button.active {
+.art-sidebar-nav button.active {
   border-color: rgba(96, 165, 250, 0.32);
   background: linear-gradient(90deg, rgba(37, 99, 235, 0.28), rgba(34, 197, 94, 0.12));
   color: #fff;
 }
 
-.sidebar-footer {
+.art-sidebar-footer {
   min-height: 46px;
   display: flex;
   align-items: center;
@@ -4054,25 +4054,25 @@ button,
     transform: translateX(0);
   }
 
-  .admin-shell[data-menu-open="false"] .sidebar-brand,
-  .admin-shell[data-layout="compact"] .sidebar-brand {
+  .admin-shell[data-menu-open="false"] .art-sidebar-brand,
+  .admin-shell[data-layout="compact"] .art-sidebar-brand {
     justify-content: flex-start;
     padding-inline: 8px;
   }
 
-  .admin-shell[data-menu-open="false"] .sidebar-brand div:last-child,
-  .admin-shell[data-menu-open="false"] .sidebar-nav p,
-  .admin-shell[data-menu-open="false"] .sidebar-nav span,
-  .admin-shell[data-menu-open="false"] .sidebar-footer span,
-  .admin-shell[data-layout="compact"] .sidebar-brand div:last-child,
-  .admin-shell[data-layout="compact"] .sidebar-nav p,
-  .admin-shell[data-layout="compact"] .sidebar-nav span,
-  .admin-shell[data-layout="compact"] .sidebar-footer span {
+  .admin-shell[data-menu-open="false"] .art-sidebar-brand div:last-child,
+  .admin-shell[data-menu-open="false"] .art-sidebar-nav p,
+  .admin-shell[data-menu-open="false"] .art-sidebar-nav span,
+  .admin-shell[data-menu-open="false"] .art-sidebar-footer span,
+  .admin-shell[data-layout="compact"] .art-sidebar-brand div:last-child,
+  .admin-shell[data-layout="compact"] .art-sidebar-nav p,
+  .admin-shell[data-layout="compact"] .art-sidebar-nav span,
+  .admin-shell[data-layout="compact"] .art-sidebar-footer span {
     display: block;
   }
 
-  .admin-shell[data-menu-open="false"] .sidebar-nav button,
-  .admin-shell[data-layout="compact"] .sidebar-nav button {
+  .admin-shell[data-menu-open="false"] .art-sidebar-nav button,
+  .admin-shell[data-layout="compact"] .art-sidebar-nav button {
     justify-content: flex-start;
     padding-inline: 12px;
   }

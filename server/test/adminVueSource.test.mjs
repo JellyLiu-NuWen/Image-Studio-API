@@ -461,16 +461,32 @@ test("Vue header and sidebar expose Art Design Pro menu collapse and mobile shel
   assert.match(source, /toggleMenuVisibility/, "Admin should expose an ArtHeaderBar-style menu visibility action");
   assert.match(source, /closeMobileMenu/, "Admin should close mobile menu overlays");
   assert.match(shellSection, /layout-sidebar/, "Sidebar should use the ArtSidebarMenu layout shell class");
+  assert.match(shellSection, /art-sidebar-brand/, "Sidebar should render an Art sidebar brand block");
+  assert.match(shellSection, /art-sidebar-logo/, "Sidebar should render an Art sidebar logo");
+  assert.match(shellSection, /art-sidebar-nav/, "Sidebar should render an Art sidebar navigation list");
+  assert.match(shellSection, /art-sidebar-footer/, "Sidebar should render an Art sidebar footer");
   assert.match(shellSection, /menu-left-open/, "Sidebar should expose an open state class");
   assert.match(shellSection, /menu-left-close/, "Sidebar should expose a collapsed state class");
   assert.match(shellSection, /menu-model/, "Shell should render a mobile menu overlay model");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])sidebar-brand(?![A-Za-z0-9_-])/, "Sidebar should not keep the generic sidebar-brand class");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])sidebar-nav(?![A-Za-z0-9_-])/, "Sidebar should not keep the generic sidebar-nav class");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])sidebar-footer(?![A-Za-z0-9_-])/, "Sidebar should not keep the generic sidebar-footer class");
+  assert.doesNotMatch(shellSection, /(?<![A-Za-z0-9_-])brand-logo(?![A-Za-z0-9_-])/, "Sidebar should not keep the generic brand-logo class");
   assert.match(topbarSection, /header-menu-trigger/, "Topbar should render the ArtHeaderBar menu trigger");
   assert.match(topbarSection, /@click="toggleMenuVisibility"/, "Menu trigger should toggle sidebar visibility");
   assert.match(styleSource, /\.layout-sidebar/, "Styles should include ArtSidebarMenu layout shell");
+  assert.match(styleSource, /\.art-sidebar-brand/, "Styles should include Art sidebar brand styling");
+  assert.match(styleSource, /\.art-sidebar-logo/, "Styles should include Art sidebar logo styling");
+  assert.match(styleSource, /\.art-sidebar-nav/, "Styles should include Art sidebar navigation styling");
+  assert.match(styleSource, /\.art-sidebar-footer/, "Styles should include Art sidebar footer styling");
   assert.match(styleSource, /\.menu-left-open/, "Styles should include sidebar open state");
   assert.match(styleSource, /\.menu-left-close/, "Styles should include sidebar close state");
   assert.match(styleSource, /\.menu-model/, "Styles should include mobile overlay model");
   assert.match(styleSource, /\.header-menu-trigger/, "Styles should include header menu trigger");
+  assert.doesNotMatch(styleSource, /\.sidebar-brand(?![A-Za-z0-9_-])/, "Styles should remove the generic sidebar-brand selector");
+  assert.doesNotMatch(styleSource, /\.sidebar-nav(?![A-Za-z0-9_-])/, "Styles should remove the generic sidebar-nav selector");
+  assert.doesNotMatch(styleSource, /\.sidebar-footer(?![A-Za-z0-9_-])/, "Styles should remove the generic sidebar-footer selector");
+  assert.doesNotMatch(styleSource, /\.brand-logo(?![A-Za-z0-9_-])/, "Styles should remove the generic brand-logo selector");
 });
 
 test("Vue topbar notifications use an Art Design Pro notification panel", async () => {
