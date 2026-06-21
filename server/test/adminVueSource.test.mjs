@@ -101,16 +101,37 @@ test("Vue login page uses an Art Design Pro access workspace", async () => {
   );
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
-  assert.match(loginSection, /login-workspace/, "Login page should render a template-style workspace wrapper");
-  assert.match(loginSection, /login-status-panel/, "Login page should render an operational status panel");
-  assert.match(loginSection, /login-signal-grid/, "Login page should render compact system signal cards");
-  assert.match(loginSection, /login-access-panel/, "Login page should render a dedicated access panel");
-  assert.match(loginSection, /login-security-strip/, "Login page should render login security affordances");
-  assert.match(styleSource, /\.login-workspace/, "Styles should include login workspace layout");
-  assert.match(styleSource, /\.login-status-panel/, "Styles should include login status panel styling");
-  assert.match(styleSource, /\.login-signal-grid/, "Styles should include login signal cards");
-  assert.match(styleSource, /\.login-access-panel/, "Styles should include login access panel styling");
-  assert.match(styleSource, /\.login-security-strip/, "Styles should include login security strip styling");
+  const expectedAuthTokens = [
+    "art-auth-page",
+    "art-auth-workspace",
+    "art-auth-status-panel",
+    "art-auth-brand",
+    "art-auth-headline",
+    "art-auth-signal-grid",
+    "art-auth-pipeline",
+    "art-auth-card",
+    "art-auth-access-panel",
+    "art-auth-security-strip",
+  ];
+  for (const token of expectedAuthTokens) {
+    assert.match(loginSection, new RegExp(token), `Login page should render ${token}`);
+    assert.match(styleSource, new RegExp(`\\.${token}`), `Styles should include ${token}`);
+  }
+  for (const oldToken of [
+    "login-page",
+    "login-workspace",
+    "login-status-panel",
+    "brand-orbit",
+    "login-headline",
+    "login-signal-grid",
+    "login-pipeline",
+    "login-card",
+    "login-access-panel",
+    "login-security-strip",
+  ]) {
+    assert.doesNotMatch(loginSection, new RegExp(oldToken), `Login page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, new RegExp(`\\.${oldToken}`), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue shell utility controls use Art Design Pro tokens", async () => {
