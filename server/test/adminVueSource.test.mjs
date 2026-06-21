@@ -1590,16 +1590,26 @@ test("Vue alerts page uses an Art Design Pro alert center workspace", async () =
 
   assert.match(source, /alertSummaryCards/, "Alerts page should compute alert summary cards");
   assert.match(source, /pendingAlertCount/, "Alerts page should compute pending alert count");
-  assert.match(alertsSection, /alerts-workspace/, "Alerts page should render a workspace wrapper");
-  assert.match(alertsSection, /alerts-summary-grid/, "Alerts page should render compact alert summary cards");
-  assert.match(alertsSection, /alert-queue-workspace/, "Alerts page should render an alert queue workspace");
-  assert.match(alertsSection, /alert-rules-workspace/, "Alerts page should render alert rules workspace");
-  assert.match(alertsSection, /notification-workspace/, "Alerts page should render notification workspace");
+  assert.match(alertsSection, /art-alert-center/, "Alerts page should render an Art alert center wrapper");
+  assert.match(alertsSection, /art-alert-summary-grid/, "Alerts page should render compact Art alert summary cards");
+  assert.match(alertsSection, /art-alert-queue-workspace/, "Alerts page should render an Art alert queue workspace");
+  assert.match(alertsSection, /art-alert-rules-workspace/, "Alerts page should render Art alert rules workspace");
+  assert.match(alertsSection, /art-alert-notification-workspace/, "Alerts page should render Art notification workspace");
   assert.match(alertsSection, /:size="tableSize"/, "Alert table should respect shared density size");
-  assert.match(styleSource, /\.alerts-workspace/, "Styles should include alerts workspace layout");
-  assert.match(styleSource, /\.alerts-summary-grid/, "Styles should include alert summary grid layout");
-  assert.match(styleSource, /\.alert-queue-workspace/, "Styles should include alert queue workspace styling");
-  assert.match(styleSource, /\.alert-rules-workspace/, "Styles should include alert rules workspace styling");
+  assert.match(styleSource, /\.art-alert-center/, "Styles should include Art alert center layout");
+  assert.match(styleSource, /\.art-alert-summary-grid/, "Styles should include Art alert summary grid layout");
+  assert.match(styleSource, /\.art-alert-queue-workspace/, "Styles should include Art alert queue workspace styling");
+  assert.match(styleSource, /\.art-alert-rules-workspace/, "Styles should include Art alert rules workspace styling");
+  for (const oldToken of [
+    "alerts-workspace",
+    "alerts-summary-grid",
+    "alert-queue-workspace",
+    "alert-rules-workspace",
+    "notification-workspace",
+  ]) {
+    assert.doesNotMatch(alertsSection, classTokenPattern(oldToken), `Alerts page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue alerts cards use Art Design Pro panels", async () => {
@@ -1612,22 +1622,35 @@ test("Vue alerts cards use Art Design Pro panels", async () => {
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(alertsSection, /art-alert-panel/g, "Alert cards should use a reusable Art panel shell");
-  assert.match(alertsSection, /alert-queue-panel/, "Alerts page should style the alert queue card");
-  assert.match(alertsSection, /alert-notification-panel/, "Alerts page should style the notification status card");
-  assert.match(alertsSection, /alert-rules-panel/, "Alerts page should style the rules card");
-  assert.match(alertsSection, /alert-panel-header/g, "Alert panels should use structured headers");
-  assert.match(alertsSection, /alert-panel-title/g, "Alert panels should expose title and helper copy");
-  assert.match(alertsSection, /alert-panel-body/g, "Alert panels should wrap body content consistently");
-  assert.match(alertsSection, /alert-panel-actions/g, "Alert panels should group compact actions");
-  assert.match(alertsSection, /alert-panel-action/, "Alert panel buttons should use compact action styling");
+  assert.match(alertsSection, /art-alert-queue-panel/, "Alerts page should style the alert queue card");
+  assert.match(alertsSection, /art-alert-notification-panel/, "Alerts page should style the notification status card");
+  assert.match(alertsSection, /art-alert-rules-panel/, "Alerts page should style the rules card");
+  assert.match(alertsSection, /art-alert-panel-header/g, "Alert panels should use structured headers");
+  assert.match(alertsSection, /art-alert-panel-title/g, "Alert panels should expose title and helper copy");
+  assert.match(alertsSection, /art-alert-panel-body/g, "Alert panels should wrap body content consistently");
+  assert.match(alertsSection, /art-alert-panel-actions/g, "Alert panels should group compact actions");
+  assert.match(alertsSection, /art-alert-panel-action/, "Alert panel buttons should use compact action styling");
   assert.match(alertsSection, /art-alert-status-list/, "Alert notification status should use a dedicated Art status list");
   assert.match(alertsSection, /art-alert-form/, "Alert rules should use a dedicated Art form layout");
   assert.doesNotMatch(alertsSection, /class="status-list"/, "Alert panels should not keep the legacy status-list class");
   assert.doesNotMatch(alertsSection, /class="narrow-form"/, "Alert panels should not keep the generic narrow-form class");
   assert.match(styleSource, /\.art-alert-panel/, "Styles should include alert panel shell");
-  assert.match(styleSource, /\.alert-panel-header/, "Styles should include alert panel header");
-  assert.match(styleSource, /\.alert-panel-body/, "Styles should include alert panel body layout");
-  assert.match(styleSource, /\.alert-panel-action/, "Styles should include alert panel actions");
+  assert.match(styleSource, /\.art-alert-panel-header/, "Styles should include alert panel header");
+  assert.match(styleSource, /\.art-alert-panel-body/, "Styles should include alert panel body layout");
+  assert.match(styleSource, /\.art-alert-panel-action/, "Styles should include alert panel actions");
   assert.match(styleSource, /\.art-alert-status-list/, "Styles should include alert status list styling");
   assert.match(styleSource, /\.art-alert-form/, "Styles should include alert form layout");
+  for (const oldToken of [
+    "alert-queue-panel",
+    "alert-notification-panel",
+    "alert-rules-panel",
+    "alert-panel-header",
+    "alert-panel-title",
+    "alert-panel-body",
+    "alert-panel-actions",
+    "alert-panel-action",
+  ]) {
+    assert.doesNotMatch(alertsSection, classTokenPattern(oldToken), `Alerts page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });

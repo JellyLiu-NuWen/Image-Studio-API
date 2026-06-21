@@ -2924,29 +2924,29 @@ window.addEventListener('beforeunload', (event) => {
         </el-card>
       </section>
 
-      <section v-if="activeView === 'alerts'" class="view-stack alerts-workspace">
-        <div class="alerts-summary-grid">
+      <section v-if="activeView === 'alerts'" class="view-stack art-alert-center">
+        <div class="art-alert-summary-grid">
           <button v-for="item in alertSummaryCards" :key="item.label" :class="item.type === 'critical' ? 'critical' : item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'info'" type="button">
             <span>{{ item.label }}</span>
             <strong>{{ item.value }}</strong>
             <small>{{ item.hint }}</small>
           </button>
         </div>
-        <div class="alerts-workspace-grid">
-          <el-card shadow="never" class="alert-queue-workspace art-alert-panel alert-queue-panel">
+        <div class="art-alert-workspace-grid">
+          <el-card shadow="never" class="art-alert-queue-workspace art-alert-panel art-alert-queue-panel">
             <template #header>
-              <div class="alert-panel-header">
-                <div class="alert-panel-title">
+              <div class="art-alert-panel-header">
+                <div class="art-alert-panel-title">
                   <h4><Bell />当前告警</h4>
                   <p>集中查看活跃风险、确认状态和处理入口。</p>
                 </div>
-                <div class="alert-panel-actions">
+                <div class="art-alert-panel-actions">
                   <el-tag :type="pendingAlertCount ? 'danger' : 'success'">待处理 {{ pendingAlertCount }}</el-tag>
-                  <el-button class="alert-panel-action" :icon="Refresh" @click="refreshAll">刷新</el-button>
+                  <el-button class="art-alert-panel-action" :icon="Refresh" @click="refreshAll">刷新</el-button>
                 </div>
               </div>
             </template>
-            <div class="alert-panel-body">
+            <div class="art-alert-panel-body">
               <el-table :data="activeAlerts" :size="tableSize" height="420" empty-text="暂无活跃告警">
                 <template #empty>
                   <div class="art-empty-state">
@@ -2965,22 +2965,22 @@ window.addEventListener('beforeunload', (event) => {
                   <template #default="{ row }"><el-tag :type="row.acknowledged ? 'info' : 'danger'">{{ row.acknowledged ? '已确认' : '待处理' }}</el-tag></template>
                 </el-table-column>
                 <el-table-column label="操作" width="120">
-                  <template #default="{ row }"><el-button size="small" class="alert-panel-action" :disabled="row.acknowledged" @click="acknowledgeAlert(row.id)">确认</el-button></template>
+                  <template #default="{ row }"><el-button size="small" class="art-alert-panel-action" :disabled="row.acknowledged" @click="acknowledgeAlert(row.id)">确认</el-button></template>
                 </el-table-column>
               </el-table>
             </div>
           </el-card>
-          <div class="alerts-side-stack">
-            <el-card shadow="never" class="notification-workspace art-alert-panel alert-notification-panel">
+          <div class="art-alert-side-stack">
+            <el-card shadow="never" class="art-alert-notification-workspace art-alert-panel art-alert-notification-panel">
               <template #header>
-                <div class="alert-panel-header">
-                  <div class="alert-panel-title">
+                <div class="art-alert-panel-header">
+                  <div class="art-alert-panel-title">
                     <h4><Bell />通知状态</h4>
                     <p>检查 webhook 通知是否启用，以及最近发送结果。</p>
                   </div>
                 </div>
               </template>
-              <div class="alert-panel-body">
+              <div class="art-alert-panel-body">
                 <div class="art-alert-status-list">
                   <div><span>Webhook</span><strong>{{ config?.alerts.webhookEnabled ? '已启用' : '未启用' }}</strong></div>
                   <div><span>最近发送</span><strong>{{ notificationLabel(alertNotification.status) }}</strong></div>
@@ -2989,23 +2989,23 @@ window.addEventListener('beforeunload', (event) => {
                 </div>
               </div>
             </el-card>
-            <el-card shadow="never" class="alert-rules-workspace art-alert-panel alert-rules-panel">
+            <el-card shadow="never" class="art-alert-rules-workspace art-alert-panel art-alert-rules-panel">
               <template #header>
-                <div class="alert-panel-header">
-                  <div class="alert-panel-title">
+                <div class="art-alert-panel-header">
+                  <div class="art-alert-panel-title">
                     <h4><Operation />告警规则</h4>
                     <p>配置成功率、延迟、上游失败和 webhook 触发条件。</p>
                   </div>
                 </div>
               </template>
-              <div class="alert-panel-body">
+              <div class="art-alert-panel-body">
                 <el-form v-if="config" :model="alertsForm" label-width="150px" class="art-alert-form">
                   <el-form-item label="Webhook 通知"><el-switch v-model="config.alerts.webhookEnabled" /></el-form-item>
                   <el-form-item label="Webhook URL"><el-input v-model="config.alerts.webhookURL" placeholder="https://hooks.example/a" /></el-form-item>
                   <el-form-item label="上游失败阈值"><el-input-number v-model="config.alerts.upstreamFailureThreshold" :min="1" /></el-form-item>
                   <el-form-item label="成功率阈值"><el-input-number v-model="config.alerts.successRateThreshold" :min="1" :max="100" /></el-form-item>
                   <el-form-item label="P95 阈值 ms"><el-input-number v-model="config.alerts.p95LatencyMsThreshold" :min="100" /></el-form-item>
-                  <el-form-item><el-button type="primary" class="alert-panel-action" @click="saveAlerts">保存告警配置</el-button></el-form-item>
+                  <el-form-item><el-button type="primary" class="art-alert-panel-action" @click="saveAlerts">保存告警配置</el-button></el-form-item>
                 </el-form>
               </div>
             </el-card>

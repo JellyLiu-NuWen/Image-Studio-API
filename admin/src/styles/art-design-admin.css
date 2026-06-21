@@ -1541,7 +1541,7 @@ button,
 .art-table-workspace :deep(.el-table__empty-block),
 .log-workspace :deep(.el-table__empty-block),
 .usage-breakdown-workspace :deep(.el-table__empty-block),
-.alert-queue-workspace :deep(.el-table__empty-block),
+.art-alert-queue-workspace :deep(.el-table__empty-block),
 .art-session-workspace :deep(.el-table__empty-block),
 .art-audit-workspace :deep(.el-table__empty-block),
 .art-backup-workspace :deep(.el-table__empty-block),
@@ -2800,17 +2800,17 @@ button,
   border-top: 0;
 }
 
-.alerts-workspace {
+.art-alert-center {
   gap: 14px;
 }
 
-.alerts-summary-grid {
+.art-alert-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
-.alerts-summary-grid button {
+.art-alert-summary-grid button {
   min-height: 104px;
   display: grid;
   gap: 6px;
@@ -2825,52 +2825,52 @@ button,
   transition: 180ms ease;
 }
 
-.alerts-summary-grid button:hover {
+.art-alert-summary-grid button:hover {
   transform: translateY(-1px);
   border-color: rgba(37, 99, 235, 0.28);
 }
 
-.alerts-summary-grid span,
-.alerts-summary-grid small {
+.art-alert-summary-grid span,
+.art-alert-summary-grid small {
   color: var(--art-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
-.alerts-summary-grid strong {
+.art-alert-summary-grid strong {
   color: var(--art-text);
   font-size: 24px;
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
 
-.alerts-summary-grid button.critical {
+.art-alert-summary-grid button.critical {
   border-color: rgba(220, 38, 38, 0.24);
   background: rgba(220, 38, 38, 0.07);
 }
 
-.alerts-summary-grid button.success {
+.art-alert-summary-grid button.success {
   border-color: rgba(22, 163, 74, 0.22);
   background: rgba(22, 163, 74, 0.07);
 }
 
-.alerts-summary-grid button.warning {
+.art-alert-summary-grid button.warning {
   border-color: rgba(217, 119, 6, 0.28);
   background: rgba(217, 119, 6, 0.08);
 }
 
-.alerts-summary-grid button.info {
+.art-alert-summary-grid button.info {
   border-color: rgba(37, 99, 235, 0.16);
 }
 
-.alerts-workspace-grid {
+.art-alert-workspace-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.58fr);
   gap: 14px;
   align-items: start;
 }
 
-.alerts-side-stack {
+.art-alert-side-stack {
   display: grid;
   gap: 14px;
 }
@@ -2898,20 +2898,20 @@ button,
   padding: 10px 18px 18px;
 }
 
-.alert-panel-header {
+.art-alert-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
 }
 
-.alert-panel-title {
+.art-alert-panel-title {
   min-width: 0;
   display: grid;
   gap: 5px;
 }
 
-.alert-panel-title h4 {
+.art-alert-panel-title h4 {
   margin: 0;
   display: inline-flex;
   align-items: center;
@@ -2921,29 +2921,29 @@ button,
   font-weight: 900;
 }
 
-.alert-panel-title h4 svg {
+.art-alert-panel-title h4 svg {
   width: 18px;
   height: 18px;
   color: var(--art-primary);
 }
 
-.alert-panel-title p {
+.art-alert-panel-title p {
   margin: 0;
   color: var(--art-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.alert-panel-body {
+.art-alert-panel-body {
   display: grid;
   gap: 12px;
 }
 
-.alert-panel-body .el-table {
+.art-alert-panel-body .el-table {
   border-radius: 10px;
 }
 
-.alert-panel-actions {
+.art-alert-panel-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -2951,13 +2951,13 @@ button,
   gap: 8px;
 }
 
-.alert-panel-action {
+.art-alert-panel-action {
   font-weight: 800;
 }
 
-.alert-queue-workspace :deep(.el-card__body),
-.alert-rules-workspace :deep(.el-card__body),
-.notification-workspace :deep(.el-card__body) {
+.art-alert-queue-workspace :deep(.el-card__body),
+.art-alert-rules-workspace :deep(.el-card__body),
+.art-alert-notification-workspace :deep(.el-card__body) {
   display: grid;
   gap: 12px;
 }
@@ -3986,7 +3986,7 @@ button,
   .art-auth-page,
   .admin-shell,
   .art-console-section-grid,
-  .alerts-workspace-grid,
+  .art-alert-workspace-grid,
   .art-security-overview,
   .art-security-policy-grid,
   .art-session-workspace,
@@ -4017,7 +4017,7 @@ button,
 
   .art-console-card-list,
   .art-preset-grid,
-  .alerts-summary-grid,
+  .art-alert-summary-grid,
   .log-summary-grid,
   .art-security-summary-grid,
   .art-system-summary-grid,
@@ -4112,7 +4112,7 @@ button,
 
   .art-console-card-list,
   .art-preset-grid,
-  .alerts-summary-grid,
+  .art-alert-summary-grid,
   .log-summary-grid,
   .art-security-summary-grid,
   .art-system-summary-grid,
