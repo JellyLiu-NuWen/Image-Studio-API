@@ -539,7 +539,7 @@ button,
   letter-spacing: 0;
 }
 
-.header-tools {
+.art-header-tools {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -547,7 +547,7 @@ button,
   flex-wrap: wrap;
 }
 
-.global-search {
+.art-header-search {
   width: 230px;
   min-height: 36px;
   display: flex;
@@ -562,9 +562,9 @@ button,
   transition: 180ms ease;
 }
 
-.global-search:hover,
-.header-tool:hover,
-.user-entry:hover {
+.art-header-search:hover,
+.art-header-tool:hover,
+.art-header-user-entry:hover {
   border-color: rgba(37, 99, 235, 0.28);
   background: rgba(37, 99, 235, 0.08);
   color: var(--art-primary);
@@ -574,13 +574,13 @@ button,
   display: inline-flex;
 }
 
-.global-search span {
+.art-header-search span {
   flex: 1;
   font-size: 13px;
   font-weight: 800;
 }
 
-.global-search kbd {
+.art-header-search kbd {
   min-width: 44px;
   padding: 3px 6px;
   border: 1px solid var(--art-border);
@@ -745,8 +745,8 @@ button,
   font-family: inherit;
 }
 
-.header-tool,
-.user-entry {
+.art-header-tool,
+.art-header-user-entry {
   min-width: 36px;
   min-height: 36px;
   display: inline-flex;
@@ -764,16 +764,16 @@ button,
   transition: 180ms ease;
 }
 
-.header-tool .el-icon,
-.header-tool svg,
-.notification-entry svg,
-.settings-entry svg,
-.user-entry svg {
+.art-header-tool .el-icon,
+.art-header-tool svg,
+.art-header-notification-entry svg,
+.art-header-settings-entry svg,
+.art-header-user-entry svg {
   width: 16px;
   height: 16px;
 }
 
-.notification-entry {
+.art-header-notification-entry {
   position: relative;
 }
 
@@ -936,7 +936,7 @@ button,
   margin: 8px 14px 14px;
 }
 
-.user-entry {
+.art-header-user-entry {
   padding: 0 10px;
 }
 
@@ -4006,12 +4006,12 @@ button,
     flex-direction: column;
   }
 
-  .header-tools {
+  .art-header-tools {
     width: 100%;
     justify-content: flex-start;
   }
 
-  .global-search {
+  .art-header-search {
     width: min(100%, 320px);
   }
 
@@ -4093,12 +4093,12 @@ button,
     padding: 16px;
   }
 
-  .global-search {
+  .art-header-search {
     width: 100%;
   }
 
-  .global-search kbd,
-  .user-entry span {
+  .art-header-search kbd,
+  .art-header-user-entry span {
     display: none;
   }
 

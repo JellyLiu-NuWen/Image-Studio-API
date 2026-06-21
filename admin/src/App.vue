@@ -1936,34 +1936,34 @@ window.addEventListener('beforeunload', (event) => {
           <h1>{{ currentTitle }}</h1>
           <small v-if="config && JSON.stringify(config) !== lastSavedConfig" class="art-dirty-hint">有未保存的配置变更</small>
         </div>
-        <div class="art-header-actions header-tools">
-          <button type="button" class="header-tool header-menu-trigger" @click="toggleMenuVisibility" aria-label="切换菜单">
+        <div class="art-header-actions art-header-tools">
+          <button type="button" class="art-header-tool header-menu-trigger" @click="toggleMenuVisibility" aria-label="切换菜单">
             <Operation />
           </button>
-          <button type="button" class="global-search" @click="openGlobalSearch" aria-label="搜索模块">
+          <button type="button" class="art-header-search" @click="openGlobalSearch" aria-label="搜索模块">
             <el-icon><Search /></el-icon>
             <span>搜索模块</span>
             <kbd>Ctrl K</kbd>
           </button>
-          <button type="button" class="header-tool notification-entry" @click="toggleNotificationPanel" aria-label="告警通知">
+          <button type="button" class="art-header-tool art-header-notification-entry" @click="toggleNotificationPanel" aria-label="告警通知">
             <el-badge :value="pendingAlertCount" :hidden="!pendingAlertCount" type="danger">
               <Bell />
             </el-badge>
           </button>
-          <button type="button" class="header-tool" @click="refreshAll" aria-label="刷新">
+          <button type="button" class="art-header-tool" @click="refreshAll" aria-label="刷新">
             <Refresh />
           </button>
-          <button type="button" class="header-tool" @click="toggleFullscreen" aria-label="全屏">
+          <button type="button" class="art-header-tool" @click="toggleFullscreen" aria-label="全屏">
             <FullScreen />
           </button>
-          <button type="button" class="header-tool settings-entry" @click="openSettings" aria-label="系统设置">
+          <button type="button" class="art-header-tool art-header-settings-entry" @click="openSettings" aria-label="系统设置">
             <Setting />
           </button>
-          <button type="button" class="header-tool" @click="toggleTheme" :aria-label="themeMode === 'dark' ? '浅色主题' : '深色主题'">
+          <button type="button" class="art-header-tool" @click="toggleTheme" :aria-label="themeMode === 'dark' ? '浅色主题' : '深色主题'">
             <component :is="themeMode === 'dark' ? Sunny : Moon" />
           </button>
           <el-dropdown trigger="click">
-            <button type="button" class="user-entry">
+            <button type="button" class="art-header-user-entry">
               <el-icon><Avatar /></el-icon>
               <span>{{ username }}</span>
             </button>
