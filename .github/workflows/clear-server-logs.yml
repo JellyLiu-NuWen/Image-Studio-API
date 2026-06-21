@@ -1,0 +1,106 @@
+name: Clear Server Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type CLEAR_LOGS to truncate Image Studio logs.
+        required: true
+        default: CLEAR_LOGS
+      deploy_root:
+        description: Server deploy root.
+        required: true
+        default: /www/docker/image-studio-api
+
+permissions:
+  contents: read
+
+jobs:
+  clear-logs:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.IMAGE_STUDIO_DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.IMAGE_STUDIO_DEPLOY_PORT || '22' }}
+      DEPLOY_USER: ${{ secrets.IMAGE_STUDIO_DEPLOY_USER || 'root' }}
+      DEPLOY_ROOT: ${{ inputs.deploy_root }}
+      CONFIRM: ${{ inputs.confirm }}
+    steps:
+      - name: Validate inputs and secrets
+        env:
+          DEPLOY_KEY: ${{ secrets.IMAGE_STUDIO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRM" = "CLEAR_LOGS" || { echo "confirm must be CLEAR_LOGS"; exit 1; }
+          test -n "$DEPLOY_HOST" || { echo "IMAGE_STUDIO_DEPLOY_HOST is required"; exit 1; }
+          test -n "$DEPLOY_KEY" || { echo "IMAGE_STUDIO_DEPLOY_KEY is required"; exit 1; }
+          case "$DEPLOY_ROOT" in
+            /www/docker/image-studio-api|/www/docker/image-studio-api/*) ;;
+            *) echo "Refusing unexpected DEPLOY_ROOT: $DEPLOY_ROOT"; exit 1 ;;
+          esac
+
+      - name: Configure SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.IMAGE_STUDIO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/image_studio_deploy_key
+          chmod 600 ~/.ssh/image_studio_deploy_key
+
+      - name: Clear logs on server
+        run: |
+          set -euo pipefail
+          escaped_deploy_root="$(printf '%q' "$DEPLOY_ROOT")"
+          ssh -p "$DEPLOY_PORT" \
+            -o StrictHostKeyChecking=accept-new \
+            -o ServerAliveInterval=10 \
+            -i ~/.ssh/image_studio_deploy_key \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "DEPLOY_ROOT=$escaped_deploy_root bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          deploy_root="${DEPLOY_ROOT:-/www/docker/image-studio-api}"
+          case "$deploy_root" in
+            /www/docker/image-studio-api|/www/docker/image-studio-api/*) ;;
+            *) echo "Refusing unexpected deploy_root: $deploy_root"; exit 1 ;;
+          esac
+
+          container="image-studio-api"
+          docker inspect "$container" >/dev/null
+
+          echo "Before:"
+          docker exec "$container" sh -lc '
+            set -eu
+            mkdir -p /data/logs
+            touch /data/logs/api-calls.jsonl /data/logs/generations.jsonl
+            wc -l /data/logs/api-calls.jsonl /data/logs/generations.jsonl
+          '
+
+          docker exec "$container" sh -lc '
+            set -eu
+            mkdir -p /data/logs
+            : > /data/logs/api-calls.jsonl
+            : > /data/logs/generations.jsonl
+          '
+
+          docker_log_path="$(docker inspect --format '{{.LogPath}}' "$container")"
+          case "$docker_log_path" in
+            /var/lib/docker/containers/*/*.log)
+              : > "$docker_log_path"
+              ;;
+            "")
+              echo "No Docker log path reported"
+              ;;
+            *)
+              echo "Refusing unexpected Docker log path: $docker_log_path"
+              exit 1
+              ;;
+          esac
+
+          echo "After:"
+          docker exec "$container" sh -lc '
+            set -eu
+            wc -c /data/logs/api-calls.jsonl /data/logs/generations.jsonl
+          '
+          curl -fsS "http://127.0.0.1:80/healthz"
+          REMOTE
