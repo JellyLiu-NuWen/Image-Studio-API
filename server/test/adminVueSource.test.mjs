@@ -1497,16 +1497,26 @@ test("Vue system page uses an Art Design Pro backup and update workspace", async
 
   assert.match(source, /systemSummaryCards/, "System page should compute backup and update summary cards");
   assert.match(source, /latestBackup/, "System page should compute the latest retained backup");
-  assert.match(systemSection, /system-workspace/, "System page should render a workspace wrapper");
-  assert.match(systemSection, /system-summary-grid/, "System page should render compact system summary cards");
-  assert.match(systemSection, /backup-workspace/, "System page should render a backup workspace");
-  assert.match(systemSection, /version-workspace/, "System page should render a config version workspace");
-  assert.match(systemSection, /update-workspace/, "System page should render an update workspace");
+  assert.match(systemSection, /art-system-console/, "System page should render an Art system console wrapper");
+  assert.match(systemSection, /art-system-summary-grid/, "System page should render compact Art system summary cards");
+  assert.match(systemSection, /art-backup-workspace/, "System page should render an Art backup workspace");
+  assert.match(systemSection, /art-version-workspace/, "System page should render an Art config version workspace");
+  assert.match(systemSection, /art-update-workspace/, "System page should render an Art update workspace");
   assert.match(systemSection, /:size="tableSize"/, "System tables should respect shared density size");
-  assert.match(styleSource, /\.system-workspace/, "Styles should include system workspace layout");
-  assert.match(styleSource, /\.system-summary-grid/, "Styles should include system summary grid layout");
-  assert.match(styleSource, /\.backup-workspace/, "Styles should include backup workspace styling");
-  assert.match(styleSource, /\.update-workspace/, "Styles should include update workspace styling");
+  assert.match(styleSource, /\.art-system-console/, "Styles should include Art system console layout");
+  assert.match(styleSource, /\.art-system-summary-grid/, "Styles should include Art system summary grid layout");
+  assert.match(styleSource, /\.art-backup-workspace/, "Styles should include Art backup workspace styling");
+  assert.match(styleSource, /\.art-update-workspace/, "Styles should include Art update workspace styling");
+  for (const oldToken of [
+    "system-workspace",
+    "system-summary-grid",
+    "backup-workspace",
+    "version-workspace",
+    "update-workspace",
+  ]) {
+    assert.doesNotMatch(systemSection, classTokenPattern(oldToken), `System page should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue system operation cards use Art Design Pro panels", async () => {
@@ -1519,14 +1529,14 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(systemSection, /art-system-panel/g, "System cards should use a reusable Art panel shell");
-  assert.match(systemSection, /system-backup-panel/, "System page should style the backup card");
-  assert.match(systemSection, /system-version-panel/, "System page should style the version history card");
-  assert.match(systemSection, /system-update-panel/, "System page should style the update card");
-  assert.match(systemSection, /system-panel-header/g, "System panels should use structured headers");
-  assert.match(systemSection, /system-panel-title/g, "System panels should expose title and helper copy");
-  assert.match(systemSection, /system-panel-body/g, "System panels should wrap body content consistently");
-  assert.match(systemSection, /system-panel-actions/g, "System panels should group compact actions");
-  assert.match(systemSection, /system-panel-action/, "System panel buttons should use compact action styling");
+  assert.match(systemSection, /art-system-backup-panel/, "System page should style the backup card");
+  assert.match(systemSection, /art-system-version-panel/, "System page should style the version history card");
+  assert.match(systemSection, /art-system-update-panel/, "System page should style the update card");
+  assert.match(systemSection, /art-system-panel-header/g, "System panels should use structured headers");
+  assert.match(systemSection, /art-system-panel-title/g, "System panels should expose title and helper copy");
+  assert.match(systemSection, /art-system-panel-body/g, "System panels should wrap body content consistently");
+  assert.match(systemSection, /art-system-panel-actions/g, "System panels should group compact actions");
+  assert.match(systemSection, /art-system-panel-action/, "System panel buttons should use compact action styling");
   assert.match(systemSection, /art-system-status-list/, "System update status should use a dedicated Art status list");
   assert.match(systemSection, /art-system-backup-status/, "System backup status should use a dedicated Art status row");
   assert.match(systemSection, /art-system-file-input/, "System restore input should use a dedicated Art hidden file control");
@@ -1536,13 +1546,13 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.doesNotMatch(systemSection, /class="status-list"/, "System panels should not keep the legacy status-list class");
   assert.doesNotMatch(systemSection, /class="system-actions"/, "System panels should not keep the generic system-actions class");
   assert.doesNotMatch(systemSection, /class="hidden-file"/, "System panels should not keep the generic hidden-file class");
-  assert.doesNotMatch(systemSection, /class="update-actions system-panel-actions"/, "System panels should not keep the generic update-actions class");
+  assert.doesNotMatch(systemSection, /class="update-actions art-system-panel-actions"/, "System panels should not keep the generic update-actions class");
   assert.doesNotMatch(systemSection, /(?<![A-Za-z0-9_-])changelog-preview(?![A-Za-z0-9_-])/, "System panels should not keep the generic changelog-preview class");
   assert.doesNotMatch(systemSection, /(?<![A-Za-z0-9_-])rollback-command(?![A-Za-z0-9_-])/, "System panels should not keep the generic rollback-command class");
   assert.match(styleSource, /\.art-system-panel/, "Styles should include system panel shell");
-  assert.match(styleSource, /\.system-panel-header/, "Styles should include system panel header");
-  assert.match(styleSource, /\.system-panel-body/, "Styles should include system panel body layout");
-  assert.match(styleSource, /\.system-panel-action/, "Styles should include system panel actions");
+  assert.match(styleSource, /\.art-system-panel-header/, "Styles should include system panel header");
+  assert.match(styleSource, /\.art-system-panel-body/, "Styles should include system panel body layout");
+  assert.match(styleSource, /\.art-system-panel-action/, "Styles should include system panel actions");
   assert.match(styleSource, /\.art-system-status-list/, "Styles should include system status list styling");
   assert.match(styleSource, /\.art-system-backup-status/, "Styles should include system backup status row");
   assert.match(styleSource, /\.art-system-file-input/, "Styles should include system hidden file input");
@@ -1554,6 +1564,19 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.doesNotMatch(styleSource, /\.update-actions\b/, "Styles should remove the legacy update-actions selector");
   assert.doesNotMatch(styleSource, /\.changelog-preview(?![A-Za-z0-9_-])/, "Styles should remove the generic changelog-preview selector");
   assert.doesNotMatch(styleSource, /\.rollback-command(?![A-Za-z0-9_-])/, "Styles should remove the generic rollback-command selector");
+  for (const oldToken of [
+    "system-backup-panel",
+    "system-version-panel",
+    "system-update-panel",
+    "system-panel-header",
+    "system-panel-title",
+    "system-panel-body",
+    "system-panel-actions",
+    "system-panel-action",
+  ]) {
+    assert.doesNotMatch(systemSection, classTokenPattern(oldToken), `System panels should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue alerts page uses an Art Design Pro alert center workspace", async () => {
