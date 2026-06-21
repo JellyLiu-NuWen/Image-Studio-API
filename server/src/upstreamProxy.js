@@ -241,7 +241,7 @@ async function forwardRawWithRetry({
         status: response.status,
         headers: {
           "content-type": lastContentType,
-          "cache-control": "no-cache",
+          "cache-control": "no-cache, no-transform",
           "x-accel-buffering": "no",
         },
       });
@@ -298,11 +298,12 @@ async function forwardRawAsSSE({
   const encoder = new TextEncoder();
   const heartbeatMs = streamHeartbeatMs();
   const timeoutSignal = createTimeoutSignal(imageWorkTimeoutSeconds(pathname, timeoutSeconds));
+  const upstreamAbortController = abortControllerFromSignals([timeoutSignal]);
+  let closed = false;
+  let heartbeatTimer = null;
 
   const body = new ReadableStream({
-    async start(controller) {
-      let closed = false;
-      let heartbeatTimer = null;
+    start(controller) {
       const enqueue = (chunk) => {
         if (closed) return;
         try {
@@ -310,46 +311,57 @@ async function forwardRawAsSSE({
         } catch {
           closed = true;
           if (heartbeatTimer) clearInterval(heartbeatTimer);
+          upstreamAbortController.abort();
         }
       };
       const heartbeat = () => enqueue(encoder.encode(": image-studio keepalive\n\n"));
       heartbeat();
       heartbeatTimer = setInterval(heartbeat, heartbeatMs);
-      try {
-        const response = await fetchImpl(upstreamURL, {
-          method,
-          headers,
-          body: bodyBuffer,
-          signal: timeoutSignal,
-        });
-        const contentType = response.headers.get("content-type") || "";
-        if (contentType.toLowerCase().includes("text/event-stream")) {
-          const reader = response.body?.getReader();
-          if (reader) {
-            while (true) {
-              const chunk = await reader.read();
-              if (chunk.done) break;
-              enqueue(chunk.value);
+      (async () => {
+        try {
+          const response = await fetchImpl(upstreamURL, {
+            method,
+            headers,
+            body: bodyBuffer,
+            signal: upstreamAbortController.signal,
+          });
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.toLowerCase().includes("text/event-stream")) {
+            const reader = response.body?.getReader();
+            if (reader) {
+              while (true) {
+                const chunk = await reader.read();
+                if (chunk.done) break;
+                enqueue(chunk.value);
+              }
             }
+          } else {
+            const raw = await response.text();
+            enqueue(encoder.encode(`data: ${raw}\n\n`));
           }
-        } else {
-          const raw = await response.text();
-          enqueue(encoder.encode(`data: ${raw}\n\n`));
+        } catch (error) {
+          if (!closed) {
+            enqueue(encoder.encode(`data: ${JSON.stringify({
+              error: {
+                message: `上游请求失败:${error?.message || String(error || "Unknown error")}`,
+                upstreamStatus: 502,
+              },
+            })}\n\n`));
+          }
+        } finally {
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
+          if (!closed) {
+            closed = true;
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+          }
         }
-      } catch (error) {
-        enqueue(encoder.encode(`data: ${JSON.stringify({
-          error: {
-            message: `上游请求失败:${error?.message || String(error || "Unknown error")}`,
-            upstreamStatus: 502,
-          },
-        })}\n\n`));
-      } finally {
-        if (heartbeatTimer) clearInterval(heartbeatTimer);
-        if (!closed) {
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        }
-      }
+      })();
+    },
+    cancel() {
+      closed = true;
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      upstreamAbortController.abort();
     },
   });
 
@@ -357,7 +369,7 @@ async function forwardRawAsSSE({
     status: 200,
     headers: {
       "content-type": "text/event-stream; charset=utf-8",
-      "cache-control": "no-cache",
+      "cache-control": "no-cache, no-transform",
       "x-accel-buffering": "no",
     },
   });
@@ -377,6 +389,27 @@ function createTimeoutSignal(seconds) {
 
 async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function abortControllerFromSignals(signals) {
+  const controller = new AbortController();
+  const abort = (source) => {
+    if (controller.signal.aborted) return;
+    try {
+      controller.abort(source?.reason);
+    } catch {
+      controller.abort();
+    }
+  };
+  for (const signal of signals) {
+    if (!signal) continue;
+    if (signal.aborted) {
+      abort(signal);
+      break;
+    }
+    signal.addEventListener("abort", () => abort(signal), { once: true });
+  }
+  return controller;
 }
 
 function streamHeartbeatMs() {

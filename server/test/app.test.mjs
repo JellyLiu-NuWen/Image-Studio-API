@@ -735,6 +735,7 @@ test("image stream proxy sends a heartbeat before upstream responds", async () =
   }));
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("content-type"), "text/event-stream; charset=utf-8");
+  assert.equal(response.headers.get("cache-control"), "no-cache, no-transform");
   assert.equal(response.headers.get("x-accel-buffering"), "no");
   assert.equal(capturedAccept, "text/event-stream");
   const reader = response.body.getReader();
@@ -745,6 +746,51 @@ test("image stream proxy sends a heartbeat before upstream responds", async () =
   const doneChunk = await reader.read();
   assert.match(new TextDecoder().decode(doneChunk.value), /data: \[DONE\]/);
   assert.equal((await reader.read()).done, true);
+});
+
+test("image stream proxy aborts the upstream request when the client cancels", async () => {
+  const previousHeartbeat = process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS;
+  process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = "10";
+  let capturedSignal = null;
+  let upstreamAborted = false;
+  try {
+    const app = createSelfHostedApp({
+      store: memoryStore({
+        imageApiToken: "client-token",
+        upstreamBaseURL: "https://upstream.example/v1",
+        upstreamApiKey: "upstream-key",
+      }),
+      ...ADMIN_OPTIONS,
+      fetchImpl: async (_url, init) => {
+        capturedSignal = init.signal;
+        capturedSignal.addEventListener("abort", () => {
+          upstreamAborted = true;
+        });
+        await new Promise(() => {});
+      },
+    });
+
+    const response = await app.handle(jsonRequest("/v1/images/generations", {
+      prompt: "cancelled stream",
+      stream: true,
+    }, {
+      authorization: "Bearer client-token",
+    }));
+    assert.equal(response.status, 200);
+    const reader = response.body.getReader();
+    await reader.read();
+    await reader.cancel();
+    await new Promise((resolve) => setTimeout(resolve, 25));
+
+    assert.equal(capturedSignal?.aborted, true);
+    assert.equal(upstreamAborted, true);
+  } finally {
+    if (previousHeartbeat === undefined) {
+      delete process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS;
+    } else {
+      process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = previousHeartbeat;
+    }
+  }
 });
 
 test("image stream proxy keeps heartbeating while upstream is silent", async () => {
