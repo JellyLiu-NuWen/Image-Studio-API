@@ -2507,23 +2507,23 @@ window.addEventListener('beforeunload', (event) => {
           </div>
           <div class="art-preset-grid">
             <el-card v-for="preset in paginatedPresets" :key="preset.id" shadow="never" class="art-preset-card">
-              <div class="preset-card-header">
-                <div class="preset-card-icon"><MagicStick /></div>
-                <div class="preset-card-title">
+              <div class="art-preset-card-header">
+                <div class="art-preset-card-icon"><MagicStick /></div>
+                <div class="art-preset-card-title">
                   <h4>{{ preset.name }}</h4>
                   <span>{{ preset.id }}</span>
                 </div>
                 <el-tag :type="preset.promptEnhance ? 'success' : 'info'">{{ preset.promptEnhance ? '增强' : '模板' }}</el-tag>
               </div>
-              <div class="preset-card-body">
+              <div class="art-preset-card-body">
                 <p>{{ preset.useCase }}</p>
-                <div class="preset-card-meta">
+                <div class="art-preset-card-meta">
                   <span><strong>{{ preset.quality }}</strong>质量</span>
                   <span><strong>{{ preset.size }}</strong>尺寸</span>
                   <span><strong>{{ preset.outputFormat }}</strong>格式</span>
                 </div>
               </div>
-              <div class="preset-card-footer">
+              <div class="art-preset-card-footer">
                 <span>{{ preset.promptEnhance ? 'Prompt 自动增强已启用' : '保留用户核心意图' }}</span>
                 <div class="art-table-actions">
                   <el-tooltip content="编辑预设" placement="top">
@@ -2540,7 +2540,7 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </el-card>
           </div>
-          <el-table :data="paginatedPresets" :size="tableSize" class="preset-list-table">
+          <el-table :data="paginatedPresets" :size="tableSize" class="art-preset-list-table">
             <template #empty>
               <div class="art-empty-state">
                 <MagicStick />
@@ -2590,15 +2590,15 @@ window.addEventListener('beforeunload', (event) => {
         </el-card>
         <el-card shadow="never" class="art-quality-case-panel">
           <template #header>
-            <div class="quality-case-panel-header">
-              <div class="quality-case-panel-title">
+            <div class="art-quality-case-panel-header">
+              <div class="art-quality-case-panel-title">
                 <h4><Document />质量案例库</h4>
                 <p>沉淀优秀样例和质量差案例，用于继续优化 Prompt 模板。</p>
               </div>
-              <div class="quality-case-panel-tools">
-                <span class="quality-case-panel-badge">总计 {{ qualityCases.length }}</span>
-                <span class="quality-case-panel-badge danger">差例 {{ poorQualityCases.length }}</span>
-                <span class="quality-case-panel-badge success">优秀 {{ excellentQualityCases.length }}</span>
+              <div class="art-quality-case-panel-tools">
+                <span class="art-quality-case-panel-badge">总计 {{ qualityCases.length }}</span>
+                <span class="art-quality-case-panel-badge danger">差例 {{ poorQualityCases.length }}</span>
+                <span class="art-quality-case-panel-badge success">优秀 {{ excellentQualityCases.length }}</span>
                 <button type="button" class="art-console-panel-action" @click="refreshAll">刷新案例</button>
               </div>
             </div>
@@ -3664,20 +3664,20 @@ window.addEventListener('beforeunload', (event) => {
               <small>{{ item.hint }}</small>
             </div>
           </div>
-          <el-card shadow="never" class="detail-route-card art-detail-panel route-detail-panel">
+          <el-card shadow="never" class="art-route-detail-card art-detail-panel art-route-detail-panel">
             <template #header>
-              <div class="detail-panel-header">
-                <div class="detail-panel-title">
+              <div class="art-detail-panel-header">
+                <div class="art-detail-panel-title">
                   <h4><Connection />故障转移链路</h4>
                   <p>展示本次请求经过的上游路由和重试路径。</p>
                 </div>
-                <div class="detail-panel-meta">
+                <div class="art-detail-panel-meta">
                   <span>{{ logDetailRouteSteps.length }} 步</span>
                 </div>
               </div>
             </template>
-            <div class="detail-panel-body">
-              <div class="detail-route-steps">
+            <div class="art-detail-panel-body">
+              <div class="art-detail-route-steps">
                 <div v-for="item in logDetailRouteSteps" :key="item.index + item.name" :class="{ active: item.active }">
                   <i>{{ item.index }}</i>
                   <span>{{ item.name }}</span>
@@ -3686,35 +3686,35 @@ window.addEventListener('beforeunload', (event) => {
               </div>
             </div>
           </el-card>
-          <el-card shadow="never" class="detail-diagnostic-card art-detail-panel diagnostic-detail-panel">
+          <el-card shadow="never" class="art-diagnostic-detail-card art-detail-panel art-diagnostic-detail-panel">
             <template #header>
-              <div class="detail-panel-header">
-                <div class="detail-panel-title">
+              <div class="art-detail-panel-header">
+                <div class="art-detail-panel-title">
                   <h4><Document />错误摘要</h4>
                   <p>保留脱敏后的失败原因，便于复盘和告警判断。</p>
                 </div>
-                <div class="detail-panel-meta">
+                <div class="art-detail-panel-meta">
                   <span>{{ selectedLog.errorSummary ? '已记录' : '无错误' }}</span>
                 </div>
               </div>
             </template>
-            <div class="detail-panel-body">
+            <div class="art-detail-panel-body">
               <p class="art-detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
             </div>
           </el-card>
-          <el-card shadow="never" class="detail-curl-card art-detail-panel curl-detail-panel">
+          <el-card shadow="never" class="art-curl-detail-card art-detail-panel art-curl-detail-panel">
             <template #header>
-              <div class="detail-panel-header">
-                <div class="detail-panel-title">
+              <div class="art-detail-panel-header">
+                <div class="art-detail-panel-title">
                   <h4><Document />脱敏 curl</h4>
                   <p>用于本地重放请求，敏感 Token 已统一隐藏。</p>
                 </div>
-                <div class="detail-panel-meta">
+                <div class="art-detail-panel-meta">
                   <span>可复制</span>
                 </div>
               </div>
             </template>
-            <div class="detail-panel-body">
+            <div class="art-detail-panel-body">
               <pre class="art-curl-block">{{ sanitizedCurl(selectedLog) }}</pre>
             </div>
           </el-card>

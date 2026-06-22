@@ -1001,15 +1001,24 @@ test("Vue quality case library uses an Art Design Pro table panel", async () => 
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(qualitySection, /art-quality-case-panel/, "Quality cases should use a dedicated Art panel shell");
-  assert.match(qualitySection, /quality-case-panel-header/, "Quality case panel should use a structured header");
-  assert.match(qualitySection, /quality-case-panel-title/, "Quality case panel should expose title and helper copy");
-  assert.match(qualitySection, /quality-case-panel-badge/, "Quality case panel should show case counts as badges");
-  assert.match(qualitySection, /quality-case-panel-tools/, "Quality case panel should group compact actions");
+  assert.match(qualitySection, /art-quality-case-panel-header/, "Quality case panel should use a structured header");
+  assert.match(qualitySection, /art-quality-case-panel-title/, "Quality case panel should expose title and helper copy");
+  assert.match(qualitySection, /art-quality-case-panel-badge/, "Quality case panel should show case counts as badges");
+  assert.match(qualitySection, /art-quality-case-panel-tools/, "Quality case panel should group compact actions");
   assert.match(qualitySection, /art-table-action-button action-view/, "Quality case rows should use icon action buttons");
   assert.match(qualitySection, /aria-label="查看质量案例日志"/, "Quality case log action should be accessible");
   assert.match(styleSource, /\.art-quality-case-panel/, "Styles should include the quality case panel shell");
-  assert.match(styleSource, /\.quality-case-panel-header/, "Styles should include quality case panel header");
-  assert.match(styleSource, /\.quality-case-panel-badge/, "Styles should include quality case badges");
+  assert.match(styleSource, /\.art-quality-case-panel-header/, "Styles should include quality case panel header");
+  assert.match(styleSource, /\.art-quality-case-panel-badge/, "Styles should include quality case badges");
+  for (const oldToken of [
+    "quality-case-panel-header",
+    "quality-case-panel-title",
+    "quality-case-panel-badge",
+    "quality-case-panel-tools",
+  ]) {
+    assert.doesNotMatch(qualitySection, classTokenPattern(oldToken), `Quality case panel should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue quality metrics use ArtStatsCard style cards", async () => {
@@ -1048,16 +1057,28 @@ test("Vue quality preset cards use an Art Design Pro card template", async () =>
 
   assert.match(qualitySection, /art-preset-grid/, "Preset cards should render inside an Art card grid");
   assert.match(qualitySection, /art-preset-card/, "Preset cards should use a dedicated Art card shell");
-  assert.match(qualitySection, /preset-card-header/, "Preset cards should expose a structured header");
-  assert.match(qualitySection, /preset-card-title/, "Preset cards should expose a title block");
-  assert.match(qualitySection, /preset-card-meta/, "Preset cards should expose compact metadata");
-  assert.match(qualitySection, /preset-card-body/, "Preset cards should expose a body section");
-  assert.match(qualitySection, /preset-card-footer/, "Preset cards should expose footer actions");
+  assert.match(qualitySection, /art-preset-card-header/, "Preset cards should expose a structured header");
+  assert.match(qualitySection, /art-preset-card-title/, "Preset cards should expose a title block");
+  assert.match(qualitySection, /art-preset-card-meta/, "Preset cards should expose compact metadata");
+  assert.match(qualitySection, /art-preset-card-body/, "Preset cards should expose a body section");
+  assert.match(qualitySection, /art-preset-card-footer/, "Preset cards should expose footer actions");
   assert.doesNotMatch(qualitySection, /class="preset-card"/, "Preset cards should no longer use the legacy card class");
   assert.match(styleSource, /\.art-preset-grid/, "Styles should include the Art preset grid");
   assert.match(styleSource, /\.art-preset-card/, "Styles should include preset card shell styling");
-  assert.match(styleSource, /\.preset-card-header/, "Styles should include preset card header styling");
-  assert.match(styleSource, /\.preset-card-footer/, "Styles should include preset card footer styling");
+  assert.match(styleSource, /\.art-preset-card-header/, "Styles should include preset card header styling");
+  assert.match(styleSource, /\.art-preset-card-footer/, "Styles should include preset card footer styling");
+  for (const oldToken of [
+    "preset-card-header",
+    "preset-card-icon",
+    "preset-card-title",
+    "preset-card-meta",
+    "preset-card-body",
+    "preset-card-footer",
+    "preset-list-table",
+  ]) {
+    assert.doesNotMatch(qualitySection, classTokenPattern(oldToken), `Preset cards should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue tables expose Art Design Pro empty states", async () => {
@@ -1293,7 +1314,7 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.match(detailDrawer, /art-detail-stack/, "Log detail drawer should render an Art detail stack");
   assert.match(detailDrawer, /art-detail-overview/, "Log detail drawer should render an Art overview header");
   assert.match(detailDrawer, /art-detail-summary-grid/, "Log detail drawer should render Art summary cards");
-  assert.match(detailDrawer, /detail-route-steps/, "Log detail drawer should render route steps");
+  assert.match(detailDrawer, /art-detail-route-steps/, "Log detail drawer should render route steps");
   assert.match(detailDrawer, /art-detail-action-bar/, "Log detail drawer should render an Art action bar");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-stack(?![A-Za-z0-9_-])/, "Log detail drawer should not keep the generic detail-stack class");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-overview(?![A-Za-z0-9_-])/, "Log detail drawer should not keep the generic detail-overview class");
@@ -1303,7 +1324,7 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.match(styleSource, /\.art-detail-stack/, "Styles should include Art detail stack styling");
   assert.match(styleSource, /\.art-detail-overview/, "Styles should include Art detail overview styling");
   assert.match(styleSource, /\.art-detail-summary-grid/, "Styles should include Art detail summary styling");
-  assert.match(styleSource, /\.detail-route-steps/, "Styles should include route step styling");
+  assert.match(styleSource, /\.art-detail-route-steps/, "Styles should include route step styling");
   assert.match(styleSource, /\.art-detail-action-bar/, "Styles should include Art detail action bar styling");
   assert.doesNotMatch(styleSource, /\.detail-stack(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-stack selector");
   assert.doesNotMatch(styleSource, /\.detail-overview(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-overview selector");
@@ -1311,6 +1332,8 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.doesNotMatch(styleSource, /\.detail-action-bar(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-action-bar selector");
   assert.doesNotMatch(detailDrawer, classTokenPattern("log-detail-drawer"), "Log detail drawer should not keep old log-detail-drawer token");
   assert.doesNotMatch(styleSource, cssClassSelectorPattern("log-detail-drawer"), "Styles should not keep old log-detail-drawer selector");
+  assert.doesNotMatch(detailDrawer, classTokenPattern("detail-route-steps"), "Log detail drawer should not keep old detail-route-steps token");
+  assert.doesNotMatch(styleSource, cssClassSelectorPattern("detail-route-steps"), "Styles should not keep old detail-route-steps selector");
 });
 
 test("Vue log detail diagnostic cards use Art Design Pro panels", async () => {
@@ -1323,25 +1346,40 @@ test("Vue log detail diagnostic cards use Art Design Pro panels", async () => {
   const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
 
   assert.match(detailDrawer, /art-detail-panel/, "Detail cards should share an Art detail panel class");
-  assert.match(detailDrawer, /detail-panel-header/, "Detail cards should render a structured header");
-  assert.match(detailDrawer, /detail-panel-title/, "Detail cards should expose a title block");
-  assert.match(detailDrawer, /detail-panel-meta/, "Detail cards should expose metadata in the header");
-  assert.match(detailDrawer, /detail-panel-body/, "Detail cards should wrap content in a panel body");
+  assert.match(detailDrawer, /art-detail-panel-header/, "Detail cards should render a structured header");
+  assert.match(detailDrawer, /art-detail-panel-title/, "Detail cards should expose a title block");
+  assert.match(detailDrawer, /art-detail-panel-meta/, "Detail cards should expose metadata in the header");
+  assert.match(detailDrawer, /art-detail-panel-body/, "Detail cards should wrap content in a panel body");
   assert.match(detailDrawer, /art-detail-text/, "Diagnostic summary copy should use an Art detail text token");
   assert.match(detailDrawer, /art-curl-block/, "Sanitized replay command should use an Art curl block token");
-  assert.match(detailDrawer, /route-detail-panel/, "Route card should use the shared detail panel shell");
-  assert.match(detailDrawer, /diagnostic-detail-panel/, "Diagnostic card should use the shared detail panel shell");
-  assert.match(detailDrawer, /curl-detail-panel/, "Curl card should use the shared detail panel shell");
+  assert.match(detailDrawer, /art-route-detail-panel/, "Route card should use the shared detail panel shell");
+  assert.match(detailDrawer, /art-diagnostic-detail-panel/, "Diagnostic card should use the shared detail panel shell");
+  assert.match(detailDrawer, /art-curl-detail-panel/, "Curl card should use the shared detail panel shell");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-text(?![A-Za-z0-9_-])/, "Detail drawer should not keep the generic detail-text class");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])curl-block(?![A-Za-z0-9_-])/, "Detail drawer should not keep the generic curl-block class");
   assert.doesNotMatch(detailDrawer, /<template #header><div class="card-title"/, "Log detail drawer should not use legacy one-line card titles");
   assert.match(styleSource, /\.art-detail-panel/, "Styles should include the Art detail panel shell");
-  assert.match(styleSource, /\.detail-panel-header/, "Styles should include detail panel header styling");
-  assert.match(styleSource, /\.detail-panel-body/, "Styles should include detail panel body styling");
+  assert.match(styleSource, /\.art-detail-panel-header/, "Styles should include detail panel header styling");
+  assert.match(styleSource, /\.art-detail-panel-body/, "Styles should include detail panel body styling");
   assert.match(styleSource, /\.art-detail-text/, "Styles should include Art detail text styling");
   assert.match(styleSource, /\.art-curl-block/, "Styles should include Art curl block styling");
   assert.doesNotMatch(styleSource, /\.detail-text(?![A-Za-z0-9_-])/, "Styles should remove the generic detail-text selector");
   assert.doesNotMatch(styleSource, /\.curl-block(?![A-Za-z0-9_-])/, "Styles should remove the generic curl-block selector");
+  for (const oldToken of [
+    "detail-route-card",
+    "detail-diagnostic-card",
+    "detail-curl-card",
+    "detail-panel-header",
+    "detail-panel-title",
+    "detail-panel-meta",
+    "detail-panel-body",
+    "route-detail-panel",
+    "diagnostic-detail-panel",
+    "curl-detail-panel",
+  ]) {
+    assert.doesNotMatch(detailDrawer, classTokenPattern(oldToken), `Detail drawer should not keep old ${oldToken} token`);
+    assert.doesNotMatch(styleSource, cssClassSelectorPattern(oldToken), `Styles should not keep old ${oldToken} selector`);
+  }
 });
 
 test("Vue usage page uses an Art Design Pro analytics workspace", async () => {
