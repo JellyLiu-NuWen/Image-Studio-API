@@ -113,6 +113,13 @@ export function createJsonlLogStore({ path, maxRecords = 1000 }) {
       const records = await readAll();
       return records.filter((record) => matchesFilters(record, filters));
     },
+    async clear() {
+      const writeOperation = writeQueue.then(async () => {
+        await writeAll([]);
+      });
+      writeQueue = writeOperation.catch(() => {});
+      await writeOperation;
+    },
   };
 }
 
@@ -127,6 +134,9 @@ export function createMemoryLogStore() {
     },
     async readAll(filters = {}) {
       return records.filter((record) => matchesFilters(record, filters));
+    },
+    async clear() {
+      records.splice(0);
     },
   };
 }

@@ -1197,6 +1197,60 @@ test("admin can read logs and metrics while client or missing token is rejected"
   assert.equal(typeof metricsBody.metrics.upstreams, "object");
 });
 
+test("admin can clear application logs without writing a final clear log", async () => {
+  const apiLogStore = createMemoryLogStore();
+  const generationLogStore = createMemoryLogStore();
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example",
+      upstreamApiKey: "upstream-key",
+      rateLimitPerMinute: 10,
+    }),
+    ...ADMIN_OPTIONS,
+    apiLogStore,
+    generationLogStore,
+    fetchImpl: async () => new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+
+  const generation = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "logged",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+  assert.equal(generation.status, 200);
+
+  const adminHeaders = await loginHeaders(app);
+  const rejected = await app.handle(jsonRequest("/api/logs/clear", {
+    targets: ["application"],
+    confirm: "WRONG",
+  }, adminHeaders));
+  assert.equal(rejected.status, 400);
+
+  const clear = await app.handle(jsonRequest("/api/logs/clear", {
+    targets: ["application", "docker"],
+    confirm: "CLEAR_LOGS",
+  }, adminHeaders));
+  assert.equal(clear.status, 200);
+  const clearBody = await clear.json();
+  assert.equal(clearBody.ok, true);
+  assert.equal(clearBody.result.generations.cleared, true);
+  assert.equal(clearBody.result.generations.count, 1);
+  assert.equal(clearBody.result.api.cleared, true);
+  assert.equal(clearBody.result.docker.status, "requires_host_access");
+
+  assert.deepEqual(await generationLogStore.readRecent(10), []);
+  assert.deepEqual(await apiLogStore.readRecent(10), []);
+
+  const audit = await app.handle(new Request("http://localhost/api/audit-logs", { headers: adminHeaders }));
+  assert.equal(audit.status, 200);
+  const auditBody = await audit.json();
+  assert.equal(auditBody.records[0].action, "logs.clear");
+});
+
 test("admin update check requires admin authorization", async () => {
   const app = createSelfHostedApp({
     store: memoryStore({

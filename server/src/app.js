@@ -13,6 +13,7 @@ import { mergeConfigUpdate, normalizeConfig, publicConfig } from "./config.js";
 import { forwardOpenAIPath } from "./upstreamProxy.js";
 import { summarizeMetrics } from "./metrics.js";
 import { createHmac, randomBytes } from "node:crypto";
+import { writeFile } from "node:fs/promises";
 
 function requireClientAuth(request, config) {
   if (!config.interfaces.some((item) => item.enabled && item.apiToken)) {
@@ -222,6 +223,67 @@ function recordsToCSV(records) {
     return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
   };
   return [headers.join(","), ...records.map((record) => headers.map((header) => escapeCell(record?.[header])).join(","))].join("\n");
+}
+
+function normalizeLogClearTargets(value) {
+  const requested = Array.isArray(value) ? value : [value || "application"];
+  const allowed = new Set(["application", "api", "generations", "docker"]);
+  return Array.from(new Set(requested.map((item) => String(item || "").trim()).filter((item) => allowed.has(item))));
+}
+
+async function clearLogStore(store) {
+  const before = store?.readAll ? await store.readAll() : store?.readRecent ? await store.readRecent(500) : [];
+  if (store?.clear) await store.clear();
+  return before.length;
+}
+
+function dockerStdoutClearPath() {
+  const path = String(process.env.IMAGE_STUDIO_DOCKER_LOG_PATH || "").trim();
+  if (!path) return "";
+  return path.startsWith("/var/lib/docker/containers/") && path.endsWith(".log") ? path : "";
+}
+
+async function handleClearLogs({ request, apiLogStore, generationLogStore, auditRecords, username, now }) {
+  const body = await request.json().catch(() => ({}));
+  if (body.confirm !== "CLEAR_LOGS") {
+    return json({ error: { message: "confirm must be CLEAR_LOGS" } }, { status: 400 });
+  }
+
+  const targets = normalizeLogClearTargets(body.targets);
+  if (!targets.length) {
+    return json({ error: { message: "No supported log targets selected" } }, { status: 400 });
+  }
+
+  const result = {
+    api: { cleared: false, count: 0 },
+    generations: { cleared: false, count: 0 },
+    docker: { cleared: false, status: "not_requested", message: "" },
+  };
+
+  if (targets.includes("application") || targets.includes("api")) {
+    result.api.count = await clearLogStore(apiLogStore);
+    result.api.cleared = !!apiLogStore?.clear;
+  }
+  if (targets.includes("application") || targets.includes("generations")) {
+    result.generations.count = await clearLogStore(generationLogStore);
+    result.generations.cleared = !!generationLogStore?.clear;
+  }
+  if (targets.includes("docker")) {
+    const path = dockerStdoutClearPath();
+    if (path) {
+      await writeFile(path, "", "utf8");
+      result.docker = { cleared: true, status: "cleared", message: "Docker stdout log file cleared" };
+    } else {
+      result.docker = {
+        cleared: false,
+        status: "requires_host_access",
+        message: "Docker stdout requires host-side log access. Configure IMAGE_STUDIO_DOCKER_LOG_PATH or use the Clear Server Logs workflow.",
+      };
+    }
+  }
+
+  appendAudit(auditRecords, "logs.clear", { targets, result }, username, now);
+  return json({ ok: true, targets, result });
 }
 
 function appendAudit(auditRecords, action, details, username, now) {
@@ -1528,6 +1590,29 @@ export function createSelfHostedApp({
         return response;
       }
 
+      if (url.pathname === "/api/logs/clear") {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        if (request.method !== "POST") {
+          response = methodNotAllowed();
+          return response;
+        }
+        const token = parseCookies(request).image_studio_session || "";
+        response = await handleClearLogs({
+          request,
+          apiLogStore,
+          generationLogStore,
+          auditRecords,
+          username: sessions.get(token)?.username,
+          now,
+        });
+        return response;
+      }
+
       if (url.pathname === "/api/usage") {
         authKind = classifyAuthKind(request, sessions);
         const authError = requireAdminAuth(request, sessions);
@@ -1695,7 +1780,7 @@ export function createSelfHostedApp({
           errorSummary: decodeHeaderValue(response.headers.get("x-image-studio-error-summary")) || errorSummary,
         });
       }
-      if (apiLogStore) {
+      if (apiLogStore && url.pathname !== "/api/logs/clear") {
         await appendLogSafely(apiLogStore, {
           id,
           createdAt: new Date(startedAt).toISOString(),

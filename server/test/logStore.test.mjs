@@ -93,6 +93,25 @@ test("createJsonlLogStore preserves concurrent appends", async () => {
   }
 });
 
+test("createJsonlLogStore clears stored records", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "image-studio-logs-"));
+  try {
+    const store = createJsonlLogStore({
+      path: join(dir, "nested", "api-calls.jsonl"),
+      maxRecords: 100,
+    });
+
+    await store.append({ id: "one" });
+    await store.append({ id: "two" });
+    await store.clear();
+
+    assert.deepEqual(await store.readRecent(10), []);
+    assert.deepEqual(await store.readAll(), []);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("createJsonlLogStore filters recent records by query fields", async () => {
   const dir = await mkdtemp(join(tmpdir(), "image-studio-logs-"));
   try {

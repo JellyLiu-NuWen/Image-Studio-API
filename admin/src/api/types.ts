@@ -235,6 +235,18 @@ export interface UsageResponse {
   }
 }
 
+export type LogClearTarget = 'application' | 'api' | 'generations' | 'docker'
+
+export interface LogClearResponse {
+  ok: boolean
+  targets: LogClearTarget[]
+  result: {
+    api: { cleared: boolean; count: number }
+    generations: { cleared: boolean; count: number }
+    docker: { cleared: boolean; status: string; message: string }
+  }
+}
+
 export interface UpdateInfo {
   currentVersion?: string
   currentCommit?: string

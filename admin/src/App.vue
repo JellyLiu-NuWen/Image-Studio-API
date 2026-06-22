@@ -51,6 +51,7 @@ import type {
   AuditRecord,
   BackupRecord,
   ConfigVersion,
+  LogClearTarget,
   LogRecord,
   MetricsResponse,
   QualityCase,
@@ -76,6 +77,14 @@ type WorkTabActionKey = 'refresh' | 'fixed' | 'left' | 'right' | 'other' | 'all'
 type TableHeaderToolKey = 'search' | 'refresh' | 'density' | 'columns'
 type TableModuleKey = 'interfaces' | 'upstreams' | 'models' | 'quality'
 type TablePaginationState = { currentPage: number; pageSize: number }
+
+const logClearOptions: Array<{ command: string; label: string; targets: LogClearTarget[] }> = [
+  { command: 'application', label: '清空应用日志', targets: ['application'] },
+  { command: 'generations', label: '仅清生图日志', targets: ['generations'] },
+  { command: 'api', label: '仅清 API 日志', targets: ['api'] },
+  { command: 'docker', label: '清 Docker stdout', targets: ['docker'] },
+  { command: 'all', label: '清应用日志和 Docker stdout', targets: ['application', 'docker'] }
+]
 
 const navGroups: Array<{ title: string; items: Array<{ key: ViewKey; label: string; icon: unknown }> }> = [
   { title: '监控', items: [
@@ -1668,6 +1677,30 @@ async function refreshLogsOnly() {
   }
 }
 
+async function clearLogs(targets: LogClearTarget[], label: string) {
+  const confirmation = await ElMessageBox.prompt(
+    `${label}会删除对应日志记录。请输入 CLEAR_LOGS 确认。`,
+    label,
+    {
+      confirmButtonText: '清空日志',
+      cancelButtonText: '取消',
+      type: 'warning',
+      inputPattern: /^CLEAR_LOGS$/,
+      inputErrorMessage: '请输入 CLEAR_LOGS'
+    }
+  )
+  const data = await adminApi.clearLogs(targets, String(confirmation.value || ''))
+  await refreshLogsOnly()
+  auditLogs.value = (await adminApi.auditLogs().catch(() => ({ records: auditLogs.value }))).records
+  const parts = [
+    data.result.generations.cleared ? `生图 ${data.result.generations.count}` : '',
+    data.result.api.cleared ? `API ${data.result.api.count}` : '',
+    data.result.docker.cleared ? 'Docker stdout 已清空' : '',
+    data.result.docker.status === 'requires_host_access' ? 'Docker stdout 需要宿主机权限' : ''
+  ].filter(Boolean)
+  ElMessage.success(parts.length ? parts.join('，') : '日志清理已提交')
+}
+
 function resetLogFilters() {
   Object.assign(logFilter, {
     keyword: '',
@@ -2719,6 +2752,19 @@ window.addEventListener('beforeunload', (event) => {
                 <el-button :icon="Refresh" @click="refreshLogsOnly">刷新日志</el-button>
                 <el-button :icon="Download" @click="exportLogs('jsonl')">导出 JSONL</el-button>
                 <el-button :icon="Download" @click="exportLogs('csv')">导出 CSV</el-button>
+                <el-dropdown trigger="click" @command="(command: string) => {
+                  const option = logClearOptions.find((item) => item.command === command)
+                  if (option) clearLogs(option.targets, option.label)
+                }">
+                  <el-button class="art-log-clear-button" type="danger" plain :icon="Delete">清空日志</el-button>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item v-for="item in logClearOptions" :key="item.command" :command="item.command">
+                        {{ item.label }}
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </div>
             </div>
             <div class="art-log-panel-body">

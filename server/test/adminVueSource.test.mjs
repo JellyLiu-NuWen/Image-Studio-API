@@ -1178,6 +1178,12 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(logSection, /art-search-form-grid/, "Query panel should use an ArtSearchBar form grid layout");
   assert.match(logSection, /art-search-form-item/, "Query panel fields should use Art search form items");
   assert.match(logSection, /art-result-toolbar/, "Logs page should render an Art result toolbar above tables");
+  assert.match(source, /logClearOptions/, "Logs page should define clear-log target options");
+  assert.match(source, /clearLogs/, "Logs page should expose a clear-log handler");
+  assert.match(source, /CLEAR_LOGS/, "Logs clear flow should require an explicit confirmation phrase");
+  assert.match(logSection, /art-log-clear-button/, "Result toolbar should expose a dedicated clear-log action");
+  assert.match(logSection, /<el-dropdown/, "Clear-log action should use a dropdown for target selection");
+  assert.match(source, /清 Docker stdout/, "Clear-log dropdown should expose Docker stdout as a separate target");
   for (const legacyClass of [
     "query-panel",
     "query-panel-heading",
@@ -1198,6 +1204,7 @@ test("Vue logs page uses an Art Design Pro query and results workspace", async (
   assert.match(styleSource, /\.art-query-panel/, "Styles should include Art query panel layout");
   assert.match(styleSource, /\.art-result-toolbar/, "Styles should include Art result toolbar layout");
   assert.match(styleSource, /\.art-search-form-item/, "Styles should include Art search form item layout");
+  assert.match(styleSource, /\.art-log-clear-button/, "Styles should include clear-log action styling");
   for (const oldToken of [
     "log-workspace",
     "log-summary-grid",

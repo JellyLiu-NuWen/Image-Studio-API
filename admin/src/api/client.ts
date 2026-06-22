@@ -8,6 +8,8 @@ import type {
   AuditRecord,
   BackupRecord,
   ConfigVersion,
+  LogClearResponse,
+  LogClearTarget,
   LogRecord,
   MetricsResponse,
   QualityCase,
@@ -64,6 +66,10 @@ export const adminApi = {
   secret: (kind: 'interface' | 'upstream', id: string) => requestJSON<{ secret: { value: string } }>(`/config/secrets?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}`),
   metrics: () => requestJSON<MetricsResponse>('/metrics'),
   logs: (type: 'generations' | 'api', filters: LogQuery = {}) => requestJSON<{ records: LogRecord[] }>(`/logs${queryString({ type, ...filters })}`),
+  clearLogs: (targets: LogClearTarget[], confirm: string) => requestJSON<LogClearResponse>('/logs/clear', {
+    method: 'POST',
+    body: JSON.stringify({ targets, confirm })
+  }),
   usage: () => requestJSON<UsageResponse>('/usage'),
   versions: () => requestJSON<{ versions: ConfigVersion[] }>('/config/versions'),
   restoreVersion: (id: string) => requestJSON<{ ok: boolean; config: AdminConfig }>(`/config/versions/${encodeURIComponent(id)}/restore`, {

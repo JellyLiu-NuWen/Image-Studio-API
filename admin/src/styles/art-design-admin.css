@@ -2714,6 +2714,10 @@ button,
   gap: 12px;
 }
 
+.art-log-clear-button {
+  font-weight: 800;
+}
+
 .art-search-form-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(168px, 1fr));
