@@ -1592,6 +1592,8 @@ test("Vue system page uses an Art Design Pro backup and update workspace", async
   assert.match(systemSection, /art-version-workspace/, "System page should render an Art config version workspace");
   assert.match(systemSection, /art-update-workspace/, "System page should render an Art update workspace");
   assert.match(systemSection, /art-health-workspace/, "System page should render a no-cost health workspace");
+  assert.match(systemSection, /部署一致性/, "System page should call out deployment consistency");
+  assert.match(systemSection, /GitHub main/, "System page should show the GitHub main commit");
   assert.match(systemSection, /runNoCostHealthCheck/, "System page should expose no-cost health checks");
   assert.match(systemSection, /:size="tableSize"/, "System tables should respect shared density size");
   assert.match(styleSource, /\.art-system-console/, "Styles should include Art system console layout");
@@ -1633,6 +1635,7 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.match(systemSection, /art-system-backup-status/, "System backup status should use a dedicated Art status row");
   assert.match(systemSection, /art-system-file-input/, "System restore input should use a dedicated Art hidden file control");
   assert.match(systemSection, /art-system-update-actions/, "System update actions should use a dedicated Art action row");
+  assert.match(systemSection, /art-deployment-status/, "System update should expose a prominent deployment status block");
   assert.match(systemSection, /art-changelog-preview/, "System changelog preview should use an Art preview token");
   assert.match(systemSection, /art-rollback-command/, "System rollback command should use an Art command token");
   assert.doesNotMatch(systemSection, /class="status-list"/, "System panels should not keep the legacy status-list class");
@@ -1649,6 +1652,7 @@ test("Vue system operation cards use Art Design Pro panels", async () => {
   assert.match(styleSource, /\.art-system-backup-status/, "Styles should include system backup status row");
   assert.match(styleSource, /\.art-system-file-input/, "Styles should include system hidden file input");
   assert.match(styleSource, /\.art-system-update-actions/, "Styles should include system update actions row");
+  assert.match(styleSource, /\.art-deployment-status/, "Styles should include Art deployment status styling");
   assert.match(styleSource, /\.art-changelog-preview/, "Styles should include Art changelog preview styling");
   assert.match(styleSource, /\.art-rollback-command/, "Styles should include Art rollback command styling");
   assert.doesNotMatch(styleSource, /\.system-actions\b/, "Styles should remove the legacy system-actions selector");

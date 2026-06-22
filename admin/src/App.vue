@@ -545,7 +545,13 @@ const systemSummaryCards = computed(() => [
     label: '更新状态',
     value: updateInfo.value.status || 'unknown',
     hint: updateInfo.value.latestVersion ? `最新 ${updateInfo.value.latestVersion}` : '等待更新检查',
-    type: updateInfo.value.status === 'outdated' ? 'warning' : 'info'
+    type: updateStatusSummaryType(updateInfo.value.status)
+  },
+  {
+    label: '部署一致性',
+    value: updateInfo.value.deployment?.status || 'unknown',
+    hint: updateInfo.value.deployment?.message || '等待 GitHub main 对比',
+    type: deploymentSummaryType(updateInfo.value.deployment?.status)
   },
   {
     label: '回滚入口',
@@ -564,7 +570,7 @@ const pendingAlertCount = computed(() => activeAlerts.value.filter((item) => !it
 const notificationTabs = computed(() => [
   { key: 'alerts', label: '告警', count: pendingAlertCount.value },
   { key: 'notifications', label: '通知', count: alertNotification.value.status === 'idle' ? 0 : 1 },
-  { key: 'system', label: '系统', count: updateInfo.value.status ? 1 : 0 },
+  { key: 'system', label: '系统', count: updateInfo.value.status || updateInfo.value.deployment?.status ? 1 : 0 },
 ] as Array<{ key: 'alerts' | 'notifications' | 'system'; label: string; count: number }>)
 const notificationPreviewItems = computed(() => {
   if (activeNotificationTab.value === 'alerts') {
@@ -588,13 +594,22 @@ const notificationPreviewItems = computed(() => {
       type: alertNotification.value.status === 'failed' ? 'critical' : alertNotification.value.status === 'sent' ? 'success' : 'info',
     }]
   }
-  return [{
-    id: 'system-update-status',
-    title: `版本状态 ${updateInfo.value.status || 'unknown'}`,
-    time: updateInfo.value.status ? '已检查' : '等待检查',
-    meta: updateInfo.value.latestVersion ? `最新版本 ${updateInfo.value.latestVersion}` : '未获取到更新信息',
-    type: updateInfo.value.status === 'outdated' ? 'warning' : 'info',
-  }]
+  return [
+    {
+      id: 'system-deployment-status',
+      title: `部署一致性 ${updateInfo.value.deployment?.status || 'unknown'}`,
+      time: updateInfo.value.deployment?.status ? '已检查' : '等待检查',
+      meta: updateInfo.value.deployment?.message || '等待 GitHub main 对比',
+      type: deploymentSummaryType(updateInfo.value.deployment?.status),
+    },
+    {
+      id: 'system-update-status',
+      title: `版本状态 ${updateInfo.value.status || 'unknown'}`,
+      time: updateInfo.value.status ? '已检查' : '等待检查',
+      meta: updateInfo.value.latestVersion ? `最新版本 ${updateInfo.value.latestVersion}` : '未获取到更新信息',
+      type: updateStatusSummaryType(updateInfo.value.status),
+    },
+  ]
 })
 const alertSummaryCards = computed(() => [
   {
@@ -827,7 +842,7 @@ const riskItems = computed(() => [
   {
     label: '版本状态',
     value: updateInfo.value.status || 'unknown',
-    severity: updateInfo.value.status === 'outdated' ? 'warning' : 'info',
+    severity: updateStatusSummaryType(updateInfo.value.status),
     hint: updateInfo.value.latestVersion ? `最新 ${updateInfo.value.latestVersion}` : '等待更新检查',
     target: 'system' as ViewKey
   }
@@ -1680,6 +1695,34 @@ async function copyRollbackCommand() {
     return
   }
   await copyText(command, '已复制回滚命令')
+}
+
+function updateStatusSummaryType(status?: string) {
+  if (status === 'same' || status === 'current') return 'success'
+  if (status === 'newer' || status === 'older' || status === 'outdated') return 'warning'
+  if (status === 'error') return 'critical'
+  return 'info'
+}
+
+function updateStatusTagType(status?: string) {
+  if (status === 'same' || status === 'current') return 'success'
+  if (status === 'newer' || status === 'older' || status === 'outdated') return 'warning'
+  if (status === 'error') return 'danger'
+  return 'info'
+}
+
+function deploymentSummaryType(status?: string) {
+  if (status === 'current') return 'success'
+  if (status === 'behind') return 'warning'
+  if (status === 'error') return 'critical'
+  return 'info'
+}
+
+function deploymentTagType(status?: string) {
+  if (status === 'current') return 'success'
+  if (status === 'behind') return 'warning'
+  if (status === 'error') return 'danger'
+  return 'info'
 }
 
 function noCostHealthTag(status: string) {
@@ -3349,18 +3392,30 @@ window.addEventListener('beforeunload', (event) => {
               <div class="art-system-panel-header">
                 <div class="art-system-panel-title">
                   <h4><Cpu />版本更新</h4>
-                  <p>查看当前版本、远端发布状态和回滚入口。</p>
+                  <p>查看当前版本、远端发布状态、main 部署一致性和回滚入口。</p>
                 </div>
-                <el-tag :type="updateInfo.status === 'outdated' ? 'warning' : updateInfo.status === 'current' ? 'success' : 'info'">{{ updateInfo.status || 'unknown' }}</el-tag>
+                <div class="art-system-panel-actions">
+                  <el-tag :type="updateStatusTagType(updateInfo.status)">版本 {{ updateInfo.status || 'unknown' }}</el-tag>
+                  <el-tag :type="deploymentTagType(updateInfo.deployment?.status)">部署 {{ updateInfo.deployment?.status || 'unknown' }}</el-tag>
+                </div>
               </div>
             </template>
             <div class="art-system-panel-body">
+              <div v-if="updateInfo.deployment" class="art-deployment-status" :data-status="updateInfo.deployment.status">
+                <div>
+                  <el-tag :type="deploymentTagType(updateInfo.deployment.status)">{{ updateInfo.deployment.status }}</el-tag>
+                  <strong>{{ updateInfo.deployment.message }}</strong>
+                </div>
+                <p>服务器 {{ updateInfo.deployment.currentCommit || '未知' }} · GitHub main {{ updateInfo.deployment.mainCommit || '未知' }} · 镜像 tag {{ updateInfo.deployment.dockerImageTag || '未设置' }}</p>
+              </div>
               <div class="art-system-status-list">
                 <div><span>当前版本</span><strong>{{ updateInfo.currentVersion || 'dev' }}</strong></div>
                 <div><span>当前 Commit</span><strong>{{ updateInfo.currentCommit || '未知' }}</strong></div>
                 <div><span>Docker Tag</span><strong>{{ updateInfo.dockerImageTag || 'latest' }}</strong></div>
+                <div><span>GitHub main</span><strong>{{ updateInfo.deployment?.mainCommit || '未知' }}</strong></div>
                 <div><span>最新版本</span><strong>{{ updateInfo.latestVersion || '未知' }}</strong></div>
-                <div><span>状态</span><strong>{{ updateInfo.status || 'unknown' }}</strong></div>
+                <div><span>发布状态</span><strong>{{ updateInfo.status || 'unknown' }}</strong></div>
+                <div><span>部署一致性</span><strong>{{ updateInfo.deployment?.status || 'unknown' }}</strong></div>
                 <div><span>来源</span><strong>{{ updateInfo.source || 'release' }}</strong></div>
               </div>
               <div class="art-system-update-actions art-system-panel-actions">

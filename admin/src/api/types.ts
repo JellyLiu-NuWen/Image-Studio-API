@@ -302,6 +302,16 @@ export interface UpdateInfo {
   changelogURL?: string
   changelog?: string
   rollbackCommand?: string
+  deployment?: {
+    status: string
+    message: string
+    currentCommit: string
+    dockerImageTag: string
+    mainCommit: string
+    mainCommitURL: string
+    commitStatus: string
+    imageTagStatus: string
+  }
 }
 
 export interface ConfigVersion {

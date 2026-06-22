@@ -28,16 +28,23 @@ test("compareReleaseVersions returns unknown for invalid semantic versions", () 
 });
 
 test("checkLatest calls the GitHub latest release API and returns release status", async () => {
-  let capturedURL = "";
-  let capturedAccept = "";
+  const requested = [];
   const service = createUpdateService({
     currentVersion: "v1.2.5",
     currentCommit: "abcdef1234567890",
     dockerImageTag: "v1.2.5",
     repository: " owner/repo ",
     fetchImpl: async (url, init) => {
-      capturedURL = String(url);
-      capturedAccept = init.headers.accept;
+      requested.push({ url: String(url), accept: init.headers.accept });
+      if (String(url).endsWith("/commits/main")) {
+        return new Response(JSON.stringify({
+          sha: "abcdef1234567890abcdef1234567890abcdef12",
+          html_url: "https://github.com/owner/repo/commit/abcdef1234567890abcdef1234567890abcdef12",
+        }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({
         tag_name: "v1.2.6",
         html_url: "https://github.com/owner/repo/releases/tag/v1.2.6",
@@ -51,9 +58,12 @@ test("checkLatest calls the GitHub latest release API and returns release status
 
   const update = await service.checkLatest();
 
-  assert.equal(capturedURL, "https://api.github.com/repos/owner/repo/releases/latest");
-  assert.equal(capturedAccept, "application/vnd.github+json");
-  assert.deepEqual(update, {
+  assert.deepEqual(requested, [
+    { url: "https://api.github.com/repos/owner/repo/releases/latest", accept: "application/vnd.github+json" },
+    { url: "https://api.github.com/repos/owner/repo/commits/main", accept: "application/vnd.github+json" },
+  ]);
+  const { deployment, ...updateDetails } = update;
+  assert.deepEqual(updateDetails, {
     currentVersion: "v1.2.5",
     currentCommit: "abcdef12",
     dockerImageTag: "v1.2.5",
@@ -65,6 +75,12 @@ test("checkLatest calls the GitHub latest release API and returns release status
     rollbackCommand: "docker compose -p current -f docker-compose.self-hosted.yml up -d --no-deps image-studio-api",
     source: "release",
   });
+  assert.equal(deployment.status, "current");
+  assert.equal(deployment.currentCommit, "abcdef12");
+  assert.equal(deployment.mainCommit, "abcdef12");
+  assert.equal(deployment.commitStatus, "current");
+  assert.equal(deployment.imageTagStatus, "release");
+  assert.match(deployment.message, /已与 GitHub main 一致/);
 });
 
 test("checkLatest reports unconfigured when no repository is set", async () => {
@@ -77,7 +93,9 @@ test("checkLatest reports unconfigured when no repository is set", async () => {
     },
   });
 
-  assert.deepEqual(await service.checkLatest(), {
+  const result = await service.checkLatest();
+  const { deployment, ...update } = result;
+  assert.deepEqual(update, {
     currentVersion: "v1.2.5",
     ...DEFAULT_UPDATE_DETAILS,
     latestVersion: "",
@@ -85,6 +103,7 @@ test("checkLatest reports unconfigured when no repository is set", async () => {
     releaseURL: "",
     source: "release",
   });
+  assert.equal(deployment.status, "unconfigured");
 });
 
 test("checkLatest reports unconfigured for malformed repository values", async () => {
@@ -97,7 +116,9 @@ test("checkLatest reports unconfigured for malformed repository values", async (
     },
   });
 
-  assert.deepEqual(await service.checkLatest(), {
+  const result = await service.checkLatest();
+  const { deployment, ...update } = result;
+  assert.deepEqual(update, {
     currentVersion: "v1.2.5",
     ...DEFAULT_UPDATE_DETAILS,
     latestVersion: "",
@@ -105,6 +126,7 @@ test("checkLatest reports unconfigured for malformed repository values", async (
     releaseURL: "",
     source: "release",
   });
+  assert.equal(deployment.status, "unconfigured");
 });
 
 test("checkLatest returns error for failed or throwing GitHub requests", async () => {
@@ -114,7 +136,9 @@ test("checkLatest returns error for failed or throwing GitHub requests", async (
     repository: "owner/repo",
     fetchImpl: async () => new Response("not found", { status: 404 }),
   });
-  assert.deepEqual(await failingService.checkLatest(), {
+  const failingResult = await failingService.checkLatest();
+  const { deployment: failingDeployment, ...failingUpdate } = failingResult;
+  assert.deepEqual(failingUpdate, {
     currentVersion: "v1.2.5",
     ...DEFAULT_UPDATE_DETAILS,
     latestVersion: "",
@@ -122,6 +146,7 @@ test("checkLatest returns error for failed or throwing GitHub requests", async (
     releaseURL: "",
     source: "release",
   });
+  assert.equal(failingDeployment.status, "error");
 
   const throwingService = createUpdateService({
     currentVersion: "v1.2.5",
@@ -131,7 +156,9 @@ test("checkLatest returns error for failed or throwing GitHub requests", async (
       throw new Error("network down");
     },
   });
-  assert.deepEqual(await throwingService.checkLatest(), {
+  const throwingResult = await throwingService.checkLatest();
+  const { deployment: throwingDeployment, ...throwingUpdate } = throwingResult;
+  assert.deepEqual(throwingUpdate, {
     currentVersion: "v1.2.5",
     ...DEFAULT_UPDATE_DETAILS,
     latestVersion: "",
@@ -139,6 +166,7 @@ test("checkLatest returns error for failed or throwing GitHub requests", async (
     releaseURL: "",
     source: "release",
   });
+  assert.equal(throwingDeployment.status, "error");
 });
 
 test("checkLatest falls back to the main commit when no release exists", async () => {
@@ -162,7 +190,9 @@ test("checkLatest falls back to the main commit when no release exists", async (
     },
   });
 
-  assert.deepEqual(await service.checkLatest(), {
+  const result = await service.checkLatest();
+  const { deployment, ...update } = result;
+  assert.deepEqual(update, {
     currentVersion: "cc308c93",
     ...DEFAULT_UPDATE_DETAILS,
     latestVersion: "cc308c93",
@@ -171,8 +201,46 @@ test("checkLatest falls back to the main commit when no release exists", async (
     changelogURL: "https://github.com/owner/repo/commit/cc308c933c496071e93a8a302f1a03c23dc4a4ff",
     source: "commit",
   });
+  assert.equal(deployment.status, "unknown");
+  assert.equal(deployment.mainCommit, "cc308c93");
   assert.deepEqual(requested, [
     "https://api.github.com/repos/owner/repo/releases/latest",
     "https://api.github.com/repos/owner/repo/commits/main",
   ]);
+});
+
+test("checkLatest marks deployment behind when server commit differs from GitHub main", async () => {
+  const service = createUpdateService({
+    currentVersion: "v1.2.5",
+    currentCommit: "1111111111111111",
+    dockerImageTag: "111111111111",
+    repository: "owner/repo",
+    fetchImpl: async (url) => {
+      if (String(url).endsWith("/commits/main")) {
+        return new Response(JSON.stringify({
+          sha: "2222222222222222222222222222222222222222",
+          html_url: "https://github.com/owner/repo/commit/2222222222222222222222222222222222222222",
+        }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({
+        tag_name: "v1.2.5",
+        html_url: "https://github.com/owner/repo/releases/tag/v1.2.5",
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const update = await service.checkLatest();
+
+  assert.equal(update.status, "same");
+  assert.equal(update.deployment.status, "behind");
+  assert.equal(update.deployment.currentCommit, "11111111");
+  assert.equal(update.deployment.mainCommit, "22222222");
+  assert.equal(update.deployment.commitStatus, "behind");
+  assert.equal(update.deployment.imageTagStatus, "behind");
 });
