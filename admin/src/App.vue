@@ -122,7 +122,7 @@ const fixedPageTabs = ref<ViewKey[]>(['dashboard'])
 const workTabTarget = ref<ViewKey>('dashboard')
 const themeMode = ref<ThemeMode>('light')
 const layoutMode = ref<LayoutMode>('left')
-const menuStyleMode = ref<MenuStyleMode>('design')
+const menuStyleMode = ref<MenuStyleMode>('light')
 const menuOpen = ref(true)
 const mobileMenuVisible = ref(false)
 const viewportWidth = ref(typeof window === 'undefined' ? 1200 : window.innerWidth)
@@ -251,9 +251,9 @@ const settingsOptions = computed(() => ({
     { label: '宽屏工作台', value: 'wide', icon: FullScreen, hint: '大屏监控' },
   ],
   menuStyle: [
-    { label: '设计风格', value: 'design', icon: MagicStick, hint: '品牌渐变' },
-    { label: '暗色菜单', value: 'dark', icon: Moon, hint: '高对比导航' },
     { label: '亮色菜单', value: 'light', icon: Sunny, hint: '轻量导航' },
+    { label: '暗色菜单', value: 'dark', icon: Moon, hint: '高对比导航' },
+    { label: '设计风格', value: 'design', icon: MagicStick, hint: '品牌强调' },
   ],
   density: [
     { label: '默认', value: 'default', icon: More, hint: '大字号表格' },
@@ -1128,7 +1128,7 @@ function applySettingsPreset(group: SettingOptionGroup, value: string) {
 function resetSettingsPanel() {
   themeMode.value = 'light'
   layoutMode.value = 'left'
-  menuStyleMode.value = 'design'
+  menuStyleMode.value = 'light'
   tableDensity.value = 'comfortable'
   persistSettings()
 }
@@ -1228,7 +1228,7 @@ function loadThemeMode() {
   const storedLayout = window.localStorage.getItem('image-studio-admin-layout')
   layoutMode.value = storedLayout === 'compact' || storedLayout === 'wide' ? storedLayout : 'left'
   const storedMenuStyle = window.localStorage.getItem('image-studio-admin-menu-style')
-  menuStyleMode.value = storedMenuStyle === 'dark' || storedMenuStyle === 'light' ? storedMenuStyle : 'design'
+  menuStyleMode.value = storedMenuStyle === 'dark' || storedMenuStyle === 'design' ? storedMenuStyle : 'light'
   const storedDensity = window.localStorage.getItem('image-studio-admin-table-density')
   tableDensity.value = storedDensity === 'default' || storedDensity === 'compact' ? storedDensity : 'comfortable'
 }
