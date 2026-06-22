@@ -1710,11 +1710,16 @@ test("Vue alerts page uses an Art Design Pro alert center workspace", async () =
   assert.match(alertsSection, /art-alert-queue-workspace/, "Alerts page should render an Art alert queue workspace");
   assert.match(alertsSection, /art-alert-rules-workspace/, "Alerts page should render Art alert rules workspace");
   assert.match(alertsSection, /art-alert-notification-workspace/, "Alerts page should render Art notification workspace");
+  assert.match(alertsSection, /art-alert-ack-workspace/, "Alerts page should render acknowledged alert history");
   assert.match(alertsSection, /:size="tableSize"/, "Alert table should respect shared density size");
+  assert.match(alertsSection, /:data="pendingActiveAlerts"/, "Alert queue should only render pending alerts");
+  assert.match(alertsSection, /acknowledgedActiveAlerts/, "Alerts page should keep acknowledged alerts visible outside the pending queue");
+  assert.match(alertsSection, /acknowledgeAllAlerts/, "Alerts page should support acknowledging all pending alerts");
   assert.match(styleSource, /\.art-alert-center/, "Styles should include Art alert center layout");
   assert.match(styleSource, /\.art-alert-summary-grid/, "Styles should include Art alert summary grid layout");
   assert.match(styleSource, /\.art-alert-queue-workspace/, "Styles should include Art alert queue workspace styling");
   assert.match(styleSource, /\.art-alert-rules-workspace/, "Styles should include Art alert rules workspace styling");
+  assert.match(styleSource, /\.art-alert-ack-list/, "Styles should include acknowledged alert history styling");
   for (const oldToken of [
     "alerts-workspace",
     "alerts-summary-grid",

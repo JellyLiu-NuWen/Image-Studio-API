@@ -2367,7 +2367,51 @@ test("admin can review and acknowledge active alerts", async () => {
   assert.equal(ack.status, 200);
   const ackBody = await ack.json();
   assert.equal(ackBody.alert.acknowledged, true);
+  assert.equal(ackBody.summary.acknowledged, 1);
   assert.equal(store.current().acknowledgedAlerts.some((item) => item.id === "generation.p95-latency"), true);
+
+  const refreshed = await app.handle(new Request("http://localhost/api/alerts/active", { headers }));
+  assert.equal(refreshed.status, 200);
+  const refreshedBody = await refreshed.json();
+  const refreshedAlert = refreshedBody.alerts.find((alert) => alert.id === "generation.p95-latency");
+  assert.equal(refreshedAlert.acknowledged, true);
+  assert.equal(refreshedBody.alerts.filter((alert) => !alert.acknowledged).some((alert) => alert.id === "generation.p95-latency"), false);
+  assert.equal(refreshedBody.summary.acknowledged, 1);
+});
+
+test("admin active alerts honors legacy normalized acknowledged alert ids", async () => {
+  const generationLogStore = createMemoryLogStore();
+  await generationLogStore.append({
+    id: "gen-slow",
+    createdAt: "2026-06-19T01:01:00.000Z",
+    status: "success",
+    interfaceId: "codex",
+    upstreamId: "primary",
+    model: "gpt-image-2",
+    durationMs: 85000,
+  });
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      acknowledgedAlerts: [{
+        id: "generation-p95-latency",
+        acknowledgedAt: "2026-06-19T02:00:00.000Z",
+        username: "admin",
+      }],
+      alerts: {
+        p95LatencyMsThreshold: 30000,
+      },
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+  });
+  const headers = await loginHeaders(app);
+
+  const active = await app.handle(new Request("http://localhost/api/alerts/active", { headers }));
+  assert.equal(active.status, 200);
+  const activeBody = await active.json();
+  const p95Alert = activeBody.alerts.find((alert) => alert.id === "generation.p95-latency");
+  assert.equal(p95Alert.acknowledged, true);
+  assert.equal(activeBody.summary.acknowledged, 1);
 });
 
 test("admin active alerts sends webhook notifications once per alert set", async () => {

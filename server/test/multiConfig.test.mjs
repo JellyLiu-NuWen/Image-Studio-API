@@ -183,6 +183,18 @@ test("publicConfig exposes operations-console metadata without raw secrets", () 
   assert.equal(exposed.security.totpEnabled, false);
 });
 
+test("normalizeConfig preserves dotted acknowledged alert ids", () => {
+  const config = normalizeConfig({
+    acknowledgedAlerts: [{
+      id: "generation.p95-latency",
+      acknowledgedAt: "2026-06-22T07:00:00.000Z",
+      username: "admin",
+    }],
+  });
+
+  assert.equal(config.acknowledgedAlerts[0].id, "generation.p95-latency");
+});
+
 test("normalizeConfig persists recent config backups and publicConfig hides raw backup secrets", () => {
   const config = normalizeConfig({
     configBackups: Array.from({ length: 12 }, (_, index) => ({

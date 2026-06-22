@@ -227,6 +227,15 @@ function normalizeId(value, fallback) {
   return normalized || fallback;
 }
 
+function normalizeAlertId(value, fallback) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return normalized || fallback;
+}
+
 function hasOwnValue(object, key) {
   return Object.prototype.hasOwnProperty.call(object || {}, key);
 }
@@ -350,7 +359,7 @@ function normalizeQualityCase(raw = {}, index = 0, previous = {}) {
 
 function normalizeAcknowledgedAlert(raw = {}, index = 0, previous = {}) {
   return {
-    id: normalizeId(raw.id || previous.id, `alert-${index + 1}`),
+    id: normalizeAlertId(raw.id || previous.id, `alert-${index + 1}`),
     acknowledgedAt: String(raw.acknowledgedAt || previous.acknowledgedAt || "").trim(),
     username: String(raw.username || previous.username || "admin").trim(),
   };
@@ -480,13 +489,13 @@ function normalizeUpstream(raw = {}, index = 0, previous = {}) {
   };
 }
 
-function normalizeCollection(items, previousItems, normalizeItem) {
+function normalizeCollection(items, previousItems, normalizeItem, normalizeItemId = normalizeId) {
   const previousMap = byId(previousItems);
   const seen = new Set();
   const normalized = [];
   for (const [index, item] of (Array.isArray(items) ? items : []).entries()) {
     const fallbackId = index === 0 ? "default" : `item-${index + 1}`;
-    const id = normalizeId(item?.id, fallbackId);
+    const id = normalizeItemId(item?.id, fallbackId);
     if (seen.has(id)) continue;
     seen.add(id);
     normalized.push(normalizeItem({ ...item, id }, index, previousMap.get(id) || {}));
@@ -572,6 +581,7 @@ export function normalizeConfig(input = {}, previous = {}) {
     Array.isArray(input.acknowledgedAlerts) ? input.acknowledgedAlerts : (Array.isArray(previous.acknowledgedAlerts) ? previous.acknowledgedAlerts : []),
     previous.acknowledgedAlerts,
     normalizeAcknowledgedAlert,
+    normalizeAlertId,
   );
   const configBackups = normalizeCollection(
     Array.isArray(input.configBackups) ? input.configBackups : (Array.isArray(previous.configBackups) ? previous.configBackups : []),
@@ -688,7 +698,7 @@ export function mergeConfigUpdate(current, patch) {
       ? normalizeCollection(patch.qualityCases, normalizedCurrent.qualityCases, normalizeQualityCase)
       : normalizedCurrent.qualityCases,
     acknowledgedAlerts: Array.isArray(patch.acknowledgedAlerts)
-      ? normalizeCollection(patch.acknowledgedAlerts, normalizedCurrent.acknowledgedAlerts, normalizeAcknowledgedAlert)
+      ? normalizeCollection(patch.acknowledgedAlerts, normalizedCurrent.acknowledgedAlerts, normalizeAcknowledgedAlert, normalizeAlertId)
       : normalizedCurrent.acknowledgedAlerts,
     configBackups: Array.isArray(patch.configBackups)
       ? normalizeCollection(patch.configBackups, normalizedCurrent.configBackups, normalizeConfigBackup).slice(0, 10)

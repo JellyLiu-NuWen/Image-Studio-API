@@ -155,6 +155,8 @@ const noCostHealthLoading = ref(false)
 const activeAlerts = ref<ActiveAlert[]>([])
 const alertSummary = ref<AlertSummary>({ total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 })
 const alertNotification = ref<AlertNotification>({ status: 'idle' })
+const alertAckLoading = reactive<Record<string, boolean>>({})
+const alertAckAllLoading = ref(false)
 const backupStatus = ref('')
 const backupFileInput = ref<HTMLInputElement | null>(null)
 const settingsPanelVisible = ref(false)
@@ -567,7 +569,9 @@ const systemSummaryCards = computed(() => [
     type: noCostHealth.value?.summary.failed ? 'warning' : noCostHealth.value ? 'success' : 'info'
   }
 ])
-const pendingAlertCount = computed(() => activeAlerts.value.filter((item) => !item.acknowledged).length)
+const pendingActiveAlerts = computed(() => activeAlerts.value.filter((item) => !item.acknowledged))
+const acknowledgedActiveAlerts = computed(() => activeAlerts.value.filter((item) => item.acknowledged))
+const pendingAlertCount = computed(() => pendingActiveAlerts.value.length)
 const notificationTabs = computed(() => [
   { key: 'alerts', label: '告警', count: pendingAlertCount.value },
   { key: 'notifications', label: '通知', count: alertNotification.value.status === 'idle' ? 0 : 1 },
@@ -575,8 +579,7 @@ const notificationTabs = computed(() => [
 ] as Array<{ key: 'alerts' | 'notifications' | 'system'; label: string; count: number }>)
 const notificationPreviewItems = computed(() => {
   if (activeNotificationTab.value === 'alerts') {
-    return activeAlerts.value
-      .filter((item) => !item.acknowledged)
+    return pendingActiveAlerts.value
       .slice(0, 6)
       .map((item) => ({
         id: item.id,
@@ -1644,11 +1647,38 @@ async function saveAlerts() {
 }
 
 async function acknowledgeAlert(id: string) {
-  const data = await adminApi.acknowledgeAlert(id)
-  activeAlerts.value = data.alerts
-  alertSummary.value = data.summary
-  alertNotification.value = data.notification
-  ElMessage.success('告警已确认')
+  if (alertAckLoading[id]) return
+  alertAckLoading[id] = true
+  try {
+    const data = await adminApi.acknowledgeAlert(id)
+    activeAlerts.value = data.alerts
+    alertSummary.value = data.summary
+    alertNotification.value = data.notification
+    ElMessage.success('告警已确认')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '确认告警失败')
+  } finally {
+    alertAckLoading[id] = false
+  }
+}
+
+async function acknowledgeAllAlerts() {
+  const pending = [...pendingActiveAlerts.value]
+  if (!pending.length || alertAckAllLoading.value) return
+  alertAckAllLoading.value = true
+  try {
+    for (const item of pending) {
+      const data = await adminApi.acknowledgeAlert(item.id)
+      activeAlerts.value = data.alerts
+      alertSummary.value = data.summary
+      alertNotification.value = data.notification
+    }
+    ElMessage.success(`已确认 ${pending.length} 条告警`)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '批量确认告警失败')
+  } finally {
+    alertAckAllLoading.value = false
+  }
 }
 
 async function restoreVersion(id: string) {
@@ -3146,17 +3176,25 @@ window.addEventListener('beforeunload', (event) => {
             <template #header>
               <div class="art-alert-panel-header">
                 <div class="art-alert-panel-title">
-                  <h4><Bell />当前告警</h4>
-                  <p>集中查看活跃风险、确认状态和处理入口。</p>
+                  <h4><Bell />待处理告警</h4>
+                  <p>只显示尚未确认的活跃风险；确认后会移入右侧记录。</p>
                 </div>
                 <div class="art-alert-panel-actions">
                   <el-tag :type="pendingAlertCount ? 'danger' : 'success'">待处理 {{ pendingAlertCount }}</el-tag>
+                  <el-button
+                    class="art-alert-panel-action"
+                    :disabled="!pendingAlertCount"
+                    :loading="alertAckAllLoading"
+                    @click="acknowledgeAllAlerts"
+                  >
+                    全部确认
+                  </el-button>
                   <el-button class="art-alert-panel-action" :icon="Refresh" @click="refreshAll">刷新</el-button>
                 </div>
               </div>
             </template>
             <div class="art-alert-panel-body">
-              <el-table :data="activeAlerts" :size="tableSize" height="420" empty-text="暂无活跃告警">
+              <el-table :data="pendingActiveAlerts" :size="tableSize" height="420" empty-text="暂无待处理告警">
                 <template #empty>
                   <div class="art-empty-state">
                     <Bell />
@@ -3174,7 +3212,7 @@ window.addEventListener('beforeunload', (event) => {
                   <template #default="{ row }"><el-tag :type="row.acknowledged ? 'info' : 'danger'">{{ row.acknowledged ? '已确认' : '待处理' }}</el-tag></template>
                 </el-table-column>
                 <el-table-column label="操作" width="120">
-                  <template #default="{ row }"><el-button size="small" class="art-alert-panel-action" :disabled="row.acknowledged" @click="acknowledgeAlert(row.id)">确认</el-button></template>
+                  <template #default="{ row }"><el-button size="small" class="art-alert-panel-action" :loading="alertAckLoading[row.id]" :disabled="row.acknowledged" @click="acknowledgeAlert(row.id)">确认</el-button></template>
                 </el-table-column>
               </el-table>
             </div>
@@ -3196,6 +3234,29 @@ window.addEventListener('beforeunload', (event) => {
                   <div><span>HTTP 状态</span><strong>{{ alertNotification.webhookStatus || '-' }}</strong></div>
                   <div><span>通知条数</span><strong>{{ alertNotification.alertCount || 0 }}</strong></div>
                 </div>
+              </div>
+            </el-card>
+            <el-card shadow="never" class="art-alert-ack-workspace art-alert-panel art-alert-ack-panel">
+              <template #header>
+                <div class="art-alert-panel-header">
+                  <div class="art-alert-panel-title">
+                    <h4><Finished />已确认记录</h4>
+                    <p>保留当前仍活跃但已被人工确认的告警，刷新后不会回到待处理。</p>
+                  </div>
+                  <div class="art-alert-panel-actions">
+                    <el-tag type="info">已确认 {{ acknowledgedActiveAlerts.length }}</el-tag>
+                  </div>
+                </div>
+              </template>
+              <div class="art-alert-panel-body">
+                <div v-if="acknowledgedActiveAlerts.length" class="art-alert-ack-list">
+                  <div v-for="item in acknowledgedActiveAlerts" :key="item.id">
+                    <span>{{ item.title }}</span>
+                    <strong>{{ item.acknowledgedAt ? formatTime(item.acknowledgedAt) : '已确认' }}</strong>
+                    <small>{{ item.message }}</small>
+                  </div>
+                </div>
+                <div v-else class="art-alert-ack-empty">暂无已确认告警</div>
               </div>
             </el-card>
             <el-card shadow="never" class="art-alert-rules-workspace art-alert-panel art-alert-rules-panel">

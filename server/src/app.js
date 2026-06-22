@@ -421,6 +421,14 @@ function createAlert(id, severity, title, message, details = {}) {
   };
 }
 
+function legacyAlertId(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function alertSummary(alerts) {
   return alerts.reduce((summary, alert) => {
     summary.total += 1;
@@ -560,8 +568,8 @@ function deriveActiveAlerts(config, metrics) {
   const acknowledged = new Map(config.acknowledgedAlerts.map((item) => [item.id, item]));
   return alerts.map((alert) => ({
     ...alert,
-    acknowledged: acknowledged.has(alert.id),
-    acknowledgedAt: acknowledged.get(alert.id)?.acknowledgedAt || "",
+    acknowledged: acknowledged.has(alert.id) || acknowledged.has(legacyAlertId(alert.id)),
+    acknowledgedAt: (acknowledged.get(alert.id) || acknowledged.get(legacyAlertId(alert.id)))?.acknowledgedAt || "",
   }));
 }
 

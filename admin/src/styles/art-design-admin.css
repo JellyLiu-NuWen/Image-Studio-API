@@ -3047,9 +3047,52 @@ button,
 
 .art-alert-queue-workspace :deep(.el-card__body),
 .art-alert-rules-workspace :deep(.el-card__body),
-.art-alert-notification-workspace :deep(.el-card__body) {
+.art-alert-notification-workspace :deep(.el-card__body),
+.art-alert-ack-workspace :deep(.el-card__body) {
   display: grid;
   gap: 12px;
+}
+
+.art-alert-ack-list {
+  display: grid;
+  gap: 8px;
+}
+
+.art-alert-ack-list div {
+  display: grid;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid var(--art-border);
+  border-radius: 10px;
+  background: var(--art-soft);
+}
+
+.art-alert-ack-list span {
+  color: var(--art-text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.art-alert-ack-list strong,
+.art-alert-ack-list small,
+.art-alert-ack-empty {
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.art-alert-ack-list small {
+  overflow-wrap: anywhere;
+}
+
+.art-alert-ack-empty {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--art-border);
+  border-radius: 10px;
+  background: var(--art-soft);
 }
 
 .advanced-filter {
