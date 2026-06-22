@@ -4294,4 +4294,79 @@ button,
     width: 100%;
     justify-content: center;
   }
+
+  .art-table-workspace,
+  .art-log-workspace,
+  .art-usage-breakdown-workspace,
+  .art-alert-queue-workspace,
+  .art-session-workspace,
+  .art-audit-workspace,
+  .art-backup-workspace,
+  .art-version-workspace,
+  .art-health-workspace {
+    overflow-x: auto;
+  }
+
+  .art-table-card :deep(.el-table),
+  .art-log-workspace :deep(.el-table),
+  .art-usage-breakdown-workspace :deep(.el-table),
+  .art-alert-queue-workspace :deep(.el-table),
+  .art-session-workspace :deep(.el-table),
+  .art-audit-workspace :deep(.el-table),
+  .art-backup-workspace :deep(.el-table),
+  .art-version-workspace :deep(.el-table),
+  .art-system-panel-body :deep(.el-table) {
+    min-width: 680px;
+  }
+
+  .config-drawer.el-drawer,
+  .art-log-detail-drawer.el-drawer,
+  .art-settings-panel.el-drawer {
+    width: 100vw !important;
+    max-width: 100vw;
+  }
+
+  .config-drawer :deep(.el-drawer__body),
+  .art-log-detail-drawer :deep(.el-drawer__body),
+  .art-settings-panel :deep(.el-drawer__body) {
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  .art-detail-panel-header,
+  .art-system-panel-header,
+  .art-quality-case-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .art-detail-panel-meta,
+  .art-system-panel-actions,
+  .art-quality-case-panel-tools,
+  .art-table-pagination {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .art-system-panel-actions .el-button,
+  .art-system-panel-action,
+  .art-drawer-footer-actions .el-button,
+  .art-detail-action-bar .el-button,
+  .art-quality-case-target {
+    width: 100%;
+  }
+
+  .art-detail-action-bar strong,
+  .art-detail-action-bar span,
+  .art-deployment-status p {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .art-curl-block {
+    max-width: calc(100vw - 48px);
+  }
 }

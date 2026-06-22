@@ -522,6 +522,18 @@ test("Vue header and sidebar expose Art Design Pro menu collapse and mobile shel
   assert.doesNotMatch(styleSource, /\.brand-logo(?![A-Za-z0-9_-])/, "Styles should remove the generic brand-logo selector");
 });
 
+test("Vue narrow-screen styles protect tables drawers logs and system panels", async () => {
+  const styleSource = await readFile(new URL("../../admin/src/styles/art-design-admin.css", import.meta.url), "utf8");
+
+  assert.match(styleSource, /@media \(max-width: 720px\)/, "Styles should keep a narrow-screen breakpoint");
+  assert.match(styleSource, /@media \(max-width: 720px\)[\s\S]*\.art-table-workspace,[\s\S]*overflow-x: auto/, "Narrow tables should be horizontally scrollable");
+  assert.match(styleSource, /@media \(max-width: 720px\)[\s\S]*\.art-system-panel-body :deep\(\.el-table\)[\s\S]*min-width: 680px/, "System tables should keep a stable scan width on phones");
+  assert.match(styleSource, /@media \(max-width: 720px\)[\s\S]*\.config-drawer\.el-drawer,[\s\S]*\.art-log-detail-drawer\.el-drawer,[\s\S]*width: 100vw !important/, "Config and log drawers should fill the phone viewport");
+  assert.match(styleSource, /@media \(max-width: 720px\)[\s\S]*\.art-detail-panel-header,[\s\S]*\.art-system-panel-header,[\s\S]*flex-direction: column/, "Detail and system panel headers should stack on narrow screens");
+  assert.match(styleSource, /@media \(max-width: 720px\)[\s\S]*\.art-detail-action-bar strong,[\s\S]*white-space: normal/, "Log detail footer text should wrap instead of clipping");
+  assert.match(styleSource, /@media \(max-width: 720px\)[\s\S]*\.art-curl-block[\s\S]*max-width: calc\(100vw - 48px\)/, "Curl replay blocks should stay inside the viewport");
+});
+
 test("Vue topbar notifications use an Art Design Pro notification panel", async () => {
   const source = await readAppSource();
   const topbarSection = sourceBetween(
