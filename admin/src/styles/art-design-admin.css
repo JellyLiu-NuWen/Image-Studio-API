@@ -4084,6 +4084,106 @@ button,
   background: linear-gradient(180deg, rgba(236, 253, 245, 0.94), rgba(255, 255, 255, 0.98));
 }
 
+.art-result-image-card {
+  border-color: rgba(37, 99, 235, 0.16);
+}
+
+.art-result-image-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.art-result-image-item {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--art-border);
+  border-radius: 12px;
+  background: var(--art-card);
+}
+
+.art-result-image-item img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: block;
+  object-fit: contain;
+  background:
+    linear-gradient(45deg, rgba(148, 163, 184, 0.12) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(148, 163, 184, 0.12) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(148, 163, 184, 0.12) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(148, 163, 184, 0.12) 75%);
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  background-size: 20px 20px;
+}
+
+.art-result-image-item figcaption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+.art-result-image-item figcaption > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.art-result-image-item strong {
+  overflow: hidden;
+  color: var(--art-text);
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.art-result-image-item span {
+  overflow: hidden;
+  color: var(--art-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.art-result-image-item figcaption > div:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.art-icon-action-button {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(20, 184, 166, 0.16);
+  border-radius: 8px;
+  background: rgba(20, 184, 166, 0.06);
+  color: var(--art-primary);
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.art-icon-action-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.art-icon-action-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 184, 166, 0.32);
+  background: rgba(20, 184, 166, 0.12);
+}
+
+.art-icon-action-button:focus-visible {
+  outline: 2px solid rgba(20, 184, 166, 0.35);
+  outline-offset: 2px;
+}
+
 .art-curl-block {
   margin: 0;
   padding: 14px;
@@ -4397,6 +4497,7 @@ button,
 
   .art-drawer-status-grid,
   .art-drawer-form-grid,
+  .art-result-image-grid,
   .art-detail-summary-grid,
   .art-detail-route-steps div {
     grid-template-columns: 1fr;

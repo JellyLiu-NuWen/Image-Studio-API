@@ -11,6 +11,7 @@ import {
 import { json, methodNotAllowed, notFound, tooManyRequests, unauthorized } from "./http.js";
 import { mergeConfigUpdate, normalizeConfig, publicConfig } from "./config.js";
 import { dryRunMultipartEditDefaults, forwardOpenAIPath } from "./upstreamProxy.js";
+import { extractImageArtifactsFromJSONText, mergeImageArtifacts } from "./imageArtifacts.js";
 import { summarizeMetrics } from "./metrics.js";
 import { normalizeBaseURL } from "../../shared/kernel/requestModel.js";
 import { createHmac, randomBytes } from "node:crypto";
@@ -658,6 +659,7 @@ function buildGenerationLogRecord({
   url,
   errorSummary,
   streamDiagnostics,
+  responseBodyText = "",
 }) {
   const responseHeaders = response?.headers || new Headers();
   const responseStatus = Number(response?.status) || 0;
@@ -677,6 +679,18 @@ function buildGenerationLogRecord({
     durationMs: Math.max(0, now() - startedAt),
     errorSummary: decodeHeaderValue(responseHeaders.get("x-image-studio-error-summary")) || errorSummary,
   };
+  const resultImages = mergeImageArtifacts(
+    [],
+    [
+      ...extractImageArtifactsFromJSONText(responseBodyText, { source: "response" }),
+      ...(Array.isArray(streamDiagnostics?.resultImages) ? streamDiagnostics.resultImages : []),
+    ],
+  );
+  if (resultImages.length) {
+    const completedImages = resultImages.filter((item) => !item.partial);
+    record.resultImages = resultImages;
+    record.imageCount = completedImages.length || resultImages.length;
+  }
   if (streamDiagnostics) {
     record.stream = sanitizeStreamDiagnostics(streamDiagnostics);
     record.status = streamDiagnostics.finalState === "completed" ? "success" : "failed";
@@ -2264,6 +2278,9 @@ export function createSelfHostedApp({
         if (!errorSummary) errorSummary = errorSummaryFromResponse(response);
       }
       if (isGenerationEndpoint && generationLogStore && !(response?.headers.get("content-type") || "").toLowerCase().includes("text/event-stream")) {
+        const responseBodyText = response?.clone
+          ? await response.clone().text().catch(() => "")
+          : "";
         await appendLogSafely(generationLogStore, {
           ...buildGenerationLogRecord({
             id,
@@ -2272,6 +2289,7 @@ export function createSelfHostedApp({
             response,
             url,
             errorSummary,
+            responseBodyText,
           }),
         });
       }

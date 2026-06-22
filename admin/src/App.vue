@@ -51,6 +51,7 @@ import type {
   AuditRecord,
   BackupRecord,
   ConfigVersion,
+  GeneratedImageArtifact,
   LogClearTarget,
   LogRecord,
   MetricsResponse,
@@ -774,6 +775,10 @@ const logDetailStreamCards = computed(() => {
     { label: '流事件', value: `${stream.partialImageEvents || 0} / ${stream.completedEvents || 0} / ${stream.errorEvents || 0}`, hint: 'partial / completed / error', type: stream.errorEvents ? 'critical' : 'info' },
     { label: '心跳/分片', value: `${stream.heartbeatCount || 0} / ${stream.upstreamChunkCount || 0}`, hint: `${Math.max(0, Number(stream.upstreamByteCount || 0))} bytes`, type: 'info' }
   ]
+})
+const selectedLogImages = computed(() => {
+  const images = selectedLog.value?.resultImages
+  return Array.isArray(images) ? images : []
 })
 const unhealthyUpstreams = computed(() => upstreamHealth.value.filter((item) => {
   if (!item.enabled) return false
@@ -1933,6 +1938,66 @@ function sanitizedCurl(record: LogRecord) {
 
 async function copySanitizedCurl(record: LogRecord) {
   await copyText(sanitizedCurl(record), '已复制脱敏 curl')
+}
+
+function imageArtifactSource(item: GeneratedImageArtifact) {
+  if (item.kind === 'url') return item.url || ''
+  if (item.b64Json) return `data:${item.mimeType || 'image/png'};base64,${item.b64Json}`
+  return ''
+}
+
+function imageArtifactLabel(item: GeneratedImageArtifact, index: number) {
+  return `${item.partial ? '过程图' : '结果图'} ${index + 1}`
+}
+
+function imageArtifactMeta(item: GeneratedImageArtifact) {
+  const parts = [
+    item.kind === 'url' ? 'URL' : 'base64',
+    item.mimeType || 'image/png'
+  ]
+  if (item.byteSize) {
+    parts.push(item.byteSize >= 1024 * 1024
+      ? `${(item.byteSize / 1024 / 1024).toFixed(1)} MB`
+      : `${Math.max(1, Math.round(item.byteSize / 1024))} KB`)
+  }
+  if (item.partial) parts.push('partial')
+  return parts.join(' · ')
+}
+
+function imageExtension(item: GeneratedImageArtifact) {
+  const mime = String(item.mimeType || '').toLowerCase()
+  if (mime.includes('jpeg')) return 'jpg'
+  if (mime.includes('webp')) return 'webp'
+  if (mime.includes('gif')) return 'gif'
+  return 'png'
+}
+
+function safeFilenamePart(value: string) {
+  return String(value || 'image').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'image'
+}
+
+function downloadImageArtifact(item: GeneratedImageArtifact, index: number) {
+  const source = imageArtifactSource(item)
+  if (!source) {
+    ElMessage.warning('没有可下载的图片数据')
+    return
+  }
+  const link = document.createElement('a')
+  link.href = source
+  link.download = `image-studio-${safeFilenamePart(selectedLog.value?.id || 'request')}-${index + 1}.${imageExtension(item)}`
+  link.rel = 'noopener'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+}
+
+async function copyImageArtifact(item: GeneratedImageArtifact) {
+  const source = imageArtifactSource(item)
+  if (!source) {
+    ElMessage.warning('没有可复制的图片数据')
+    return
+  }
+  await copyText(source, item.kind === 'url' ? '已复制图片链接' : '已复制图片 data URL')
 }
 
 async function markQualityCase(record: LogRecord, label: 'poor' | 'excellent') {
@@ -3985,6 +4050,44 @@ window.addEventListener('beforeunload', (event) => {
               <small>{{ item.hint }}</small>
             </div>
           </div>
+          <el-card v-if="selectedLogImages.length" shadow="never" class="art-result-image-card art-detail-panel art-result-image-panel">
+            <template #header>
+              <div class="art-detail-panel-header">
+                <div class="art-detail-panel-title">
+                  <h4><MagicStick />生成结果</h4>
+                  <p>展示本次请求返回的结果图，用于留存和质量复盘。</p>
+                </div>
+                <div class="art-detail-panel-meta">
+                  <span>{{ selectedLogImages.length }} 张</span>
+                </div>
+              </div>
+            </template>
+            <div class="art-detail-panel-body">
+              <div class="art-result-image-grid">
+                <figure v-for="(item, index) in selectedLogImages" :key="`${item.kind}-${item.source || index}-${index}`" class="art-result-image-item">
+                  <img :src="imageArtifactSource(item)" :alt="imageArtifactLabel(item, index)" loading="lazy">
+                  <figcaption>
+                    <div>
+                      <strong>{{ imageArtifactLabel(item, index) }}</strong>
+                      <span>{{ imageArtifactMeta(item) }}</span>
+                    </div>
+                    <div>
+                      <el-tooltip content="下载图片" placement="top">
+                        <button type="button" class="art-icon-action-button" :aria-label="`下载${imageArtifactLabel(item, index)}`" @click="downloadImageArtifact(item, index)">
+                          <Download />
+                        </button>
+                      </el-tooltip>
+                      <el-tooltip content="复制图片数据" placement="top">
+                        <button type="button" class="art-icon-action-button" :aria-label="`复制${imageArtifactLabel(item, index)}`" @click="copyImageArtifact(item)">
+                          <Link />
+                        </button>
+                      </el-tooltip>
+                    </div>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+          </el-card>
           <el-card shadow="never" class="art-route-detail-card art-detail-panel art-route-detail-panel">
             <template #header>
               <div class="art-detail-panel-header">

@@ -1341,6 +1341,7 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.match(detailDrawer, /art-detail-summary-grid/, "Log detail drawer should render Art summary cards");
   assert.match(detailDrawer, /art-detail-route-steps/, "Log detail drawer should render route steps");
   assert.match(detailDrawer, /art-detail-action-bar/, "Log detail drawer should render an Art action bar");
+  assert.match(detailDrawer, /art-result-image-card/, "Log detail drawer should render retained result images");
   assert.match(detailDrawer, /art-stream-detail-card/, "Log detail drawer should render stream diagnostics");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-stack(?![A-Za-z0-9_-])/, "Log detail drawer should not keep the generic detail-stack class");
   assert.doesNotMatch(detailDrawer, /(?<![A-Za-z0-9_-])detail-overview(?![A-Za-z0-9_-])/, "Log detail drawer should not keep the generic detail-overview class");
@@ -1351,6 +1352,7 @@ test("Vue log detail drawer uses an Art Design Pro detail workspace", async () =
   assert.match(styleSource, /\.art-detail-overview/, "Styles should include Art detail overview styling");
   assert.match(styleSource, /\.art-detail-summary-grid/, "Styles should include Art detail summary styling");
   assert.match(styleSource, /\.art-detail-route-steps/, "Styles should include route step styling");
+  assert.match(styleSource, /\.art-result-image-grid/, "Styles should include retained result image grid styling");
   assert.match(styleSource, /\.art-detail-action-bar/, "Styles should include Art detail action bar styling");
   assert.doesNotMatch(styleSource, /\.detail-stack(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-stack selector");
   assert.doesNotMatch(styleSource, /\.detail-overview(?![A-Za-z0-9_-])/, "Styles should remove the legacy detail-overview selector");

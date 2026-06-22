@@ -212,8 +212,21 @@ export interface LogRecord {
   retryCount?: number
   failoverChain?: string[]
   durationMs: number
+  imageCount?: number
+  resultImages?: GeneratedImageArtifact[]
   errorSummary?: string
   stream?: GenerationStreamDiagnostics
+}
+
+export interface GeneratedImageArtifact {
+  index: number
+  kind: 'b64_json' | 'url'
+  mimeType: string
+  url?: string
+  b64Json?: string
+  byteSize?: number
+  source?: string
+  partial?: boolean
 }
 
 export interface GenerationStreamDiagnostics {

@@ -1012,6 +1012,48 @@ test("image generation logs include the upstream failure summary", async () => {
   assert.match(records[0].errorSummary, /upstream gateway timed out after billing/);
 });
 
+test("image generation logs retain generated image artifacts", async () => {
+  const generationLogStore = createMemoryLogStore();
+  const resultBody = {
+    data: [
+      { b64_json: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB" },
+      { url: "https://cdn.example/generated/result.webp" },
+    ],
+  };
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => new Response(JSON.stringify(resultBody), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "retain result image",
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), resultBody);
+  const records = await generationLogStore.readRecent(10);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].status, "success");
+  assert.equal(records[0].imageCount, 2);
+  assert.equal(records[0].resultImages.length, 2);
+  assert.equal(records[0].resultImages[0].kind, "b64_json");
+  assert.equal(records[0].resultImages[0].mimeType, "image/png");
+  assert.equal(records[0].resultImages[0].b64Json, resultBody.data[0].b64_json);
+  assert.equal(records[0].resultImages[1].kind, "url");
+  assert.equal(records[0].resultImages[1].url, resultBody.data[1].url);
+});
+
 test("image generation logs include stream diagnostics for partial success", async () => {
   const generationLogStore = createMemoryLogStore();
   const app = createSelfHostedApp({
@@ -1025,7 +1067,7 @@ test("image generation logs include stream diagnostics for partial success", asy
     fetchImpl: async () => new Response(new ReadableStream({
       start(controller) {
         controller.enqueue(new TextEncoder().encode("data: {\"type\":\"image_generation.partial_image\"}\n\n"));
-        controller.enqueue(new TextEncoder().encode("data: {\"type\":\"image_generation.completed\"}\n\n"));
+        controller.enqueue(new TextEncoder().encode("data: {\"type\":\"image_generation.completed\",\"data\":[{\"b64_json\":\"stream-final-image\"}]}\n\n"));
         controller.close();
       },
     }), {
@@ -1050,6 +1092,8 @@ test("image generation logs include stream diagnostics for partial success", asy
   assert.equal(records[0].stream.partialImageEvents >= 1, true);
   assert.equal(records[0].stream.completedEvents >= 1, true);
   assert.equal(records[0].stream.errorEvents, 0);
+  assert.equal(records[0].imageCount, 1);
+  assert.equal(records[0].resultImages[0].b64Json, "stream-final-image");
 });
 
 test("image generation logs include stream diagnostics for upstream error", async () => {

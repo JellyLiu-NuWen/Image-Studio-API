@@ -6,6 +6,11 @@ import {
   RETRY_BACKOFF_MS,
 } from "../../shared/kernel/requestModel.js";
 import { json } from "./http.js";
+import {
+  extractImageArtifactsFromJSONText,
+  extractImageArtifactsFromSSEText,
+  mergeImageArtifacts,
+} from "./imageArtifacts.js";
 
 function copyPassthroughHeaders(request, upstreamApiKey, overrides = {}) {
   const headers = new Headers();
@@ -242,6 +247,7 @@ function createStreamDiagnostics(upstreamId, timeoutSeconds) {
     errorSummary: "",
     events: ["upstream_start"],
     upstreamId,
+    resultImages: [],
   };
 }
 
@@ -274,6 +280,8 @@ function markGatewayTimeout(diagnostics, summary = "") {
 
 function recordStreamText(diagnostics, text) {
   if (!text) return;
+  mergeImageArtifacts(diagnostics.resultImages, extractImageArtifactsFromJSONText(text, { source: "stream" }));
+  mergeImageArtifacts(diagnostics.resultImages, extractImageArtifactsFromSSEText(text, diagnostics, { source: "stream" }));
   const partialMatches = text.match(/partial_image|partial\.image/gi) || [];
   if (partialMatches.length) {
     diagnostics.partialImageEvents += partialMatches.length;
