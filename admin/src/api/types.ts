@@ -269,6 +269,28 @@ export interface LogClearResponse {
   }
 }
 
+export type NoCostHealthStatus = 'pass' | 'warn' | 'fail'
+
+export interface NoCostHealthCheck {
+  id: string
+  label: string
+  status: NoCostHealthStatus
+  message: string
+  details: Record<string, unknown>
+}
+
+export interface NoCostHealthResponse {
+  ok: boolean
+  checkedAt: string
+  summary: {
+    total: number
+    passed: number
+    warning: number
+    failed: number
+  }
+  checks: NoCostHealthCheck[]
+}
+
 export interface UpdateInfo {
   currentVersion?: string
   currentCommit?: string

@@ -163,6 +163,33 @@ function insertBeforeMultipartClose(raw, boundary, text) {
   return merged.buffer;
 }
 
+export function dryRunMultipartEditDefaults(raw, contentType, config) {
+  const boundary = multipartBoundary(contentType);
+  if (!boundary) {
+    return {
+      ok: false,
+      boundary: "",
+      normalized: false,
+      hasImageArrayField: false,
+      hasMaskField: false,
+      addedDefaults: [],
+      error: "multipart boundary missing",
+    };
+  }
+  const normalizedRaw = withMultipartEditDefaults(raw, contentType, config);
+  const text = new TextDecoder().decode(normalizedRaw);
+  const defaults = ["model", "size", "quality", "output_format"];
+  return {
+    ok: true,
+    boundary,
+    normalized: normalizedRaw !== raw,
+    hasImageArrayField: /name="image\[\]"/.test(text),
+    hasMaskField: /name="mask"/.test(text),
+    addedDefaults: defaults.filter((name) => multipartHasField(text, name)),
+    byteLength: Buffer.from(normalizedRaw).byteLength,
+  };
+}
+
 function lastIndexOfBytes(bytes, needle) {
   if (!needle.length || needle.length > bytes.length) return -1;
   for (let index = bytes.length - needle.length; index >= 0; index -= 1) {

@@ -12,6 +12,7 @@ import type {
   LogClearTarget,
   LogRecord,
   MetricsResponse,
+  NoCostHealthResponse,
   QualityCase,
   QualityPreset,
   SessionRecord,
@@ -147,5 +148,6 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify(backup)
   }),
-  updateCheck: () => requestJSON<{ update: UpdateInfo }>('/update/check')
+  updateCheck: () => requestJSON<{ update: UpdateInfo }>('/update/check'),
+  noCostHealth: () => requestJSON<NoCostHealthResponse>('/health/no-cost')
 }

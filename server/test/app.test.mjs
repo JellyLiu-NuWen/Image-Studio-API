@@ -1846,6 +1846,90 @@ test("admin upstream health exposes latency and latest failure diagnostics", asy
   assert.equal(body.upstreams[0].metrics.lastFailureReason, "upstream gateway timed out after billing");
 });
 
+test("admin no-cost health check covers models stream and multipart without image generation", async () => {
+  const calls = [];
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+        defaultImageModel: "gpt-image-2",
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://primary.example/v1",
+        apiKey: "primary-key",
+        enabled: true,
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), authorization: init.headers.get("authorization") });
+      assert.equal(String(url), "https://primary.example/v1/models");
+      return new Response(JSON.stringify({ data: [{ id: "gpt-image-2" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+  const headers = await loginHeaders(app);
+
+  const response = await app.handle(new Request("http://localhost/api/health/no-cost", { headers }));
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].authorization, "Bearer primary-key");
+  assert.equal(body.checks.some((check) => check.id === "stream.heartbeat" && check.status === "pass"), true);
+  const models = body.checks.find((check) => check.id === "upstream.primary.models");
+  assert.equal(models.status, "pass");
+  assert.equal(models.details.modelCount, 1);
+  const multipart = body.checks.find((check) => check.id === "multipart.edits");
+  assert.equal(multipart.status, "pass");
+  assert.equal(multipart.details.hasImageArrayField, true);
+  assert.equal(multipart.details.hasMaskField, true);
+  assert.equal(multipart.details.charged, false);
+  assert.deepEqual(multipart.details.defaultFields.sort(), ["model", "output_format", "quality", "size"]);
+});
+
+test("admin no-cost health check reports missing upstream key without calling upstream", async () => {
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      interfaces: [{
+        id: "codex",
+        name: "Codex",
+        apiToken: "client-token",
+        upstreamIds: ["primary"],
+      }],
+      upstreams: [{
+        id: "primary",
+        name: "Primary",
+        baseURL: "https://primary.example/v1",
+        apiKey: "",
+        enabled: true,
+      }],
+    }),
+    ...ADMIN_OPTIONS,
+    fetchImpl: async () => {
+      throw new Error("missing-key health check must not call upstream");
+    },
+  });
+  const headers = await loginHeaders(app);
+
+  const response = await app.handle(new Request("http://localhost/api/health/no-cost", { headers }));
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, false);
+  const keyCheck = body.checks.find((check) => check.id === "upstream.primary.api-key");
+  assert.equal(keyCheck.status, "fail");
+  assert.match(keyCheck.message, /API Key/);
+});
+
 test("admin can read and restore config versions and audit logs", async () => {
   const store = memoryStore({
     imageApiToken: "client-token",

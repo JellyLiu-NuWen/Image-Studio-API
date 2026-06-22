@@ -10,8 +10,9 @@ import {
 } from "./auth.js";
 import { json, methodNotAllowed, notFound, tooManyRequests, unauthorized } from "./http.js";
 import { mergeConfigUpdate, normalizeConfig, publicConfig } from "./config.js";
-import { forwardOpenAIPath } from "./upstreamProxy.js";
+import { dryRunMultipartEditDefaults, forwardOpenAIPath } from "./upstreamProxy.js";
 import { summarizeMetrics } from "./metrics.js";
+import { normalizeBaseURL } from "../../shared/kernel/requestModel.js";
 import { createHmac, randomBytes } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 
@@ -988,6 +989,217 @@ async function handleTestUpstream({ request, store, upstreamId, fetchImpl, audit
   }
 }
 
+function noCostCheck(id, label, status, message, details = {}) {
+  return { id, label, status, message, details };
+}
+
+function noCostSummary(checks) {
+  const summary = { total: checks.length, passed: 0, warning: 0, failed: 0 };
+  for (const check of checks) {
+    if (check.status === "pass") summary.passed += 1;
+    else if (check.status === "warn") summary.warning += 1;
+    else summary.failed += 1;
+  }
+  return summary;
+}
+
+function noCostTimeoutSignal(ms = 15_000) {
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+    return AbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
+async function checkNoCostModels({ config, fetchImpl, now }) {
+  const checks = [];
+  const enabledUpstreams = config.upstreams.filter((upstream) => upstream.enabled !== false);
+  if (!enabledUpstreams.length) {
+    return [noCostCheck("upstreams.enabled", "上游配置", "fail", "没有启用的上游。")];
+  }
+  for (const upstream of enabledUpstreams) {
+    const baseDetails = { upstreamId: upstream.id, name: upstream.name, baseURL: upstream.baseURL ? normalizeBaseURL(upstream.baseURL) : "" };
+    if (!upstream.baseURL) {
+      checks.push(noCostCheck(`upstream.${upstream.id}.base-url`, `${upstream.name} Base URL`, "fail", "上游 Base URL 未配置。", baseDetails));
+      continue;
+    }
+    if (!upstream.apiKey) {
+      checks.push(noCostCheck(`upstream.${upstream.id}.api-key`, `${upstream.name} API Key`, "fail", "上游 API Key 未配置。", baseDetails));
+      continue;
+    }
+    checks.push(noCostCheck(`upstream.${upstream.id}.api-key`, `${upstream.name} API Key`, "pass", "上游 Key 已配置，检查结果不会暴露密钥。", baseDetails));
+    const startedAt = now();
+    const modelsURL = `${normalizeBaseURL(upstream.baseURL)}/v1/models`;
+    try {
+      const response = await fetchImpl(modelsURL, {
+        method: "GET",
+        headers: new Headers({
+          accept: "application/json",
+          authorization: `Bearer ${upstream.apiKey}`,
+        }),
+        signal: noCostTimeoutSignal(),
+      });
+      const durationMs = Math.max(0, now() - startedAt);
+      const body = await response.clone().json().catch(() => ({}));
+      const models = Array.isArray(body?.data) ? body.data : [];
+      checks.push(noCostCheck(
+        `upstream.${upstream.id}.models`,
+        `${upstream.name} /v1/models`,
+        response.ok ? "pass" : "fail",
+        response.ok ? `可读取模型目录，返回 ${models.length} 个模型。` : `上游返回 HTTP ${response.status}。`,
+        {
+          ...baseDetails,
+          url: modelsURL,
+          upstreamStatus: response.status,
+          durationMs,
+          modelCount: models.length,
+          sampleModels: models.slice(0, 5).map((model) => String(model?.id || model || "")).filter(Boolean),
+        },
+      ));
+    } catch (error) {
+      checks.push(noCostCheck(`upstream.${upstream.id}.models`, `${upstream.name} /v1/models`, "fail", error?.message || "读取模型目录失败。", {
+        ...baseDetails,
+        url: modelsURL,
+        upstreamStatus: 0,
+        durationMs: Math.max(0, now() - startedAt),
+      }));
+    }
+  }
+  return checks;
+}
+
+async function checkNoCostStreamHeartbeat() {
+  const response = streamHealthCheck(new URL("http://localhost/healthz/stream?durationMs=1&intervalMs=1"));
+  const reader = response.body?.getReader();
+  if (!reader) {
+    return noCostCheck("stream.heartbeat", "SSE 心跳", "fail", "无法读取本机 SSE 健康流。");
+  }
+  try {
+    const firstChunk = await reader.read();
+    const text = new TextDecoder().decode(firstChunk.value || new Uint8Array());
+    const ok = response.status === 200
+      && (response.headers.get("content-type") || "").includes("text/event-stream")
+      && text.includes("image-studio health keepalive");
+    return noCostCheck(
+      "stream.heartbeat",
+      "SSE 心跳",
+      ok ? "pass" : "fail",
+      ok ? "本机 SSE 健康流能立即输出 keepalive。" : "SSE 健康流没有按预期输出 keepalive。",
+      {
+        path: "/healthz/stream",
+        contentType: response.headers.get("content-type") || "",
+        firstChunk: text.slice(0, 120),
+      },
+    );
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+}
+
+function checkNoCostMultipartEdit(config) {
+  const clientInterface = config.interfaces.find((item) => item.enabled !== false);
+  if (!clientInterface) {
+    return noCostCheck("multipart.edits", "multipart edits 透传", "fail", "没有可用接口，无法做本地 dry-run。");
+  }
+  const runtimeConfig = configForClientInterface(config, clientInterface);
+  const boundary = "health-edit-boundary";
+  const body = [
+    `--${boundary}`,
+    'Content-Disposition: form-data; name="prompt"',
+    "",
+    "no-cost health check",
+    `--${boundary}`,
+    'Content-Disposition: form-data; name="image"; filename="input.png"',
+    "Content-Type: image/png",
+    "",
+    "fake-image-bytes",
+    `--${boundary}`,
+    'Content-Disposition: form-data; name="mask"; filename="mask.png"',
+    "Content-Type: image/png",
+    "",
+    "fake-mask-bytes",
+    `--${boundary}--`,
+    "",
+  ].join("\r\n");
+  const result = dryRunMultipartEditDefaults(
+    new TextEncoder().encode(body).buffer,
+    `multipart/form-data; boundary=${boundary}`,
+    runtimeConfig,
+  );
+  const requiredDefaults = ["model", "size", "quality", "output_format"];
+  const hasDefaults = requiredDefaults.every((field) => result.addedDefaults?.includes(field));
+  const ok = result.ok && result.hasImageArrayField && result.hasMaskField && hasDefaults;
+  return noCostCheck(
+    "multipart.edits",
+    "multipart edits 透传",
+    ok ? "pass" : "fail",
+    ok ? "本地 dry-run 已验证 image[]、mask 和默认参数透传。" : "本地 multipart edits dry-run 未通过。",
+    {
+      interfaceId: clientInterface.id,
+      normalized: result.normalized,
+      hasImageArrayField: result.hasImageArrayField,
+      hasMaskField: result.hasMaskField,
+      defaultFields: result.addedDefaults || [],
+      byteLength: result.byteLength || 0,
+      charged: false,
+    },
+  );
+}
+
+function checkNoCostInterfaceKeys(config) {
+  const enabledInterfaces = config.interfaces.filter((item) => item.enabled !== false);
+  if (!enabledInterfaces.length) {
+    return noCostCheck("interfaces.enabled", "接口 Key", "fail", "没有启用的接口。");
+  }
+  const missing = enabledInterfaces.filter((item) => !item.apiToken);
+  if (missing.length) {
+    return noCostCheck("interfaces.api-key", "接口 Key", "fail", `${missing.length} 个启用接口缺少调用 Key。`, {
+      missingInterfaceIds: missing.map((item) => item.id),
+    });
+  }
+  return noCostCheck("interfaces.api-key", "接口 Key", "pass", `已配置 ${enabledInterfaces.length} 个启用接口调用 Key。`, {
+    interfaceIds: enabledInterfaces.map((item) => item.id),
+  });
+}
+
+function checkNoCostProxyTimeout(config) {
+  const enabledInterfaces = config.interfaces.filter((item) => item.enabled !== false);
+  const timeoutSeconds = Math.max(...enabledInterfaces.map((item) => Number(item.requestTimeoutSeconds) || 0), 0);
+  const imageMinimumSeconds = Math.max(300, Number(process.env.IMAGE_STUDIO_IMAGE_TIMEOUT_SECONDS || process.env.IMAGE_STUDIO_STREAM_TIMEOUT_SECONDS || 300) || 300);
+  const ok = imageMinimumSeconds >= 300;
+  return noCostCheck(
+    "proxy.timeout",
+    "反代超时",
+    ok ? "pass" : "warn",
+    ok ? `生图链路最小超时保护为 ${imageMinimumSeconds}s。` : "生图链路超时保护低于建议值。",
+    {
+      maxInterfaceTimeoutSeconds: timeoutSeconds,
+      effectiveImageTimeoutSeconds: imageMinimumSeconds,
+      streamHealthPath: "/healthz/stream",
+    },
+  );
+}
+
+async function handleNoCostHealthCheck({ request, store, fetchImpl, now }) {
+  if (request.method !== "GET") return methodNotAllowed();
+  const config = normalizeConfig(await store.load());
+  const checks = [
+    checkNoCostInterfaceKeys(config),
+    checkNoCostProxyTimeout(config),
+    checkNoCostMultipartEdit(config),
+    await checkNoCostStreamHeartbeat(),
+    ...(await checkNoCostModels({ config, fetchImpl, now })),
+  ];
+  const summary = noCostSummary(checks);
+  return json({
+    ok: summary.failed === 0,
+    checkedAt: nowISO(now),
+    summary,
+    checks,
+  });
+}
+
 async function handleConfigVersions({ request, store, configVersions, versionId, auditRecords, username, now }) {
   if (!versionId) {
     if (request.method !== "GET") return methodNotAllowed();
@@ -1486,6 +1698,17 @@ export function createSelfHostedApp({
             },
           })),
         });
+        return response;
+      }
+
+      if (url.pathname === "/api/health/no-cost") {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        response = await handleNoCostHealthCheck({ request, store, fetchImpl, now });
         return response;
       }
 

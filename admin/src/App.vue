@@ -54,6 +54,7 @@ import type {
   LogClearTarget,
   LogRecord,
   MetricsResponse,
+  NoCostHealthResponse,
   QualityCase,
   QualityPreset,
   SessionRecord,
@@ -148,6 +149,8 @@ const backups = ref<BackupRecord[]>([])
 const auditLogs = ref<AuditRecord[]>([])
 const sessions = ref<SessionRecord[]>([])
 const updateInfo = ref<UpdateInfo>({})
+const noCostHealth = ref<NoCostHealthResponse | null>(null)
+const noCostHealthLoading = ref(false)
 const activeAlerts = ref<ActiveAlert[]>([])
 const alertSummary = ref<AlertSummary>({ total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 })
 const alertNotification = ref<AlertNotification>({ status: 'idle' })
@@ -549,6 +552,12 @@ const systemSummaryCards = computed(() => [
     value: updateInfo.value.rollbackCommand ? '可用' : '未配置',
     hint: updateInfo.value.dockerImageTag || updateInfo.value.currentCommit || '等待版本元数据',
     type: updateInfo.value.rollbackCommand ? 'success' : 'info'
+  },
+  {
+    label: '无扣费体检',
+    value: noCostHealth.value ? `${noCostHealth.value.summary.passed}/${noCostHealth.value.summary.total}` : '待检查',
+    hint: noCostHealth.value ? `失败 ${noCostHealth.value.summary.failed} · ${formatTime(noCostHealth.value.checkedAt)}` : '手动检查模型、SSE、multipart',
+    type: noCostHealth.value?.summary.failed ? 'warning' : noCostHealth.value ? 'success' : 'info'
   }
 ])
 const pendingAlertCount = computed(() => activeAlerts.value.filter((item) => !item.acknowledged).length)
@@ -1671,6 +1680,28 @@ async function copyRollbackCommand() {
     return
   }
   await copyText(command, '已复制回滚命令')
+}
+
+function noCostHealthTag(status: string) {
+  if (status === 'pass') return 'success'
+  if (status === 'warn') return 'warning'
+  return 'danger'
+}
+
+async function runNoCostHealthCheck() {
+  noCostHealthLoading.value = true
+  try {
+    noCostHealth.value = await adminApi.noCostHealth()
+    if (noCostHealth.value.ok) {
+      ElMessage.success('无扣费健康检查通过')
+    } else {
+      ElMessage.warning(`无扣费健康检查发现 ${noCostHealth.value.summary.failed} 项失败`)
+    }
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '无扣费健康检查失败')
+  } finally {
+    noCostHealthLoading.value = false
+  }
 }
 
 async function refreshLogsOnly() {
@@ -3345,6 +3376,45 @@ window.addEventListener('beforeunload', (event) => {
                 <span>回滚入口</span>
                 <code>{{ updateInfo.rollbackCommand }}</code>
               </div>
+            </div>
+          </el-card>
+          <el-card shadow="never" class="art-health-workspace art-system-panel art-system-health-panel">
+            <template #header>
+              <div class="art-system-panel-header">
+                <div class="art-system-panel-title">
+                  <h4><Monitor />无扣费健康检查</h4>
+                  <p>一次检查模型目录、上游 Key、SSE 心跳和 multipart edits dry-run。</p>
+                </div>
+                <div class="art-system-panel-actions">
+                  <el-button type="primary" class="art-system-panel-action" :icon="Refresh" :loading="noCostHealthLoading" @click="runNoCostHealthCheck">开始检查</el-button>
+                </div>
+              </div>
+            </template>
+            <div class="art-system-panel-body">
+              <div class="art-system-status-list">
+                <div><span>检查时间</span><strong>{{ noCostHealth ? formatTime(noCostHealth.checkedAt) : '未检查' }}</strong></div>
+                <div><span>通过</span><strong>{{ noCostHealth?.summary.passed || 0 }}</strong></div>
+                <div><span>警告</span><strong>{{ noCostHealth?.summary.warning || 0 }}</strong></div>
+                <div><span>失败</span><strong>{{ noCostHealth?.summary.failed || 0 }}</strong></div>
+              </div>
+              <el-table :data="noCostHealth?.checks || []" :size="tableSize" height="360" empty-text="尚未运行检查">
+                <template #empty>
+                  <div class="art-empty-state">
+                    <Monitor />
+                    <strong>尚未运行无扣费检查</strong>
+                    <span>点击开始检查查看模型、SSE 和 multipart 链路状态。</span>
+                    <el-button type="primary" :icon="Refresh" :loading="noCostHealthLoading" @click="runNoCostHealthCheck">开始检查</el-button>
+                  </div>
+                </template>
+                <el-table-column prop="label" label="检查项" min-width="160" />
+                <el-table-column prop="status" label="状态" width="100">
+                  <template #default="{ row }"><el-tag :type="noCostHealthTag(row.status)">{{ row.status }}</el-tag></template>
+                </el-table-column>
+                <el-table-column prop="message" label="结果" min-width="240" show-overflow-tooltip />
+                <el-table-column prop="details" label="详情" min-width="280" show-overflow-tooltip>
+                  <template #default="{ row }">{{ JSON.stringify(row.details || {}) }}</template>
+                </el-table-column>
+              </el-table>
             </div>
           </el-card>
         </div>

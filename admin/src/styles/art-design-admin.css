@@ -3138,9 +3138,14 @@ button,
 
 .art-backup-workspace :deep(.el-card__body),
 .art-version-workspace :deep(.el-card__body),
-.art-update-workspace :deep(.el-card__body) {
+.art-update-workspace :deep(.el-card__body),
+.art-health-workspace :deep(.el-card__body) {
   display: grid;
   gap: 12px;
+}
+
+.art-system-health-panel {
+  grid-column: 1 / -1;
 }
 
 .art-system-backup-status {
