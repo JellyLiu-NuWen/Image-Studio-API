@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { createSelfHostedApp } from "./app.js";
 import { createFileConfigStore, loadDotEnv } from "./config.js";
 import { createJsonlLogStore } from "./logStore.js";
+import { createJsonStateStore } from "./stateStore.js";
 import { renderAdminPage } from "./adminPage.js";
 import { createUpdateService } from "./updateService.js";
 import { createAdminAssetHandler } from "./adminAssets.js";
@@ -30,6 +31,9 @@ const app = createSelfHostedApp({
   adminPassword: process.env.ADMIN_PASSWORD || "",
   apiLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "api-calls.jsonl") }),
   generationLogStore: createJsonlLogStore({ path: join(dataDir, "logs", "generations.jsonl") }),
+  sessionStore: createJsonStateStore({ path: join(dataDir, "state", "admin-sessions.json"), fallback: [] }),
+  auditRecordStore: createJsonStateStore({ path: join(dataDir, "state", "audit-records.json"), fallback: [] }),
+  configVersionStore: createJsonStateStore({ path: join(dataDir, "state", "config-versions.json"), fallback: [] }),
   updateService,
   fetchImpl: globalThis.fetch,
 });

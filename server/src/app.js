@@ -573,6 +573,33 @@ function publicSessions(sessions, currentToken) {
   }));
 }
 
+function sessionEntries(sessions) {
+  return Array.from(sessions.entries()).map(([token, session]) => ({
+    token,
+    id: session.id || token.slice(0, 12),
+    username: session.username || "admin",
+    createdAt: session.createdAt || Date.now(),
+  }));
+}
+
+function restoreSessions(sessions, entries) {
+  sessions.clear();
+  for (const entry of Array.isArray(entries) ? entries : []) {
+    const token = String(entry?.token || "");
+    if (!token) continue;
+    sessions.set(token, {
+      id: entry.id || token.slice(0, 12),
+      username: entry.username || "admin",
+      createdAt: entry.createdAt || Date.now(),
+    });
+  }
+}
+
+function replaceArray(target, records, limit) {
+  const next = Array.isArray(records) ? records.slice(0, limit) : [];
+  target.splice(0, target.length, ...next);
+}
+
 function errorSummaryFromResponse(response) {
   if (response.status < 400) return "";
   return response.statusText || `HTTP ${response.status}`;
@@ -1128,6 +1155,9 @@ export function createSelfHostedApp({
   adminPassword = process.env.ADMIN_PASSWORD || "",
   apiLogStore = null,
   generationLogStore = null,
+  sessionStore = null,
+  auditRecordStore = null,
+  configVersionStore = null,
   updateService = null,
   fetchImpl = globalThis.fetch,
   now = () => Date.now(),
@@ -1140,10 +1170,44 @@ export function createSelfHostedApp({
   const auditRecords = [];
   const configVersions = [];
   const alertNotifications = {};
+  let adminStateLoaded = false;
+  let adminStateLoadPromise = null;
   let activeRequests = 0;
+
+  async function ensureAdminStateLoaded() {
+    if (adminStateLoaded) return;
+    if (!adminStateLoadPromise) {
+      adminStateLoadPromise = (async () => {
+        const [storedSessions, storedAuditRecords, storedConfigVersions] = await Promise.all([
+          sessionStore?.load ? sessionStore.load() : [],
+          auditRecordStore?.load ? auditRecordStore.load() : [],
+          configVersionStore?.load ? configVersionStore.load() : [],
+        ]);
+        restoreSessions(sessions, storedSessions);
+        replaceArray(auditRecords, storedAuditRecords, 200);
+        replaceArray(configVersions, storedConfigVersions, 50);
+        adminStateLoaded = true;
+      })();
+    }
+    try {
+      await adminStateLoadPromise;
+    } catch (error) {
+      adminStateLoadPromise = null;
+      throw error;
+    }
+  }
+
+  async function persistAdminState() {
+    await Promise.all([
+      sessionStore?.save ? sessionStore.save(sessionEntries(sessions)) : null,
+      auditRecordStore?.save ? auditRecordStore.save(auditRecords) : null,
+      configVersionStore?.save ? configVersionStore.save(configVersions) : null,
+    ]);
+  }
 
   async function handle(request) {
     const url = new URL(request.url);
+    const isAdminApi = url.pathname.startsWith("/api/");
     const startedAt = now();
     const id = createRequestId();
     let authKind = "none";
@@ -1154,6 +1218,8 @@ export function createSelfHostedApp({
       || url.pathname === "/v1/images/edits";
 
     try {
+      if (isAdminApi) await ensureAdminStateLoaded();
+
       if (request.method === "GET" && url.pathname === "/healthz") {
         response = json({ ok: true, service: "image-studio-self-hosted-api" });
         return response;
@@ -1792,6 +1858,7 @@ export function createSelfHostedApp({
           errorSummary,
         });
       }
+      if (isAdminApi && adminStateLoaded) await persistAdminState();
     }
   }
 

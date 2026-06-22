@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { createSelfHostedApp } from "../src/app.js";
 import { createMemoryLogStore } from "../src/logStore.js";
+import { createMemoryStateStore } from "../src/stateStore.js";
 import { parseDotEnv } from "../src/config.js";
 
 const ADMIN_OPTIONS = {
@@ -1754,6 +1755,60 @@ test("admin can read and restore config versions and audit logs", async () => {
   const auditBody = await audit.json();
   assert.equal(auditBody.records.some((record) => record.action === "config.update"), true);
   assert.equal(auditBody.records.some((record) => record.action === "config.restore"), true);
+});
+
+test("admin sessions audit logs and config versions persist across app recreation", async () => {
+  const store = memoryStore({
+    imageApiToken: "client-token",
+    upstreamBaseURL: "https://old.example/v1",
+    upstreamApiKey: "upstream-key",
+  });
+  const sessionStore = createMemoryStateStore([]);
+  const auditRecordStore = createMemoryStateStore([]);
+  const configVersionStore = createMemoryStateStore([]);
+  const appOptions = {
+    store,
+    ...ADMIN_OPTIONS,
+    sessionStore,
+    auditRecordStore,
+    configVersionStore,
+    fetchImpl: async () => {
+      throw new Error("persistent admin state operations must not call upstream");
+    },
+  };
+  const firstApp = createSelfHostedApp(appOptions);
+  const headers = await loginHeaders(firstApp);
+
+  const save = await firstApp.handle(jsonRequest("/api/config", {
+    upstreams: [{
+      id: "default",
+      name: "Default",
+      baseURL: "https://new.example/v1",
+      apiKey: "",
+    }],
+  }, headers));
+  assert.equal(save.status, 200);
+
+  const secondApp = createSelfHostedApp(appOptions);
+  const session = await secondApp.handle(new Request("http://localhost/api/session", { headers }));
+  assert.equal(session.status, 200);
+  assert.equal((await session.json()).authenticated, true);
+
+  const audit = await secondApp.handle(new Request("http://localhost/api/audit-logs", { headers }));
+  assert.equal(audit.status, 200);
+  const auditBody = await audit.json();
+  assert.equal(auditBody.records.some((record) => record.action === "auth.login"), true);
+  assert.equal(auditBody.records.some((record) => record.action === "config.update"), true);
+
+  const versions = await secondApp.handle(new Request("http://localhost/api/config/versions", { headers }));
+  assert.equal(versions.status, 200);
+  const versionBody = await versions.json();
+  assert.equal(versionBody.versions.length, 1);
+  assert.equal(versionBody.versions[0].snapshot.upstreamBaseURL, "https://old.example");
+
+  const restore = await secondApp.handle(jsonRequest(`/api/config/versions/${versionBody.versions[0].id}/restore`, {}, headers));
+  assert.equal(restore.status, 200);
+  assert.equal((await restore.json()).config.upstreamBaseURL, "https://old.example");
 });
 
 test("admin can manage models quality presets alerts sessions usage and backup", async () => {
