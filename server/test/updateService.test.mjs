@@ -70,6 +70,7 @@ test("checkLatest calls the GitHub latest release API and returns release status
 test("checkLatest reports unconfigured when no repository is set", async () => {
   const service = createUpdateService({
     currentVersion: "v1.2.5",
+    currentCommit: "",
     repository: " ",
     fetchImpl: async () => {
       throw new Error("unconfigured service must not fetch");
@@ -89,6 +90,7 @@ test("checkLatest reports unconfigured when no repository is set", async () => {
 test("checkLatest reports unconfigured for malformed repository values", async () => {
   const service = createUpdateService({
     currentVersion: "v1.2.5",
+    currentCommit: "",
     repository: "owner/repo/releases/latest",
     fetchImpl: async () => {
       throw new Error("malformed repository must not fetch");
@@ -108,6 +110,7 @@ test("checkLatest reports unconfigured for malformed repository values", async (
 test("checkLatest returns error for failed or throwing GitHub requests", async () => {
   const failingService = createUpdateService({
     currentVersion: "v1.2.5",
+    currentCommit: "",
     repository: "owner/repo",
     fetchImpl: async () => new Response("not found", { status: 404 }),
   });
@@ -122,6 +125,7 @@ test("checkLatest returns error for failed or throwing GitHub requests", async (
 
   const throwingService = createUpdateService({
     currentVersion: "v1.2.5",
+    currentCommit: "",
     repository: "owner/repo",
     fetchImpl: async () => {
       throw new Error("network down");
@@ -141,6 +145,7 @@ test("checkLatest falls back to the main commit when no release exists", async (
   const requested = [];
   const service = createUpdateService({
     currentVersion: "cc308c93",
+    currentCommit: "",
     repository: "owner/repo",
     fetchImpl: async (url) => {
       requested.push(String(url));
