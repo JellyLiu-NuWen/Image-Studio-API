@@ -98,6 +98,10 @@ npm start
 http://SERVER_IP:8787/admin
 ```
 
+`/admin` 默认服务 `admin/dist` 中的 Vue Art Design Pro 后台。`server/src/adminPage.js`
+保留为原生应急 fallback：只有当 Vue 构建产物缺失时才会返回，并带有
+`x-image-studio-admin-ui: native-fallback` 响应头。正常部署和功能迭代应以 Vue 后台为准。
+
 健康检查:
 
 ```bash

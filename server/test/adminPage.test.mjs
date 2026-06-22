@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 import { renderAdminPage } from "../src/adminPage.js";
 
@@ -16,6 +17,8 @@ test("renderAdminPage exposes the Chinese sidebar admin system landmarks", () =>
   const html = renderAdminPage();
 
   assert.match(html, /登录后进入管理后台/);
+  assert.match(html, /原生后台 fallback/);
+  assert.match(html, /Vue Art Design Pro 后台构建产物缺失/);
   assert.match(html, /账号密码登录/);
   assert.match(html, /仪表盘/);
   assert.match(html, /接口配置/);
@@ -225,4 +228,13 @@ test("renderAdminPage exposes upstream health advanced log filters and export co
   assert.match(html, /复制脱敏 curl/);
   assert.match(html, /标记为质量差案例/);
   assert.match(html, /保存为优秀案例/);
+});
+
+test("native admin is explicitly marked as a fallback for missing Vue assets", async () => {
+  const entrySource = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
+  const readme = await readFile(new URL("../../README.md", import.meta.url), "utf8");
+
+  assert.match(entrySource, /x-image-studio-admin-ui": "native-fallback"/);
+  assert.match(readme, /Vue Art Design Pro 后台/);
+  assert.match(readme, /server\/src\/adminPage\.js[\s\S]*原生应急 fallback/);
 });

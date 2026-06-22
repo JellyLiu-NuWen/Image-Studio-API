@@ -38,11 +38,12 @@ const app = createSelfHostedApp({
   fetchImpl: globalThis.fetch,
 });
 
-function responseFromHTML(html) {
+function responseFromHTML(html, headers = {}) {
   return new Response(html, {
     status: 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
+      ...headers,
     },
   });
 }
@@ -60,7 +61,9 @@ async function handleNodeRequest(nodeRequest, nodeResponse) {
     }
 
     if (nodeRequest.method === "GET" && url.pathname === "/admin") {
-      await writeWebResponse(nodeResponse, responseFromHTML(renderAdminPage()));
+      await writeWebResponse(nodeResponse, responseFromHTML(renderAdminPage(), {
+        "x-image-studio-admin-ui": "native-fallback",
+      }));
       return;
     }
 

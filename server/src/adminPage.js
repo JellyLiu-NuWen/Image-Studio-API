@@ -1,3 +1,5 @@
+// Native admin is an emergency fallback for deployments missing admin/dist.
+// The Vue Art Design Pro app served from admin/dist is the primary admin UI.
 export function renderAdminPage() {
   return `<!doctype html>
 <html lang="zh-CN">
@@ -93,6 +95,20 @@ export function renderAdminPage() {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+    }
+    .fallback-notice {
+      display: grid;
+      gap: 4px;
+      padding: 12px;
+      border: 1px solid rgba(149, 98, 22, 0.28);
+      border-radius: 12px;
+      background: rgba(217, 119, 6, 0.08);
+      color: var(--warning);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .fallback-notice strong {
+      color: var(--console-text);
     }
     .login-points {
       display: grid;
@@ -1508,6 +1524,10 @@ export function renderAdminPage() {
         <div>
           <h1>登录后进入管理后台</h1>
           <p>这里是你的私有控制台。你可以管理接口 Key、上游中转站、调用日志和版本对齐；生图请求仍然通过你的服务 API Key 统一转发。</p>
+        </div>
+        <div class="fallback-notice">
+          <strong>原生后台 fallback</strong>
+          <span>这个页面只会在 Vue Art Design Pro 后台构建产物缺失时出现；正常部署应优先使用 admin/dist 里的 Vue 后台。</span>
         </div>
         <div class="login-badges">
           <span class="pill ok">服务在线</span>
