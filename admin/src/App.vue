@@ -142,6 +142,7 @@ const metrics = ref<MetricsResponse['metrics'] | null>(null)
 const generationLogs = ref<LogRecord[]>([])
 const apiLogs = ref<LogRecord[]>([])
 const qualityCases = ref<QualityCase[]>([])
+const qualityBackfillPresetId = ref('')
 const upstreamHealth = ref<UpstreamHealthRecord[]>([])
 const usage = ref<UsageResponse['usage'] | null>(null)
 const versions = ref<ConfigVersion[]>([])
@@ -1344,6 +1345,16 @@ function markSaved() {
   if (config.value) lastSavedConfig.value = JSON.stringify(config.value)
 }
 
+function ensureQualityBackfillPreset() {
+  if (!activePresets.value.length) {
+    qualityBackfillPresetId.value = ''
+    return
+  }
+  if (!qualityBackfillPresetId.value || !activePresets.value.some((item) => item.id === qualityBackfillPresetId.value)) {
+    qualityBackfillPresetId.value = activePresets.value[0].id
+  }
+}
+
 function createInterface(): StudioInterface {
   const index = activeInterfaces.value.length + 1
   return {
@@ -1439,6 +1450,7 @@ async function refreshAll() {
       adminApi.activeAlerts().catch(() => ({ alerts: [], summary: { total: 0, critical: 0, warning: 0, info: 0, acknowledged: 0 }, notification: { status: 'idle' as const } }))
     ])
     setConfig(configData.config)
+    ensureQualityBackfillPreset()
     metrics.value = metricData.metrics
     generationLogs.value = generationData.records
     apiLogs.value = apiData.records
@@ -1589,6 +1601,7 @@ function addModel() {
 
 function addPreset() {
   config.value?.qualityPresets.push(createPreset())
+  ensureQualityBackfillPreset()
   openDrawer('quality', activePresets.value.length - 1)
 }
 
@@ -1599,6 +1612,7 @@ async function removeItem(kind: 'interface' | 'upstream' | 'model' | 'quality', 
   if (kind === 'upstream' && config.value.upstreams.length > 1) config.value.upstreams.splice(index, 1)
   if (kind === 'model') config.value.models.splice(index, 1)
   if (kind === 'quality') config.value.qualityPresets.splice(index, 1)
+  if (kind === 'quality') ensureQualityBackfillPreset()
 }
 
 async function saveModels() {
@@ -1822,6 +1836,55 @@ function openQualityCaseLog(item: QualityCase) {
     errorSummary: item.errorSummary,
   }
   logDetailVisible.value = true
+}
+
+function uniqueQualitySuggestions(items: string[]) {
+  return Array.from(new Set(items.map((item) => item.replace(/\s+/g, ' ').trim()).filter(Boolean))).slice(0, 5)
+}
+
+function qualityCaseSuggestions(item: QualityCase) {
+  if (item.suggestions?.length) return uniqueQualitySuggestions(item.suggestions)
+  if (item.label !== 'poor') return []
+  const endpoint = String(item.endpoint || '').toLowerCase()
+  const context = `${item.note || ''} ${item.errorSummary || ''}`.toLowerCase()
+  const suggestions = [
+    String(item.status).toLowerCase() === 'failed' || Number(item.status) >= 400
+      ? '先区分链路失败和画面质量问题，避免只靠 Prompt 模板掩盖上游错误或超时。'
+      : '',
+    endpoint.includes('/edits')
+      ? '编辑类 Prompt 明确保留区域、需要改动的区域、mask 边界和禁止破坏的主体特征。'
+      : '生成类 Prompt 补充主体、构图、光线、材质、背景和输出用途，减少模型自由发挥空间。',
+    /artifact|low detail|low quality|blur|模糊|低清|畸形|文字|错字|伪影|杂乱/.test(context)
+      ? '加入负面约束：避免低清晰度、畸形结构、文字伪影、杂乱背景、主体边缘破碎。'
+      : '',
+    item.model ? `针对 ${item.model} 只追加质量约束、负面约束和输出规格，保留用户原始意图。` : ''
+  ]
+  return uniqueQualitySuggestions(suggestions)
+}
+
+async function applyQualityCaseSuggestion(item: QualityCase) {
+  if (item.label !== 'poor') {
+    ElMessage.warning('只有质量差案例可以回填为优化建议')
+    return
+  }
+  ensureQualityBackfillPreset()
+  const presetId = qualityBackfillPresetId.value || activePresets.value[0]?.id || ''
+  if (!presetId) {
+    ElMessage.warning('请先创建一个质量预设')
+    return
+  }
+  if (config.value && JSON.stringify(config.value) !== lastSavedConfig.value) {
+    try {
+      await ElMessageBox.confirm('当前有未保存的配置改动，回填会以服务器已保存配置为基础继续写入。要继续吗？', '回填确认', { type: 'warning' })
+    } catch {
+      return
+    }
+  }
+  const data = await adminApi.applyQualityCaseSuggestion(item.id, presetId)
+  if (data.config) setConfig(data.config)
+  qualityCases.value = data.qualityCases
+  qualityBackfillPresetId.value = presetId
+  ElMessage.success(data.alreadyApplied ? '该案例建议已在预设中' : `已回填到 ${data.preset?.name || presetId}`)
 }
 
 function sanitizedCurl(record: LogRecord) {
@@ -2713,6 +2776,9 @@ window.addEventListener('beforeunload', (event) => {
                 <p>沉淀优秀样例和质量差案例，用于继续优化 Prompt 模板。</p>
               </div>
               <div class="art-quality-case-panel-tools">
+                <el-select v-model="qualityBackfillPresetId" size="small" class="art-quality-case-target" placeholder="回填目标预设">
+                  <el-option v-for="preset in activePresets" :key="preset.id" :label="`${preset.name} · ${preset.id}`" :value="preset.id" />
+                </el-select>
                 <span class="art-quality-case-panel-badge">总计 {{ qualityCases.length }}</span>
                 <span class="art-quality-case-panel-badge danger">差例 {{ poorQualityCases.length }}</span>
                 <span class="art-quality-case-panel-badge success">优秀 {{ excellentQualityCases.length }}</span>
@@ -2743,10 +2809,23 @@ window.addEventListener('beforeunload', (event) => {
             <el-table-column prop="durationMs" label="耗时" width="100">
               <template #default="{ row }">{{ formatDuration(row.durationMs) }}</template>
             </el-table-column>
+            <el-table-column label="优化建议" min-width="280">
+              <template #default="{ row }">
+                <div v-if="qualityCaseSuggestions(row).length" class="art-quality-suggestion-list">
+                  <span v-for="suggestion in qualityCaseSuggestions(row).slice(0, 2)" :key="suggestion">{{ suggestion }}</span>
+                </div>
+                <span v-else class="art-muted-inline">暂无建议</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="errorSummary" label="错误摘要" min-width="220" show-overflow-tooltip />
-            <el-table-column label="操作" width="120" fixed="right">
+            <el-table-column label="操作" width="160" fixed="right">
               <template #default="{ row }">
                 <div class="art-table-actions">
+                  <el-tooltip v-if="row.label === 'poor' && qualityCaseSuggestions(row).length" content="回填建议到预设" placement="top">
+                    <button type="button" class="art-table-action-button action-edit" aria-label="回填质量建议到预设" @click="applyQualityCaseSuggestion(row)">
+                      <MagicStick />
+                    </button>
+                  </el-tooltip>
                   <el-tooltip content="查看日志" placement="top">
                     <button type="button" class="art-table-action-button action-view" aria-label="查看质量案例日志" @click="openQualityCaseLog(row)">
                       <View />

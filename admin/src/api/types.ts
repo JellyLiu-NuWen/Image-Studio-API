@@ -98,6 +98,7 @@ export interface QualityCase {
   durationMs: number
   status: string
   errorSummary: string
+  suggestions: string[]
 }
 
 export interface AlertsConfig {

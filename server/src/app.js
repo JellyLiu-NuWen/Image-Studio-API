@@ -1258,6 +1258,99 @@ async function handleQualityPresets({ request, store }) {
   return json({ ok: true, qualityPresets: saved.qualityPresets, config: publicConfig(saved) });
 }
 
+function uniqueSuggestions(items) {
+  const seen = new Set();
+  const suggestions = [];
+  for (const item of items) {
+    const suggestion = String(item || "").replace(/\s+/g, " ").trim();
+    if (!suggestion || seen.has(suggestion)) continue;
+    seen.add(suggestion);
+    suggestions.push(suggestion);
+  }
+  return suggestions.slice(0, 5);
+}
+
+function suggestQualityImprovements(record = {}, label = "poor", note = "") {
+  if (label !== "poor") return [];
+  const endpoint = String(record.endpoint || record.path || "").toLowerCase();
+  const status = String(record.status ?? "").toLowerCase();
+  const errorSummary = String(record.errorSummary || "").trim();
+  const context = `${note} ${errorSummary}`.toLowerCase();
+  const suggestions = [];
+  if (status === "failed" || Number(status) >= 400) {
+    suggestions.push("先区分链路失败和画面质量问题：上游错误、网关超时或客户端中断应优先排查日志，不要只靠 Prompt 模板掩盖。");
+  }
+  if (endpoint.includes("/edits")) {
+    suggestions.push("编辑类 Prompt 明确保留区域、需要改动的区域、mask 边界和禁止破坏的主体特征。");
+  } else {
+    suggestions.push("生成类 Prompt 补充主体、构图、光线、材质、背景和输出用途，减少模型自由发挥空间。");
+  }
+  if (/timeout|timed out|gateway|abort|超时|网关/.test(context)) {
+    suggestions.push("对高复杂度或长耗时场景降低一次性要求，避免同时要求超高分辨率、复杂背景和大量文字细节。");
+  }
+  if (/artifact|low detail|low quality|blur|模糊|低清|畸形|文字|错字|伪影|杂乱/.test(context)) {
+    suggestions.push("加入负面约束：避免低清晰度、畸形结构、文字伪影、杂乱背景、主体边缘破碎。");
+  }
+  if (record.model) {
+    suggestions.push(`针对 ${record.model} 只追加质量约束、负面约束和输出规格，保留用户原始意图。`);
+  }
+  return uniqueSuggestions(suggestions);
+}
+
+function qualityCaseGuidanceBlock(qualityCase) {
+  const suggestions = uniqueSuggestions(qualityCase.suggestions || []);
+  const marker = `# 来自质量差案例 ${qualityCase.recordId || qualityCase.id} 的优化建议`;
+  return [
+    marker,
+    ...suggestions.map((item) => `- ${item}`),
+  ].join("\n");
+}
+
+async function handleQualityCaseApply({ request, store, caseId, auditRecords, username, now }) {
+  if (request.method !== "POST") return methodNotAllowed();
+  const current = normalizeConfig(await store.load());
+  const body = await request.json().catch(() => ({}));
+  const presetId = String(body.presetId || "").trim();
+  if (!presetId) return json({ error: { message: "presetId is required" } }, { status: 400 });
+  const qualityCase = current.qualityCases.find((item) => item.id === caseId || item.recordId === caseId);
+  if (!qualityCase) return json({ error: { message: "quality case not found" } }, { status: 404 });
+  if (qualityCase.label !== "poor") return json({ error: { message: "only poor quality cases can be applied to prompt presets" } }, { status: 400 });
+  const preset = current.qualityPresets.find((item) => item.id === presetId);
+  if (!preset) return json({ error: { message: "quality preset not found" } }, { status: 404 });
+  const suggestions = qualityCase.suggestions.length
+    ? qualityCase.suggestions
+    : suggestQualityImprovements(qualityCase, qualityCase.label, qualityCase.note);
+  if (!suggestions.length) return json({ error: { message: "quality case has no suggestions" } }, { status: 400 });
+  const enrichedCase = { ...qualityCase, suggestions };
+  const guidance = qualityCaseGuidanceBlock(enrichedCase);
+  const alreadyApplied = String(preset.template || "").includes(guidance.split("\n")[0]);
+  const qualityPresets = current.qualityPresets.map((item) => {
+    if (item.id !== presetId) return item;
+    return {
+      ...item,
+      promptEnhance: true,
+      template: alreadyApplied ? item.template : [item.template, guidance].map((part) => String(part || "").trim()).filter(Boolean).join("\n\n"),
+    };
+  });
+  const qualityCases = current.qualityCases.map((item) => (item.id === qualityCase.id ? enrichedCase : item));
+  const saved = await store.save(mergeConfigUpdate(current, { qualityPresets, qualityCases }));
+  appendAudit(auditRecords, "quality.case.apply", {
+    caseId: qualityCase.id,
+    recordId: qualityCase.recordId,
+    presetId,
+    suggestions: suggestions.length,
+    alreadyApplied,
+  }, username, now);
+  return json({
+    ok: true,
+    alreadyApplied,
+    preset: saved.qualityPresets.find((item) => item.id === presetId) || null,
+    qualityPresets: saved.qualityPresets,
+    qualityCases: saved.qualityCases,
+    config: publicConfig(saved),
+  });
+}
+
 async function handleQualityCases({ request, store, generationLogStore, auditRecords, username, now }) {
   const current = normalizeConfig(await store.load());
   if (request.method === "GET") return json({ qualityCases: current.qualityCases });
@@ -1283,6 +1376,7 @@ async function handleQualityCases({ request, store, generationLogStore, auditRec
     durationMs: Number(record.durationMs) || 0,
     status: String(record.status ?? ""),
     errorSummary: record.errorSummary || "",
+    suggestions: suggestQualityImprovements(record, label, body.note),
   };
   const qualityCases = [
     qualityCase,
@@ -1762,6 +1856,26 @@ export function createSelfHostedApp({
           return response;
         }
         response = await handleQualityPresets({ request, store });
+        return response;
+      }
+
+      const qualityCaseApplyMatch = url.pathname.match(/^\/api\/quality-cases\/([^/]+)\/apply$/);
+      if (qualityCaseApplyMatch) {
+        authKind = classifyAuthKind(request, sessions);
+        const authError = requireAdminAuth(request, sessions);
+        if (authError) {
+          response = authError;
+          return response;
+        }
+        const token = parseCookies(request).image_studio_session || "";
+        response = await handleQualityCaseApply({
+          request,
+          store,
+          caseId: decodeURIComponent(qualityCaseApplyMatch[1]),
+          auditRecords,
+          username: sessions.get(token)?.username,
+          now,
+        });
         return response;
       }
 

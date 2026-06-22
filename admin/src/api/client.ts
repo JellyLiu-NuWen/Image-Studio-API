@@ -129,6 +129,10 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify({ recordId, label, note })
   }),
+  applyQualityCaseSuggestion: (caseId: string, presetId: string) => requestJSON<{ ok: boolean; alreadyApplied: boolean; preset: QualityPreset | null; qualityPresets: QualityPreset[]; qualityCases: QualityCase[]; config: AdminConfig }>(`/quality-cases/${encodeURIComponent(caseId)}/apply`, {
+    method: 'POST',
+    body: JSON.stringify({ presetId })
+  }),
   alerts: () => requestJSON<{ alerts: AlertsConfig }>('/alerts'),
   saveAlerts: (alerts: AlertsConfig) => requestJSON<{ ok: boolean; alerts: AlertsConfig; config: AdminConfig }>('/alerts', {
     method: 'PUT',

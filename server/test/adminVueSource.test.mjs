@@ -1005,11 +1005,17 @@ test("Vue quality case library uses an Art Design Pro table panel", async () => 
   assert.match(qualitySection, /art-quality-case-panel-title/, "Quality case panel should expose title and helper copy");
   assert.match(qualitySection, /art-quality-case-panel-badge/, "Quality case panel should show case counts as badges");
   assert.match(qualitySection, /art-quality-case-panel-tools/, "Quality case panel should group compact actions");
+  assert.match(qualitySection, /qualityBackfillPresetId/, "Quality case panel should choose a preset backfill target");
+  assert.match(qualitySection, /qualityCaseSuggestions/, "Quality case panel should render generated suggestions");
+  assert.match(qualitySection, /applyQualityCaseSuggestion/, "Quality case panel should apply suggestions to prompt presets");
+  assert.match(qualitySection, /art-quality-suggestion-list/, "Quality case rows should show suggestion previews");
   assert.match(qualitySection, /art-table-action-button action-view/, "Quality case rows should use icon action buttons");
+  assert.match(qualitySection, /aria-label="回填质量建议到预设"/, "Quality case apply action should be accessible");
   assert.match(qualitySection, /aria-label="查看质量案例日志"/, "Quality case log action should be accessible");
   assert.match(styleSource, /\.art-quality-case-panel/, "Styles should include the quality case panel shell");
   assert.match(styleSource, /\.art-quality-case-panel-header/, "Styles should include quality case panel header");
   assert.match(styleSource, /\.art-quality-case-panel-badge/, "Styles should include quality case badges");
+  assert.match(styleSource, /\.art-quality-suggestion-list/, "Styles should include quality suggestion previews");
   for (const oldToken of [
     "quality-case-panel-header",
     "quality-case-panel-title",

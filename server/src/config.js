@@ -344,6 +344,7 @@ function normalizeQualityCase(raw = {}, index = 0, previous = {}) {
     durationMs: positiveInteger(raw.durationMs ?? previous.durationMs, 0, 0, 3_600_000),
     status: String(raw.status ?? previous.status ?? "").trim(),
     errorSummary: String(raw.errorSummary || previous.errorSummary || "").trim(),
+    suggestions: normalizeStringArray(raw.suggestions, previous.suggestions || []),
   };
 }
 

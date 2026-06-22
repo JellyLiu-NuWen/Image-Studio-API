@@ -2427,6 +2427,10 @@ button,
   gap: 8px;
 }
 
+.art-quality-case-target {
+  width: 220px;
+}
+
 .art-quality-case-panel-badge {
   min-height: 24px;
   display: inline-flex;
@@ -2447,6 +2451,24 @@ button,
 .art-quality-case-panel-badge.success {
   background: rgba(34, 197, 94, 0.12);
   color: #15803d;
+}
+
+.art-quality-suggestion-list {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.art-quality-suggestion-list span {
+  color: var(--art-text-soft);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.art-muted-inline {
+  color: var(--art-muted);
+  font-size: 12px;
 }
 
 .art-quality-stats-grid {

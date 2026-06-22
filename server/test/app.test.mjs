@@ -2485,7 +2485,27 @@ test("admin can mark generation logs as quality cases and audit the action", asy
   assert.equal(created.case.model, "gpt-image-2");
   assert.equal(created.case.interfaceId, "codex");
   assert.equal(created.case.upstreamId, "primary");
+  assert.equal(created.case.suggestions.some((suggestion) => suggestion.includes("编辑类 Prompt")), true);
+  assert.equal(created.case.suggestions.some((suggestion) => suggestion.includes("gpt-image-2")), true);
   assert.equal(created.qualityCases.length, 1);
+
+  const apply = await app.handle(jsonRequest(`/api/quality-cases/${created.case.id}/apply`, {
+    presetId: "high-quality-final",
+  }, headers));
+  assert.equal(apply.status, 200);
+  const applied = await apply.json();
+  assert.equal(applied.alreadyApplied, false);
+  assert.equal(applied.preset.id, "high-quality-final");
+  assert.equal(applied.preset.promptEnhance, true);
+  assert.match(applied.preset.template, /来自质量差案例 gen-poor 的优化建议/);
+  assert.match(applied.preset.template, /编辑类 Prompt/);
+
+  const applyAgain = await app.handle(jsonRequest(`/api/quality-cases/${created.case.id}/apply`, {
+    presetId: "high-quality-final",
+  }, headers));
+  const appliedAgain = await applyAgain.json();
+  assert.equal(appliedAgain.alreadyApplied, true);
+  assert.equal((appliedAgain.preset.template.match(/来自质量差案例 gen-poor 的优化建议/g) || []).length, 1);
 
   const list = await app.handle(new Request("http://localhost/api/quality-cases", { headers }));
   assert.equal(list.status, 200);
@@ -2493,8 +2513,10 @@ test("admin can mark generation logs as quality cases and audit the action", asy
   assert.equal(listed.qualityCases.length, 1);
   assert.equal(listed.qualityCases[0].recordId, "gen-poor");
   assert.equal(store.current().qualityCases[0].label, "poor");
+  assert.equal(store.current().qualityPresets.find((preset) => preset.id === "high-quality-final").promptEnhance, true);
 
   const audit = await app.handle(new Request("http://localhost/api/audit-logs", { headers }));
   const auditBody = await audit.json();
   assert.equal(auditBody.records.some((record) => record.action === "quality.case.mark" && record.details.recordId === "gen-poor"), true);
+  assert.equal(auditBody.records.some((record) => record.action === "quality.case.apply" && record.details.presetId === "high-quality-final"), true);
 });
