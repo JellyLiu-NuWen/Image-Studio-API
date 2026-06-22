@@ -196,6 +196,129 @@ function resolveMaxAttempts(autoRetryCount) {
   return normalizeAutoRetryCount(autoRetryCount) + 1;
 }
 
+function createStreamDiagnostics(upstreamId, timeoutSeconds) {
+  return {
+    requested: true,
+    upstreamStarted: true,
+    upstreamStatus: 0,
+    upstreamContentType: "",
+    finalState: "started",
+    timeoutSeconds,
+    heartbeatCount: 0,
+    upstreamChunkCount: 0,
+    upstreamByteCount: 0,
+    partialImageEvents: 0,
+    completedEvents: 0,
+    errorEvents: 0,
+    clientAborted: false,
+    gatewayTimeout: false,
+    errorSummary: "",
+    events: ["upstream_start"],
+    upstreamId,
+  };
+}
+
+function pushStreamEvent(diagnostics, event) {
+  if (!diagnostics.events.includes(event)) diagnostics.events.push(event);
+}
+
+function textLooksLikeGatewayTimeout(value) {
+  const lower = String(value || "").toLowerCase();
+  return lower.includes("gateway timeout")
+    || lower.includes("gateway time-out")
+    || lower.includes("error code 504")
+    || lower.includes("error code 524")
+    || lower.includes("524: a timeout occurred")
+    || lower.includes("upstream timed out");
+}
+
+function markGatewayTimeout(diagnostics, summary = "") {
+  diagnostics.gatewayTimeout = true;
+  pushStreamEvent(diagnostics, "gateway_timeout");
+  if (/gateway time-?out|upstream timed out/i.test(summary)) {
+    diagnostics.errorSummary = "流式上游网关超时。";
+    return;
+  }
+  if (summary && summary.trim()) diagnostics.errorSummary = summary;
+  if (!/网关超时|gateway time-?out|524|504/i.test(diagnostics.errorSummary)) {
+    diagnostics.errorSummary = "流式上游网关超时。";
+  }
+}
+
+function recordStreamText(diagnostics, text) {
+  if (!text) return;
+  const partialMatches = text.match(/partial_image|partial\.image/gi) || [];
+  if (partialMatches.length) {
+    diagnostics.partialImageEvents += partialMatches.length;
+    pushStreamEvent(diagnostics, "partial");
+  }
+  const completedMatches = text.match(/image_generation\.completed|response\.completed|"type"\s*:\s*"[^"]*completed[^"]*"/gi) || [];
+  if (completedMatches.length) {
+    diagnostics.completedEvents += completedMatches.length;
+    pushStreamEvent(diagnostics, "completed");
+  }
+  const hasError = /(^|\n)event:\s*error\b/i.test(text)
+    || /"error"\s*:/.test(text)
+    || /(?:image_generation|response)\.(?:failed|error)\b/i.test(text);
+  if (hasError) {
+    diagnostics.errorEvents += 1;
+    pushStreamEvent(diagnostics, "error");
+    const summary = describeProblem(text);
+    if (summary) diagnostics.errorSummary = summary;
+    if (/超时|timeout/i.test(summary)) {
+      markGatewayTimeout(diagnostics, summary);
+    }
+  }
+  if (textLooksLikeGatewayTimeout(text)) {
+    markGatewayTimeout(diagnostics, describeProblem(text));
+  }
+}
+
+function recordStreamChunk(diagnostics, chunk, decoder) {
+  diagnostics.upstreamChunkCount += 1;
+  diagnostics.upstreamByteCount += chunk?.byteLength || chunk?.length || 0;
+  try {
+    recordStreamText(diagnostics, decoder.decode(chunk, { stream: true }));
+  } catch {
+    // Binary or split unicode chunks are still counted by size above.
+  }
+}
+
+function flushStreamDecoder(diagnostics, decoder) {
+  try {
+    recordStreamText(diagnostics, decoder.decode());
+  } catch {
+    // Ignore decoder flush errors; the buffered bytes are only for diagnostics.
+  }
+}
+
+function streamErrorSummary(diagnostics, fallback = "") {
+  if (diagnostics.clientAborted) return "客户端在流式响应完成前断开连接。";
+  if (diagnostics.gatewayTimeout) {
+    if (/gateway time-?out|upstream timed out/i.test(diagnostics.errorSummary)) {
+      return "流式上游网关超时。";
+    }
+    return /网关超时|gateway time-?out|524|504/i.test(diagnostics.errorSummary)
+      ? diagnostics.errorSummary
+      : "流式上游网关超时。";
+  }
+  if (diagnostics.errorSummary) return diagnostics.errorSummary;
+  if (diagnostics.errorEvents > 0) return "流式上游返回错误事件。";
+  return fallback;
+}
+
+async function notifyStreamFinalized(callback, diagnostics) {
+  if (!callback) return;
+  try {
+    await callback({
+      ...diagnostics,
+      events: [...diagnostics.events],
+    });
+  } catch (error) {
+    console.error("Failed to finalize stream diagnostics", error);
+  }
+}
+
 async function forwardRawWithRetry({
   fetchImpl,
   upstream,
@@ -289,6 +412,8 @@ async function forwardRawAsSSE({
   request,
   bodyBuffer,
   timeoutSeconds,
+  onStreamFinalized = null,
+  diagnosticsContext = {},
 }) {
   const upstreamBaseURL = normalizeBaseURL(upstream.baseURL);
   const upstreamURL = `${upstreamBaseURL}${pathname}${search}`;
@@ -296,11 +421,36 @@ async function forwardRawAsSSE({
     accept: "text/event-stream",
   });
   const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
   const heartbeatMs = streamHeartbeatMs();
-  const timeoutSignal = createTimeoutSignal(imageWorkTimeoutSeconds(pathname, timeoutSeconds));
+  const resolvedTimeoutSeconds = imageWorkTimeoutSeconds(pathname, timeoutSeconds);
+  const timeoutSignal = createTimeoutSignal(resolvedTimeoutSeconds);
   const upstreamAbortController = abortControllerFromSignals([timeoutSignal]);
+  const diagnostics = createStreamDiagnostics(upstream.id, resolvedTimeoutSeconds);
+  Object.assign(diagnostics, diagnosticsContext);
   let closed = false;
+  let finalized = false;
   let heartbeatTimer = null;
+
+  const finalize = async (state, fallbackSummary = "") => {
+    if (finalized) return;
+    finalized = true;
+    diagnostics.finalState = state;
+    diagnostics.finishedAt = new Date().toISOString();
+    if (state === "client_aborted" && !diagnostics.upstreamStatus) diagnostics.upstreamStatus = 499;
+    if (state === "gateway_timeout" && !diagnostics.upstreamStatus) diagnostics.upstreamStatus = 504;
+    if (state === "error" && !diagnostics.upstreamStatus) diagnostics.upstreamStatus = 502;
+    if (state === "completed") {
+      diagnostics.completedEvents = Math.max(1, diagnostics.completedEvents);
+      pushStreamEvent(diagnostics, "completed");
+    }
+    if (state === "error") {
+      diagnostics.errorEvents = Math.max(1, diagnostics.errorEvents);
+      pushStreamEvent(diagnostics, "error");
+    }
+    diagnostics.errorSummary = streamErrorSummary(diagnostics, fallbackSummary);
+    await notifyStreamFinalized(onStreamFinalized, diagnostics);
+  };
 
   const body = new ReadableStream({
     start(controller) {
@@ -314,7 +464,10 @@ async function forwardRawAsSSE({
           upstreamAbortController.abort();
         }
       };
-      const heartbeat = () => enqueue(encoder.encode(": image-studio keepalive\n\n"));
+      const heartbeat = () => {
+        diagnostics.heartbeatCount += 1;
+        enqueue(encoder.encode(": image-studio keepalive\n\n"));
+      };
       heartbeat();
       heartbeatTimer = setInterval(heartbeat, heartbeatMs);
       (async () => {
@@ -326,23 +479,35 @@ async function forwardRawAsSSE({
             signal: upstreamAbortController.signal,
           });
           const contentType = response.headers.get("content-type") || "";
+          diagnostics.upstreamStatus = response.status;
+          diagnostics.upstreamContentType = contentType;
+          pushStreamEvent(diagnostics, "upstream_response");
+          if ([504, 524].includes(response.status)) {
+            markGatewayTimeout(diagnostics, `上游返回 ${response.status} 网关超时。`);
+          }
           if (contentType.toLowerCase().includes("text/event-stream")) {
             const reader = response.body?.getReader();
             if (reader) {
               while (true) {
                 const chunk = await reader.read();
                 if (chunk.done) break;
+                recordStreamChunk(diagnostics, chunk.value, decoder);
                 enqueue(chunk.value);
               }
             }
+            flushStreamDecoder(diagnostics, decoder);
           } else {
             const raw = await response.text();
+            recordStreamText(diagnostics, raw);
             if (response.ok) {
               enqueue(encoder.encode(`data: ${raw}\n\n`));
             } else {
+              diagnostics.errorEvents += 1;
+              pushStreamEvent(diagnostics, "error");
+              diagnostics.errorSummary = describeProblem(raw);
               enqueue(encoder.encode(`data: ${JSON.stringify({
                 error: {
-                  message: describeProblem(raw),
+                  message: diagnostics.errorSummary,
                   upstreamStatus: response.status,
                   raw: raw.slice(0, 1500),
                 },
@@ -351,16 +516,30 @@ async function forwardRawAsSSE({
           }
         } catch (error) {
           if (!closed) {
+            const timedOut = timeoutSignal.aborted || textLooksLikeGatewayTimeout(error?.message || error?.name || "");
+            diagnostics.upstreamStatus = timedOut ? 504 : 502;
+            diagnostics.errorEvents += 1;
+            diagnostics.errorSummary = timedOut
+              ? "流式上游网关超时。"
+              : `上游请求失败:${error?.message || String(error || "Unknown error")}`;
+            if (timedOut) markGatewayTimeout(diagnostics, diagnostics.errorSummary);
+            else pushStreamEvent(diagnostics, "error");
             enqueue(encoder.encode(`data: ${JSON.stringify({
               error: {
-                message: `上游请求失败:${error?.message || String(error || "Unknown error")}`,
-                upstreamStatus: 502,
+                message: diagnostics.errorSummary,
+                upstreamStatus: diagnostics.upstreamStatus,
               },
             })}\n\n`));
           }
         } finally {
           if (heartbeatTimer) clearInterval(heartbeatTimer);
           if (!closed) {
+            const finalState = diagnostics.gatewayTimeout
+              ? "gateway_timeout"
+              : diagnostics.errorEvents > 0
+                ? "error"
+                : "completed";
+            await finalize(finalState);
             closed = true;
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
             controller.close();
@@ -368,10 +547,13 @@ async function forwardRawAsSSE({
         }
       })();
     },
-    cancel() {
+    async cancel() {
       closed = true;
       if (heartbeatTimer) clearInterval(heartbeatTimer);
+      diagnostics.clientAborted = true;
+      pushStreamEvent(diagnostics, "client_abort");
       upstreamAbortController.abort();
+      await finalize("client_aborted");
     },
   });
 
@@ -447,7 +629,7 @@ function encodeHeaderValue(value) {
   return Buffer.from(String(value || ""), "utf8").toString("base64url");
 }
 
-export async function forwardOpenAIPath({ request, config, fetchImpl }) {
+export async function forwardOpenAIPath({ request, config, fetchImpl, onStreamFinalized = null }) {
   const upstreams = Array.isArray(config.upstreams) && config.upstreams.length > 0
     ? config.upstreams
     : [{ id: "default", baseURL: config.upstreamBaseURL, apiKey: config.upstreamApiKey, enabled: true }];
@@ -470,6 +652,12 @@ export async function forwardOpenAIPath({ request, config, fetchImpl }) {
   for (const upstream of enabledUpstreams) {
     if (!upstream.baseURL || !upstream.apiKey) continue;
     failoverChain.push(upstream.id);
+    const streamContext = {
+      interfaceId: config.interfaceId || "",
+      model: parsedBody?.model || config.defaultImageModel || "",
+      failoverChain: [...failoverChain],
+      retryCount,
+    };
     const response = wantsStream
       ? await forwardRawAsSSE({
         fetchImpl,
@@ -480,6 +668,9 @@ export async function forwardOpenAIPath({ request, config, fetchImpl }) {
         request,
         bodyBuffer,
         timeoutSeconds: config.requestTimeoutSeconds,
+        onStreamFinalized: onStreamFinalized
+          ? (diagnostics) => onStreamFinalized({ ...diagnostics, ...streamContext })
+          : null,
       })
       : await forwardRawWithRetry({
         fetchImpl,

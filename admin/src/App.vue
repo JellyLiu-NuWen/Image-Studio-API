@@ -737,6 +737,16 @@ const logDetailRouteSteps = computed(() => {
     hint: index === 0 ? '首选路由' : '故障转移'
   }))
 })
+const logDetailStreamCards = computed(() => {
+  const stream = selectedLog.value?.stream
+  if (!stream) return []
+  return [
+    { label: '最终状态', value: stream.finalState || '-', hint: stream.clientAborted ? '客户端中断' : stream.gatewayTimeout ? '网关超时' : '正常结束', type: stream.finalState === 'completed' ? 'success' : 'warning' },
+    { label: '上游状态', value: stream.upstreamStatus || '-', hint: stream.upstreamContentType || '未记录内容类型', type: stream.upstreamStatus >= 200 && stream.upstreamStatus < 400 ? 'success' : 'warning' },
+    { label: '流事件', value: `${stream.partialImageEvents || 0} / ${stream.completedEvents || 0} / ${stream.errorEvents || 0}`, hint: 'partial / completed / error', type: stream.errorEvents ? 'critical' : 'info' },
+    { label: '心跳/分片', value: `${stream.heartbeatCount || 0} / ${stream.upstreamChunkCount || 0}`, hint: `${Math.max(0, Number(stream.upstreamByteCount || 0))} bytes`, type: 'info' }
+  ]
+})
 const unhealthyUpstreams = computed(() => upstreamHealth.value.filter((item) => {
   if (!item.enabled) return false
   const rate = Number(item.metrics?.successRate || 0)
@@ -3746,6 +3756,32 @@ window.addEventListener('beforeunload', (event) => {
             </template>
             <div class="art-detail-panel-body">
               <p class="art-detail-text">{{ selectedLog.errorSummary || '无错误摘要' }}</p>
+            </div>
+          </el-card>
+          <el-card v-if="selectedLog.stream" shadow="never" class="art-stream-detail-card art-detail-panel art-stream-detail-panel">
+            <template #header>
+              <div class="art-detail-panel-header">
+                <div class="art-detail-panel-title">
+                  <h4><Timer />流式诊断</h4>
+                  <p>记录 partial、completed、error、客户端中断和网关超时的最终态。</p>
+                </div>
+                <div class="art-detail-panel-meta">
+                  <span>{{ selectedLog.stream.finalState || 'unknown' }}</span>
+                </div>
+              </div>
+            </template>
+            <div class="art-detail-panel-body">
+              <div class="art-detail-summary-grid">
+                <div v-for="item in logDetailStreamCards" :key="item.label" :class="item.type">
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                  <small>{{ item.hint }}</small>
+                </div>
+              </div>
+              <div class="art-detail-text">
+                <span>事件序列</span>
+                <p>{{ selectedLog.stream.events.join(' · ') || '未记录' }}</p>
+              </div>
             </div>
           </el-card>
           <el-card shadow="never" class="art-curl-detail-card art-detail-panel art-curl-detail-panel">

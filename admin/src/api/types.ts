@@ -212,6 +212,28 @@ export interface LogRecord {
   failoverChain?: string[]
   durationMs: number
   errorSummary?: string
+  stream?: GenerationStreamDiagnostics
+}
+
+export interface GenerationStreamDiagnostics {
+  requested: boolean
+  upstreamStarted: boolean
+  upstreamStatus: number
+  upstreamContentType: string
+  finalState: string
+  timeoutSeconds: number
+  heartbeatCount: number
+  upstreamChunkCount: number
+  upstreamByteCount: number
+  partialImageEvents: number
+  completedEvents: number
+  errorEvents: number
+  clientAborted: boolean
+  gatewayTimeout: boolean
+  errorSummary: string
+  events: string[]
+  upstreamId: string
+  finishedAt: string
 }
 
 export interface UsageBucket {

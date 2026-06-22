@@ -1012,6 +1012,137 @@ test("image generation logs include the upstream failure summary", async () => {
   assert.match(records[0].errorSummary, /upstream gateway timed out after billing/);
 });
 
+test("image generation logs include stream diagnostics for partial success", async () => {
+  const generationLogStore = createMemoryLogStore();
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => new Response(new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("data: {\"type\":\"image_generation.partial_image\"}\n\n"));
+        controller.enqueue(new TextEncoder().encode("data: {\"type\":\"image_generation.completed\"}\n\n"));
+        controller.close();
+      },
+    }), {
+      status: 200,
+      headers: { "content-type": "text/event-stream" },
+    }),
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/generations", {
+    prompt: "stream log",
+    stream: true,
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 200);
+  await response.text();
+  const records = await generationLogStore.readRecent(10);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].status, "success");
+  assert.equal(records[0].stream.finalState, "completed");
+  assert.equal(records[0].stream.partialImageEvents >= 1, true);
+  assert.equal(records[0].stream.completedEvents >= 1, true);
+  assert.equal(records[0].stream.errorEvents, 0);
+});
+
+test("image generation logs include stream diagnostics for upstream error", async () => {
+  const generationLogStore = createMemoryLogStore();
+  const app = createSelfHostedApp({
+    store: memoryStore({
+      imageApiToken: "client-token",
+      upstreamBaseURL: "https://upstream.example/v1",
+      upstreamApiKey: "upstream-key",
+    }),
+    ...ADMIN_OPTIONS,
+    generationLogStore,
+    fetchImpl: async () => new Response(new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("data: {\"error\":{\"message\":\"gateway timeout\"}}\n\n"));
+        controller.close();
+      },
+    }), {
+      status: 200,
+      headers: { "content-type": "text/event-stream" },
+    }),
+  });
+
+  const response = await app.handle(jsonRequest("/v1/images/edits", {
+    prompt: "stream log error",
+    stream: true,
+  }, {
+    authorization: "Bearer client-token",
+  }));
+
+  assert.equal(response.status, 200);
+  await response.text();
+  const records = await generationLogStore.readRecent(10);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].status, "failed");
+  assert.equal(records[0].stream.finalState, "gateway_timeout");
+  assert.equal(records[0].stream.gatewayTimeout, true);
+  assert.equal(records[0].stream.errorEvents >= 1, true);
+  assert.match(records[0].errorSummary, /网关超时/);
+});
+
+test("image generation logs include client abort stream diagnostics", async () => {
+  const generationLogStore = createMemoryLogStore();
+  const previousHeartbeat = process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS;
+  process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = "10";
+  try {
+    const app = createSelfHostedApp({
+      store: memoryStore({
+        imageApiToken: "client-token",
+        upstreamBaseURL: "https://upstream.example/v1",
+        upstreamApiKey: "upstream-key",
+      }),
+      ...ADMIN_OPTIONS,
+      generationLogStore,
+      fetchImpl: async (_url, init) => new Response(new ReadableStream({
+        start(controller) {
+          init.signal?.addEventListener("abort", () => {
+            controller.error(new Error("aborted"));
+          });
+        },
+      }), {
+        status: 200,
+        headers: { "content-type": "text/event-stream" },
+      }),
+    });
+
+    const response = await app.handle(jsonRequest("/v1/images/generations", {
+      prompt: "stream abort",
+      stream: true,
+    }, {
+      authorization: "Bearer client-token",
+    }));
+
+    const reader = response.body.getReader();
+    await reader.read();
+    await reader.cancel();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    const records = await generationLogStore.readRecent(10);
+    assert.equal(records.length, 1);
+    assert.equal(records[0].stream.finalState, "client_aborted");
+    assert.equal(records[0].stream.clientAborted, true);
+    assert.equal(records[0].status, "failed");
+    assert.match(records[0].errorSummary, /客户端在流式响应完成前断开连接/);
+  } finally {
+    if (previousHeartbeat === undefined) {
+      delete process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS;
+    } else {
+      process.env.IMAGE_STUDIO_STREAM_HEARTBEAT_MS = previousHeartbeat;
+    }
+  }
+});
+
 test("admin config updates non-secret values and keeps blank secrets unchanged", async () => {
   const store = memoryStore({
     imageApiToken: "old-client-token",

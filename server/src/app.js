@@ -614,6 +614,78 @@ function decodeHeaderValue(value) {
   }
 }
 
+function sanitizeStreamDiagnostics(diagnostics = {}) {
+  return {
+    requested: !!diagnostics.requested,
+    upstreamStarted: !!diagnostics.upstreamStarted,
+    upstreamStatus: Number(diagnostics.upstreamStatus) || 0,
+    upstreamContentType: String(diagnostics.upstreamContentType || ""),
+    finalState: String(diagnostics.finalState || ""),
+    timeoutSeconds: Number(diagnostics.timeoutSeconds) || 0,
+    heartbeatCount: Number(diagnostics.heartbeatCount) || 0,
+    upstreamChunkCount: Number(diagnostics.upstreamChunkCount) || 0,
+    upstreamByteCount: Number(diagnostics.upstreamByteCount) || 0,
+    partialImageEvents: Number(diagnostics.partialImageEvents) || 0,
+    completedEvents: Number(diagnostics.completedEvents) || 0,
+    errorEvents: Number(diagnostics.errorEvents) || 0,
+    clientAborted: !!diagnostics.clientAborted,
+    gatewayTimeout: !!diagnostics.gatewayTimeout,
+    errorSummary: String(diagnostics.errorSummary || ""),
+    events: Array.isArray(diagnostics.events) ? diagnostics.events.map((event) => String(event)) : [],
+    upstreamId: String(diagnostics.upstreamId || ""),
+    interfaceId: String(diagnostics.interfaceId || ""),
+    model: String(diagnostics.model || ""),
+    retryCount: Number(diagnostics.retryCount) || 0,
+    failoverChain: Array.isArray(diagnostics.failoverChain) ? diagnostics.failoverChain.map((item) => String(item)) : [],
+    finishedAt: String(diagnostics.finishedAt || ""),
+  };
+}
+
+function buildGenerationLogRecord({
+  id,
+  startedAt,
+  now,
+  response,
+  url,
+  errorSummary,
+  streamDiagnostics,
+}) {
+  const responseHeaders = response?.headers || new Headers();
+  const responseStatus = Number(response?.status) || 0;
+  const headerFailoverChain = (responseHeaders.get("x-image-studio-failover-chain") || "").split(",").filter(Boolean);
+  const record = {
+    id,
+    createdAt: new Date(startedAt).toISOString(),
+    finishedAt: new Date(now()).toISOString(),
+    status: responseStatus >= 200 && responseStatus <= 399 ? "success" : "failed",
+    endpoint: url.pathname,
+    interfaceId: responseHeaders.get("x-image-studio-interface-id") || streamDiagnostics?.interfaceId || "",
+    upstreamId: responseHeaders.get("x-image-studio-upstream-id") || streamDiagnostics?.upstreamId || "",
+    model: responseHeaders.get("x-image-studio-model") || streamDiagnostics?.model || "",
+    upstreamStatus: responseStatus,
+    retryCount: Number(responseHeaders.get("x-image-studio-retry-count") || streamDiagnostics?.retryCount || 0),
+    failoverChain: headerFailoverChain.length ? headerFailoverChain : Array.isArray(streamDiagnostics?.failoverChain) ? streamDiagnostics.failoverChain : [],
+    durationMs: Math.max(0, now() - startedAt),
+    errorSummary: decodeHeaderValue(responseHeaders.get("x-image-studio-error-summary")) || errorSummary,
+  };
+  if (streamDiagnostics) {
+    record.stream = sanitizeStreamDiagnostics(streamDiagnostics);
+    record.status = streamDiagnostics.finalState === "completed" ? "success" : "failed";
+    record.finishedAt = String(streamDiagnostics.finishedAt || record.finishedAt);
+    if (streamDiagnostics.upstreamStatus) record.upstreamStatus = Number(streamDiagnostics.upstreamStatus) || record.upstreamStatus;
+    if (streamDiagnostics.upstreamId) record.upstreamId = streamDiagnostics.upstreamId;
+    if (streamDiagnostics.errorSummary) record.errorSummary = streamDiagnostics.errorSummary;
+    if (!record.errorSummary && streamDiagnostics.finalState !== "completed") {
+      record.errorSummary = streamDiagnostics.finalState === "client_aborted"
+        ? "客户端在流式响应完成前断开连接。"
+        : streamDiagnostics.finalState === "gateway_timeout"
+          ? "流式上游网关超时。"
+          : "流式上游返回错误事件。";
+    }
+  }
+  return record;
+}
+
 async function appendLogSafely(logStore, record) {
   if (!logStore) return;
   try {
@@ -1807,7 +1879,24 @@ export function createSelfHostedApp({
         }
         activeRequests += 1;
         try {
-          response = await forwardOpenAIPath({ request, config: runtimeConfig, fetchImpl });
+          const logGeneration = async (streamDiagnostics = null) => {
+            if (!generationLogStore) return;
+            await appendLogSafely(generationLogStore, buildGenerationLogRecord({
+              id,
+              startedAt,
+              now,
+              response,
+              url,
+              errorSummary,
+              streamDiagnostics,
+            }));
+          };
+          response = await forwardOpenAIPath({
+            request,
+            config: runtimeConfig,
+            fetchImpl,
+            onStreamFinalized: isGenerationEndpoint ? logGeneration : null,
+          });
           const updatedConfig = normalizeConfig(await store.load());
           const nextInterfaces = updatedConfig.interfaces.map((item) => (
             item.id === clientInterface.id ? { ...item, lastUsedAt: nowISO(now) } : item
@@ -1829,21 +1918,16 @@ export function createSelfHostedApp({
         status = response.status;
         if (!errorSummary) errorSummary = errorSummaryFromResponse(response);
       }
-      if (isGenerationEndpoint && generationLogStore) {
+      if (isGenerationEndpoint && generationLogStore && !(response?.headers.get("content-type") || "").toLowerCase().includes("text/event-stream")) {
         await appendLogSafely(generationLogStore, {
-          id,
-          createdAt: new Date(startedAt).toISOString(),
-          finishedAt: new Date(now()).toISOString(),
-          status: status >= 200 && status <= 399 ? "success" : "failed",
-          endpoint: url.pathname,
-          interfaceId: response.headers.get("x-image-studio-interface-id") || "",
-          upstreamId: response.headers.get("x-image-studio-upstream-id") || "",
-          model: response.headers.get("x-image-studio-model") || "",
-          upstreamStatus: status,
-          retryCount: Number(response.headers.get("x-image-studio-retry-count") || 0),
-          failoverChain: (response.headers.get("x-image-studio-failover-chain") || "").split(",").filter(Boolean),
-          durationMs: Math.max(0, now() - startedAt),
-          errorSummary: decodeHeaderValue(response.headers.get("x-image-studio-error-summary")) || errorSummary,
+          ...buildGenerationLogRecord({
+            id,
+            startedAt,
+            now,
+            response,
+            url,
+            errorSummary,
+          }),
         });
       }
       if (apiLogStore && url.pathname !== "/api/logs/clear") {
